@@ -1,0 +1,76 @@
+[project]
+name = "cua"
+version = "0.1.0"
+description = "Computer-use automation: LLM discovers a legacy UI flow once, replays it deterministically forever."
+requires-python = ">=3.13"
+dependencies = [
+    "playwright>=1.62",
+    "pydantic>=2.13",
+    "pydantic-settings>=2.7",
+    "anthropic>=1.1,<2",
+    "fastapi>=0.141",
+    "uvicorn[standard]>=0.52",
+    "typer>=0.15",
+    "structlog>=25.1",
+    "jinja2>=3.1",
+    "tenacity>=9.0",
+    "pyyaml>=6.0",
+    "python-multipart>=0.0.32",
+]
+
+[project.scripts]
+cua = "cua.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1",
+    "pytest-asyncio>=1.0",
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "import-linter>=2.1",
+    "types-pyyaml>=6.0",
+    "httpx>=0.28.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# `targetapp` is deliberately kept outside src/cua: it is the stand-in for the bank's
+# legacy software, not part of the automation system. It still has to be installed,
+# though, or `cua serve-app` cannot import it by name.
+packages = ["src/cua", "targetapp"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "N", "A"]
+
+[tool.ruff.lint.per-file-ignores]
+# The target app deliberately mimics a legacy ASP.NET application, including its
+# camelCase query and form parameter names. Renaming them would make the fake app
+# less faithful to what it is standing in for.
+"targetapp/app.py" = ["N803"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+mypy_path = "src"
+packages = ["cua"]
+# Third-party libs without complete stubs.
+[[tool.mypy.overrides]]
+module = ["playwright.*", "structlog.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "unit: fast, no browser, no network",
+    "integration: drives a real browser against the local target app",
+    "eval: the scenario matrix (README table)",
+]

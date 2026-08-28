@@ -1,0 +1,31 @@
+# Secrets — never commit. See .env.example for the shape.
+.env
+.env.local
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Node (operator console)
+node_modules/
+web/operator/dist/
+web/operator/types.ts   # generated from schemas/*.json — regenerate, don't commit
+
+# Playwright
+/test-results/
+/playwright-report/
+
+# Scratch runs from local development. Curated demo evidence is committed separately
+# under evidence/demo/. The recorded LLM transcript in evidence/fixtures/ IS tracked -
+# `cua discover --mock` needs it, and it is what makes the no-API-key path real.
+evidence/runs/
+evidence/scratch/
+.DS_Store
