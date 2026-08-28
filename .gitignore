@@ -28,4 +28,10 @@ web/operator/types.ts   # generated from schemas/*.json — regenerate, don't co
 # `cua discover --mock` needs it, and it is what makes the no-API-key path real.
 evidence/runs/
 evidence/scratch/
+
+# Local editor/agent tooling config. Contains machine-specific paths and has no
+# place in a public repository.
+.claude/
+.vscode/
+.idea/
 .DS_Store
