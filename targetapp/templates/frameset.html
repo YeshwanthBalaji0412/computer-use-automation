@@ -1,0 +1,19 @@
+{#
+  A real <frameset>. No <body>, two named frames, and every screen the automation cares
+  about lives inside the nested content frame.
+
+  This is the single most useful hostile feature for testing the Surface layer: any
+  perception code that assumes one document, or any locator that forgets to carry a
+  frame path, breaks here immediately rather than subtly later.
+#}
+<!DOCTYPE html>
+<html>
+<head><title>{{ tenant.brand }} - CoreLink Servicing Console</title></head>
+<frameset cols="170,*" frameborder="1" border="2" framespacing="0">
+  <frame name="navFrame" src="/tenants/{{ tenant.slug }}/frame/nav" scrolling="no">
+  <frame name="contentFrame" src="/tenants/{{ tenant.slug }}/frame/content?screen=search">
+  <noframes>
+    <body>This application requires a frames-capable browser.</body>
+  </noframes>
+</frameset>
+</html>

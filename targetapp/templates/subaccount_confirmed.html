@@ -1,0 +1,16 @@
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Sub-Account Opened</h2>
+<p>The sub-account has been created successfully.</p>
+
+<table class="gv" cellspacing="0" id="{{ ctl('pnlDone','tblResult', rng=rng) }}">
+  <tr><th scope="col">Field</th><th scope="col">Value</th></tr>
+  <tr><td>Confirmation Number</td><td>{{ confirmation }}</td></tr>
+  <tr><td>Member ID</td><td>{{ member.member_id }}</td></tr>
+  <tr><td>Account Nickname</td><td>{{ nickname }}</td></tr>
+  <tr><td>Account Type</td><td>{{ acct_type }}</td></tr>
+</table>
+
+<p><a href="/tenants/{{ tenant.slug }}/frame/content?screen=detail&memberId={{ member.member_id }}"
+      id="{{ ctl('pnlDone','lnkBack', rng=rng) }}">Return to Member Detail</a></p>
+{% endblock %}

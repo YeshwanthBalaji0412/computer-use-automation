@@ -1,0 +1,57 @@
+{#
+  Member detail - the screen the primary capability has to reach, and where the savings
+  balance is extracted from.
+
+  Meridian renders the balances as a nested table; Lakeside as a definition list. Same
+  vendor product, same data, different markup. A locator recorded as a structural path
+  dies crossing tenants; a locator recorded as "the value labelled 'Savings' " survives.
+#}
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Member Detail</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+ <tr><td valign="top">
+
+  {% if tenant.detail_layout == "dl" %}
+    <dl id="{{ ctl('pnlDetail','dlFields', rng=rng) }}">
+      <dt class="lbl">Member Number</dt><dd>{{ member.member_id }}</dd>
+      <dt class="lbl">Member Name</dt><dd>{{ member.name }}</dd>
+      <dt class="lbl">Status</dt><dd>{{ member.status }}</dd>
+      <dt class="lbl">Home Branch</dt><dd>{{ member.branch }}</dd>
+      <dt class="lbl">Member Since</dt><dd>{{ member.joined }}</dd>
+      <dt class="lbl">Savings</dt><dd>${{ member.savings_balance }}</dd>
+      <dt class="lbl">Checking</dt><dd>${{ member.checking_balance }}</dd>
+    </dl>
+  {% else %}
+    <table border="0" cellpadding="3" id="{{ ctl('pnlDetail','tblFields', rng=rng) }}">
+      <tr><td class="lbl">Member ID</td><td>{{ member.member_id }}</td></tr>
+      <tr><td class="lbl">Member Name</td><td>{{ member.name }}</td></tr>
+      <tr><td class="lbl">Status</td><td>{{ member.status }}</td></tr>
+      <tr><td class="lbl">Home Branch</td><td>{{ member.branch }}</td></tr>
+      <tr><td class="lbl">Member Since</td><td>{{ member.joined }}</td></tr>
+    </table>
+
+    <br>
+    <table class="gv" cellspacing="0" id="{{ ctl('grdBalances','', rng=rng) }}">
+      <tr>
+        <th scope="col">Account</th>
+        <th scope="col">Balance</th>
+      </tr>
+      <tr><td>Savings</td><td>${{ member.savings_balance }}</td></tr>
+      <tr><td>Checking</td><td>${{ member.checking_balance }}</td></tr>
+    </table>
+  {% endif %}
+
+  <br>
+  <p>
+    <a href="/tenants/{{ tenant.slug }}/frame/content?screen=subaccount-new&memberId={{ member.member_id }}"
+       id="{{ ctl('pnlDetail','lnkNewSub', rng=rng) }}">Open Sub-Account</a>
+    &nbsp;|&nbsp;
+    <a href="/tenants/{{ tenant.slug }}/frame/content?screen=search"
+       id="{{ ctl('pnlDetail','lnkBack', rng=rng) }}">New Search</a>
+  </p>
+
+ </td></tr>
+</table>
+{% endblock %}

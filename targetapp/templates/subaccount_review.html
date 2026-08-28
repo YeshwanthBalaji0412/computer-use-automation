@@ -1,0 +1,34 @@
+{#
+  The review screen. The next click is IRREVERSIBLE and NON-IDEMPOTENT: it opens a real
+  sub-account. This is the step the policy engine must refuse to take unattended.
+
+  Note the button label - "Confirm and Open Account" - contains verbs the risk classifier
+  matches on. Risk is inferred from what the control *says*, because that is what a human
+  operator reads before deciding.
+#}
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Review Sub-Account Request</h2>
+<p>Please review. This action cannot be undone.</p>
+
+<table class="gv" cellspacing="0" id="{{ ctl('pnlReview','tblSummary', rng=rng) }}">
+  <tr><th scope="col">Field</th><th scope="col">Value</th></tr>
+  <tr><td>Member ID</td><td>{{ member.member_id }}</td></tr>
+  <tr><td>Member Name</td><td>{{ member.name }}</td></tr>
+  <tr><td>Account Nickname</td><td>{{ nickname }}</td></tr>
+  <tr><td>Account Type</td><td>{{ acct_type }}</td></tr>
+  <tr><td>Initial Deposit</td><td>${{ initial_deposit }}</td></tr>
+</table>
+
+<br>
+<form method="post" action="/tenants/{{ tenant.slug }}/frame/subaccount/confirm">
+  <input type="hidden" name="memberId" value="{{ member.member_id }}">
+  <input type="hidden" name="nickname" value="{{ nickname }}">
+  <input type="hidden" name="acctType" value="{{ acct_type }}">
+  <input type="submit" value="Confirm and Open Account"
+         id="{{ ctl('pnlReview','btnConfirm', rng=rng) }}">
+  &nbsp;
+  <a href="/tenants/{{ tenant.slug }}/frame/content?screen=detail&memberId={{ member.member_id }}"
+     id="{{ ctl('pnlReview','lnkCancel', rng=rng) }}">Cancel</a>
+</form>
+{% endblock %}

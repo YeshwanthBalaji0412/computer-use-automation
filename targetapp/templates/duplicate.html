@@ -1,0 +1,14 @@
+{#
+  Pre-flight duplicate check fired. This is what makes a non-idempotent capability safe
+  for an agent to invoke twice: the second attempt returns a business outcome instead of
+  quietly opening a second account.
+#}
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Duplicate Sub-Account</h2>
+<p class="err">A sub-account named {{ nickname }} already exists for member
+   {{ member.member_id }}.</p>
+<p>No new account was created.</p>
+<p><a href="/tenants/{{ tenant.slug }}/frame/content?screen=detail&memberId={{ member.member_id }}"
+      id="{{ ctl('pnlMsg','lnkBack', rng=rng) }}">Return to Member Detail</a></p>
+{% endblock %}

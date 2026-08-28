@@ -1,0 +1,25 @@
+{% extends "_shell.html" %}
+{% block content %}
+{% set txtuser = ctl('frmLogin','txtUser', rng=rng) %}
+{% set txtpwd = ctl('frmLogin','txtPwd', rng=rng) %}
+<h2>Operator Sign In</h2>
+<form method="post" action="/tenants/{{ tenant.slug }}/login">
+  <table border="0" cellpadding="4">
+    <tr>
+      <td class="lbl"><label for="{{ txtuser }}">User ID</label></td>
+      <td><input type="text" name="username"
+                 id="{{ txtuser }}" size="24"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><label for="{{ txtpwd }}">Password</label></td>
+      <td><input type="password" name="password"
+                 id="{{ txtpwd }}" size="24"></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><input type="submit" value="Sign In"
+                 id="{{ ctl('frmLogin','btnLogin', rng=rng) }}"></td>
+    </tr>
+  </table>
+</form>
+{% endblock %}

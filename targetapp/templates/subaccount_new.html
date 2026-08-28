@@ -1,0 +1,45 @@
+{% extends "_shell.html" %}
+{% block content %}
+{% set txtnick = ctl('frmSub','txtNick', rng=rng) %}
+{% set ddltype = ctl('frmSub','ddlType', rng=rng) %}
+{% set txtdep = ctl('frmSub','txtDep', rng=rng) %}
+<h2>Open Sub-Account</h2>
+<p>Member {{ member.member_id }} &mdash; {{ member.name }}</p>
+
+{% if error %}<p class="err">{{ error }}</p>{% endif %}
+
+<form method="post" action="/tenants/{{ tenant.slug }}/frame/subaccount/review">
+  <input type="hidden" name="memberId" value="{{ member.member_id }}">
+  <table border="0" cellpadding="4">
+    <tr>
+      <td class="lbl">
+        <label for="{{ txtnick }}">Account Nickname</label>
+      </td>
+      <td><input type="text" name="nickname" size="24"
+                 id="{{ txtnick }}"></td>
+    </tr>
+    <tr>
+      <td class="lbl">
+        <label for="{{ ddltype }}">Account Type</label>
+      </td>
+      <td>
+        <select name="acctType" id="{{ ddltype }}">
+          {% for t in types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td class="lbl">
+        <label for="{{ txtdep }}">Initial Deposit</label>
+      </td>
+      <td><input type="text" name="initialDeposit" size="12" value="0.00"
+                 id="{{ txtdep }}"></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><input type="submit" value="Continue"
+                 id="{{ ctl('frmSub','btnContinue', rng=rng) }}"></td>
+    </tr>
+  </table>
+</form>
+{% endblock %}

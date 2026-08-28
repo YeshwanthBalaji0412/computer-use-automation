@@ -1,0 +1,13 @@
+{#
+  A BUSINESS OUTCOME, not a failure. HTTP 200. No error styling beyond red text, no
+  role="alert" - detection has to work off the visible message, which is the realistic
+  case. "No such member" is a legitimate answer the caller needs.
+#}
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Search Results</h2>
+<p class="err">No member records found for ID {{ member_id }}.</p>
+<p>Verify the member number and try again.</p>
+<p><a href="/tenants/{{ tenant.slug }}/frame/content?screen=search"
+      id="{{ ctl('pnlMsg','lnkBack', rng=rng) }}">New Search</a></p>
+{% endblock %}

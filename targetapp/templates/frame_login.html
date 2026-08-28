@@ -1,0 +1,32 @@
+{#
+  Session expiry bounces the *content frame* to a sign-in form, leaving the frameset and
+  nav intact. This is what these applications genuinely do, and it is nastier than a
+  full-page redirect: the URL of the top-level page does not change, so any replay that
+  detects session loss by watching the address bar will miss it entirely. Detection has
+  to be based on what is actually on screen.
+#}
+{% extends "_shell.html" %}
+{% block content %}
+{% set txtuser = ctl('frmRelog','txtUser', rng=rng) %}
+{% set txtpwd = ctl('frmRelog','txtPwd', rng=rng) %}
+<h2>Session Ended</h2>
+<form method="post" action="/tenants/{{ tenant.slug }}/login">
+  <table border="0" cellpadding="4">
+    <tr>
+      <td class="lbl"><label for="{{ txtuser }}">User ID</label></td>
+      <td><input type="text" name="username"
+                 id="{{ txtuser }}" size="24"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><label for="{{ txtpwd }}">Password</label></td>
+      <td><input type="password" name="password"
+                 id="{{ txtpwd }}" size="24"></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><input type="submit" value="Sign In"
+                 id="{{ ctl('frmRelog','btnLogin', rng=rng) }}"></td>
+    </tr>
+  </table>
+</form>
+{% endblock %}

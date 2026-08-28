@@ -1,0 +1,31 @@
+{#
+  A HARD FAILURE. Unlike the business-outcome screens this returns HTTP 500, and there
+  is nothing here for automation to do except stop and produce a debuggable report.
+  Styled like a real ASP.NET yellow-screen-of-death, because that is what operators see.
+#}
+<!DOCTYPE html>
+<html>
+<head><title>Server Error in '/CoreLink' Application</title></head>
+<body style="font-family: Arial; background: #fff; margin: 0;">
+  <span style="font-family: Arial; font-size: 20pt; color: #b00;">
+    Server Error in '/CoreLink' Application.
+  </span>
+  <hr width="100%" size="1" color="silver">
+  <h2 style="font-family: Arial; font-size: 14pt; color: #b00;">
+    Unhandled exception in servicing module
+  </h2>
+  <p style="font-family: Arial; font-size: 10pt;">
+    <b>Description:</b> An unhandled exception occurred during the execution of the
+    current web request. Please review the stack trace for more information about the
+    error and where it originated in the code.
+  </p>
+  <p style="font-family: Arial; font-size: 10pt;">
+    <b>Exception Details:</b>
+    CoreLink.Servicing.ServiceUnavailableException: The servicing host did not respond.
+  </p>
+  <hr width="100%" size="1" color="silver">
+  <p style="font-family: Arial; font-size: 8pt;">
+    Version Information: CoreLink Runtime Version 8.2; Servicing Console Build 14
+  </p>
+</body>
+</html>

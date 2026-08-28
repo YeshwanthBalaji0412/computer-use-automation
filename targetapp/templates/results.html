@@ -1,0 +1,41 @@
+{#
+  The data grid. This is the screen locator tier 4 exists for.
+
+  The "View" link has no usable id (it churns), no test id, and its accessible name is
+  just "View" - identical on every row. The only correct way to target it is by the row
+  it lives in: "the View link in the row whose Member ID cell reads 100042".
+
+  <th> is used for the header row so the accessibility tree exposes columnheader roles,
+  which is what lets a column be addressed by its heading text rather than by index.
+#}
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Search Results</h2>
+
+<p>{{ rows|length }} record(s) found.</p>
+
+<table class="gv" cellspacing="0" id="{{ ctl('grdMembers','', rng=rng) }}">
+  <tr>
+    <th scope="col">Member ID</th>
+    <th scope="col">Name</th>
+    <th scope="col">Branch</th>
+    <th scope="col">Status</th>
+    <th scope="col">Action</th>
+  </tr>
+  {% for row in rows %}
+  <tr class="{{ junk(rng) }}">
+    <td>{{ row.member_id }}</td>
+    <td>{{ row.name }}</td>
+    <td>{{ row.branch }}</td>
+    <td>{{ row.status }}</td>
+    <td>
+      <a href="/tenants/{{ tenant.slug }}/frame/content?screen=detail&memberId={{ row.member_id }}"
+         id="{{ ctl('grdMembers','lnkView', rng=rng) }}">View</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p><a href="/tenants/{{ tenant.slug }}/frame/content?screen=search"
+      id="{{ ctl('grdMembers','lnkBack', rng=rng) }}">New Search</a></p>
+{% endblock %}

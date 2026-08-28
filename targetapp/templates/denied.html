@@ -1,0 +1,13 @@
+{#
+  Also a business outcome: the record exists, the operator's role is not entitled to it.
+  The caller must be able to tell this apart from "no such member" - conflating them
+  would be a compliance problem, not just a bug.
+#}
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Access Restricted</h2>
+<p class="err">You are not authorized to view member {{ member_id }}.</p>
+<p>This record is restricted. Contact your security administrator to request access.</p>
+<p><a href="/tenants/{{ tenant.slug }}/frame/content?screen=search"
+      id="{{ ctl('pnlMsg','lnkBack', rng=rng) }}">New Search</a></p>
+{% endblock %}

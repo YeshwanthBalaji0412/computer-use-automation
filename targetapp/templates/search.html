@@ -1,0 +1,56 @@
+{#
+  Three things vary by tenant on this one screen, and each breaks a different naive
+  locator strategy:
+    * the field label  ("Member ID" vs "Member Number")   -> breaks get_by_label
+    * the submit label ("Search"    vs "Find Member")     -> breaks exact role+name
+    * Lakeside requires a Branch selection                -> an extra step, not a rename
+#}
+{% extends "_shell.html" %}
+{% block content %}
+{% set txtid = ctl('frmSearch','txtMemberId', rng=rng) %}
+{% set ddlbranch = ctl('frmSearch','ddlBranch', rng=rng) %}
+<h2>Member Search</h2>
+
+{% if error %}<p class="err">{{ error }}</p>{% endif %}
+
+<form method="post" action="/tenants/{{ tenant.slug }}/frame/search">
+  <table border="0" cellpadding="4">
+    <tr>
+      <td class="lbl">
+        <label for="{{ txtid }}">{{ tenant.member_id_label }}</label>
+      </td>
+      <td>
+        <input type="text" name="memberId" size="16" maxlength="12"
+               value="{{ prefill|default('') }}"
+               id="{{ txtid }}">
+      </td>
+    </tr>
+    {% if tenant.requires_branch_on_search %}
+    <tr>
+      <td class="lbl">
+        <label for="{{ ddlbranch }}">Branch</label>
+      </td>
+      <td>
+        <select name="branch" id="{{ ddlbranch }}">
+          <option value="">-- Select --</option>
+          <option value="MAIN">MAIN</option>
+          <option value="NORTHGATE">NORTHGATE</option>
+          <option value="WESTSIDE">WESTSIDE</option>
+        </select>
+      </td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td></td>
+      <td>
+        <input type="submit" value="{{ tenant.search_button_label }}"
+               id="{{ ctl('frmSearch','btnSearch', rng=rng) }}">
+        &nbsp;
+        <input type="button" value="Clear"
+               id="{{ ctl('frmSearch','btnClear', rng=rng) }}"
+               onclick="this.form.reset()">
+      </td>
+    </tr>
+  </table>
+</form>
+{% endblock %}

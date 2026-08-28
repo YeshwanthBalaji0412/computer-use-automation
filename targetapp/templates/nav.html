@@ -1,0 +1,24 @@
+{% extends "_shell.html" %}
+{% block content %}
+<h2>Navigation</h2>
+<table border="0" cellpadding="2">
+  {% for item in tenant.nav_items %}
+  <tr>
+    <td>
+      {% if item == "Member Search" %}
+        <a href="/tenants/{{ tenant.slug }}/frame/content?screen=search"
+           target="contentFrame"
+           id="{{ ctl('mnuMain','lnkNav', rng=rng) }}">{{ item }}</a>
+      {% else %}
+        {# Deliberately a javascript: postback link, like the real thing. #}
+        <a href="javascript:__doPostBack('{{ ctl('mnuMain','lnkNav', rng=rng) }}','')"
+           id="{{ ctl('mnuMain','lnkNav', rng=rng) }}">{{ item }}</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  <tr><td>&nbsp;</td></tr>
+  <tr><td><a href="/tenants/{{ tenant.slug }}/logout" target="_top">Sign Out</a></td></tr>
+</table>
+<script>function __doPostBack(t, a) { /* legacy no-op */ }</script>
+{% endblock %}

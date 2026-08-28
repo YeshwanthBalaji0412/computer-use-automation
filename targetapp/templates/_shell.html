@@ -1,0 +1,82 @@
+{#
+  Base shell for every content-frame screen.
+
+  Hostility inventory, all deliberate:
+    * page laid out with nested <table> elements, not semantic landmarks
+    * junk class names (.x .f7 .tbl2) that carry no meaning
+    * control ids from legacy.ctl(), which churn on every render
+    * zero data-testid attributes anywhere in this app
+
+  What is preserved: every control has a visible, human-readable accessible name.
+  That is the only stable contract, and it is what the locator ladder targets.
+#}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ tenant.brand }} - CoreLink Servicing</title>
+  <style>
+    body { font-family: Verdana, Geneva, sans-serif; font-size: 11px; margin: 0;
+           background: #d4d0c8; color: #000; }
+    .hdrbar { background: {{ tenant.accent }}; color: #fff; padding: 6px 10px;
+              font-weight: bold; font-size: 13px; }
+    .ftr { background: #b8b4ac; padding: 3px 10px; font-size: 10px; color: #333; }
+    .pane { background: #fff; border: 2px inset #fff; padding: 10px; margin: 8px; }
+    table.gv { border-collapse: collapse; font-size: 11px; background: #fff; }
+    table.gv th { background: #999; color: #fff; padding: 3px 8px; border: 1px solid #777;
+                  text-align: left; }
+    table.gv td { padding: 3px 8px; border: 1px solid #ccc; }
+    .err { color: #b00; font-weight: bold; }
+    .lbl { font-weight: bold; padding-right: 6px; white-space: nowrap; }
+    input[type=text], select { font-family: Verdana; font-size: 11px; border: 1px solid #7f9db9; }
+    input[type=submit], input[type=button] { font-family: Verdana; font-size: 11px;
+                                             padding: 1px 10px; }
+    h2 { font-size: 13px; margin: 0 0 8px 0; }
+    .modal { position: fixed; top: 60px; left: 50%; margin-left: -190px; width: 380px;
+             background: #fff; border: 3px outset #999; padding: 0; z-index: 999; }
+    .modal .mh { background: {{ tenant.accent }}; color: #fff; padding: 5px 8px;
+                 font-weight: bold; }
+    .modal .mb { padding: 12px; line-height: 1.5; }
+    .scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 998; }
+  </style>
+</head>
+<body class="{{ junk(rng) }}">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" class="{{ junk(rng) }}">
+  <tr><td class="hdrbar">{{ tenant.brand }} &nbsp;|&nbsp; Servicing Console</td></tr>
+  <tr>
+    <td>
+      {# a second layout table, nested, for no reason whatsoever - just like the real thing #}
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" class="{{ junk(rng) }}">
+        <tr>
+          <td valign="top">
+            <div class="pane">
+              {% if banner %}<p class="err">{{ banner }}</p>{% endif %}
+              {% block content %}{% endblock %}
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td class="ftr">CoreLink Servicing Console &nbsp;v{{ app_version }}
+      &nbsp;|&nbsp; (c) CoreLink Systems Inc.</td></tr>
+</table>
+
+{% if modal %}
+  {# Overlays get role="dialog" and an accessible name. Everything else stays hostile:
+     this is the one concession, and it mirrors apps that got a partial a11y retrofit. #}
+  <div class="scrim"></div>
+  <div class="modal" role="dialog" aria-label="{{ modal.title }}">
+    <div class="mh">{{ modal.title }}</div>
+    <div class="mb">
+      <p>{{ modal.body }}</p>
+      <p><input type="button" id="{{ ctl('pnlNotice', 'btnAck', rng=rng) }}"
+                value="{{ modal.button }}"
+                onclick="var d=document.querySelector('.modal');d.parentNode.removeChild(d);
+                         var s=document.querySelector('.scrim');s.parentNode.removeChild(s);"></p>
+    </div>
+  </div>
+{% endif %}
+
+</body>
+</html>
