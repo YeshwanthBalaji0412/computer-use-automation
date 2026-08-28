@@ -1,0 +1,7 @@
+{
+  "tenant_id": "lakeside",
+  "display_name": "Lakeside Federal CU",
+  "base_url": "http://localhost:4000/tenants/lakeside",
+  "vars": { "defaultBranch": "MAIN" },
+  "capability_overrides": {}
+}

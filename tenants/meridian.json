@@ -1,0 +1,7 @@
+{
+  "tenant_id": "meridian",
+  "display_name": "Meridian Credit Union",
+  "base_url": "http://localhost:4000/tenants/meridian",
+  "vars": {},
+  "capability_overrides": {}
+}
