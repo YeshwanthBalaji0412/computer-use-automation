@@ -1,0 +1,61 @@
+# Guardrails for the agent. Read by a compliance reviewer as often as by the runtime,
+# which is why this is YAML and not Python.
+#
+# Two enforcement layers use this file:
+#   1. action level  - every action from the model, from replay, and from a human
+#                      handoff passes PolicyEngine.check() before it happens
+#   2. network level - Playwright request interception aborts anything heading to an
+#                      origin not listed here, even if no action asked for it
+#
+# The second layer is not redundant. It is what stops a redirect to an external SSO, or
+# an injected script in a legacy app's data field, from moving data off the allowlist
+# without any action being taken at all.
+
+allowed_origins:
+  - "http://localhost:4000"
+  - "http://127.0.0.1:4000"
+
+# Empty means "any path on an allowed origin". Listed explicitly here so the shape of a
+# real deployment is obvious: back-office apps are mounted per tenant.
+allowed_path_patterns:
+  - "/tenants/*"
+  - "/tenants/*/**"
+
+# Checked before the allowlist and never overridden by it.
+denied_path_patterns:
+  - "**/admin/**"
+  - "**/export/**"
+  - "**/bulk/**"
+
+allowed_actions: [navigate, click, fill, select, press, extract, assert, wait]
+
+# Not in `allowed_actions` above, and named here so the omission is clearly deliberate:
+# file transfer and script execution are the two capabilities that would let an agent
+# move regulated data off the machine or escape every other control in this file.
+denied_actions: []
+
+max_steps_per_run: 40
+max_run_duration_ms: 300000
+
+risk_gates:
+  read_only: allow
+  reversible_write: require_approval
+  irreversible_write: require_approval
+
+# Matched against a control's accessible name - the words a human operator reads before
+# deciding. Case-insensitive.
+irreversible_signals:
+  - '\b(confirm and open|confirm and submit|open account)\b'
+  - '\b(delete|remove|purge|void|reverse)\b'
+  - '\b(wire|transfer funds|send payment|submit payment|disburse)\b'
+  - '\b(close account|freeze|charge[- ]off|write[- ]off)\b'
+  - '\b(approve|authorize|authorise)\b'
+
+reversible_signals:
+  - '\b(save|update|apply|submit|continue|create)\b'
+
+redaction:
+  enabled: true
+  declared_fields: true
+  patterns: true
+  hash_correlation: true
