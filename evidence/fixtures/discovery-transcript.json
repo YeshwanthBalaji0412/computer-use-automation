@@ -1,0 +1,181 @@
+{
+  "model": "scripted-stand-in",
+  "turns": [
+    {
+      "text": "Looking at the sign-in screen.",
+      "tool_calls": [
+        {
+          "id": "call_1",
+          "name": "observe",
+          "arguments": {},
+          "element_hint": ""
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_2",
+          "name": "fill",
+          "arguments": {
+            "text": "operator",
+            "why": "sign in as the servicing operator",
+            "ref": "e2"
+          },
+          "element_hint": "textbox|User ID"
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_3",
+          "name": "fill",
+          "arguments": {
+            "text": "demo-pass",
+            "why": "supply the operator password",
+            "ref": "e3"
+          },
+          "element_hint": "textbox|Password"
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_4",
+          "name": "click",
+          "arguments": {
+            "why": "sign in to the console",
+            "ref": "e4"
+          },
+          "element_hint": "button|Sign In"
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_5",
+          "name": "fill",
+          "arguments": {
+            "text": "100042",
+            "why": "enter the member number to look up",
+            "is_parameter": true,
+            "parameter_name": "memberId",
+            "ref": "e10"
+          },
+          "element_hint": "textbox|Member ID"
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_6",
+          "name": "click",
+          "arguments": {
+            "why": "submit the member search",
+            "ref": "e11"
+          },
+          "element_hint": "button|Search"
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_7",
+          "name": "click",
+          "arguments": {
+            "why": "open the matching member's detail screen",
+            "ref": "e20"
+          },
+          "element_hint": "link|View"
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_8",
+          "name": "extract",
+          "arguments": {
+            "output_name": "savingsBalance",
+            "output_type": "currency",
+            "sensitive": true,
+            "why": "read the member's current savings balance",
+            "ref": "e23"
+          },
+          "element_hint": "cell|$4,182.55"
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_9",
+          "name": "assert_state",
+          "arguments": {
+            "describe": "the member detail screen",
+            "refs": []
+          },
+          "element_hint": ""
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_10",
+          "name": "finish",
+          "arguments": {
+            "summary": "Signed in, searched for the member, opened their detail screen and read the savings balance.",
+            "capability_id": "member.savings-balance",
+            "description": "Look up a member by id in the CoreLink servicing console and return their current savings balance."
+          },
+          "element_hint": ""
+        }
+      ],
+      "stop_reason": "tool_use",
+      "input_tokens": 0,
+      "output_tokens": 0
+    }
+  ]
+}
