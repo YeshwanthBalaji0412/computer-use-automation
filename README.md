@@ -103,7 +103,7 @@ not-found              MEMBER_NOT_FOUND             MEMBER_NOT_FOUND     PASS
 permission-denied      PERMISSION_DENIED            PERMISSION_DENIED    PASS
 invalid-input          failed                       invalid_input        PASS
 known-interstitial     success                      success              PASS
-session-expiry         escalated                    recovery_exhausted   PASS
+session-expiry         success                      success              PASS
 unknown-dialog         escalated                    unknown_dialog       PASS
 app-error              APP_ERROR                    APP_ERROR            PASS
 slow-load              success                      success              PASS
@@ -112,6 +112,8 @@ slow-load              success                      success              PASS
 ```
 
 Ten rows, **six different answers**. A system that returned `failed` for the middle six would pass a naive smoke test and be useless in production — the caller could not tell "this member does not exist" from "the automation is broken".
+
+Two rows are worth reading twice. **`session-expiry` succeeds**, and the interesting part is *how*: the content frame swaps to a sign-in form while the top-level URL never changes, so anything watching the address bar sees a healthy run. Detection has to come from the screen. And recovery is not a retry — signing in again lands on the entry screen, not the one that failed — so the artifact declares `restart_from_step` and the run picks up from there. **`unknown-dialog` escalates** rather than recovering, because the application is asking an operator a question and guessing the answer is the one decision this system is not allowed to make.
 
 ### 4. Hand a stuck run to a human, mid-session
 

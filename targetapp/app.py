@@ -39,6 +39,9 @@ _SESSIONS: dict[str, str] = {}
 #: and then let a retry through. A fault that fires forever cannot demonstrate recovery.
 _FIRED: set[str] = set()
 
+#: Expiries that have fired and not yet been answered by a sign-in. See `login`.
+_EXPIRY_IMMUNITY = 0
+
 app = FastAPI(title="CoreLink Servicing Console", docs_url=None, redoc_url=None)
 
 
@@ -138,10 +141,14 @@ async def login(
     # forever - which is not what a timeout does in a real system, and would make a
     # correct recovery look like an unrecoverable one.
     #
-    # Scoped to expiries specifically. Keying it on "any fault has fired" made the
-    # immunity leak across unrelated faults, and since `_FIRED` lives for the life of the
-    # process that quietly made the outcome depend on test ordering.
-    if any(key.startswith("expire:") for key in _FIRED):
+    # One expiry grants exactly one immunity, consumed here. Two weaker versions of this
+    # were wrong in the same way: keyed on "any fault has fired", and then on "any expiry
+    # has *ever* fired", the immunity outlived the run that earned it - and because these
+    # module globals live as long as the process, that silently made the outcome depend on
+    # which test ran first. A pending count is the only version that is scoped to one flow.
+    global _EXPIRY_IMMUNITY
+    if _EXPIRY_IMMUNITY > 0:
+        _EXPIRY_IMMUNITY -= 1
         _FIRED.add(f"expire:{sid}")
     resp = RedirectResponse(f"/tenants/{slug}/home", status_code=302)
     resp.set_cookie(SESSION_COOKIE, sid, httponly=True, samesite="lax")
@@ -198,6 +205,8 @@ async def content_frame(
     # Session expiry bounces the *frame* to login, which is what these apps really do.
     if fault is faults.Fault.EXPIRE and screen == "detail" and _fire_once(f"expire:{sid}"):
         _SESSIONS.pop(sid, None)
+        global _EXPIRY_IMMUNITY
+        _EXPIRY_IMMUNITY += 1
         return _render(
             request,
             "frame_login.html",
