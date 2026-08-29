@@ -20,6 +20,7 @@ from fnmatch import fnmatch
 
 from cua.locator.match import resolve
 from cua.schema.capability import Assertion, AssertionKind
+from cua.schema.locator import Locator
 from cua.surface.base import Observation
 
 
@@ -48,12 +49,22 @@ def screen_text(observation: Observation) -> str:
     return "\n".join(parts)
 
 
-def evaluate(assertion: Assertion, observation: Observation) -> AssertionResult:
+def evaluate(
+    assertion: Assertion,
+    observation: Observation,
+    outputs: dict[str, Locator] | None = None,
+) -> AssertionResult:
+    """`outputs` maps output name -> the locator currently in force for it.
+
+    Passed in rather than embedded so a tenant overlay that moves a value - a table on
+    one institution, a definition list on another - is honoured without the tenant being
+    allowed to redefine what success means.
+    """
     kind = assertion.kind
     label = assertion.describe or str(kind)
 
     if kind is AssertionKind.ALL_OF:
-        results = [evaluate(a, observation) for a in assertion.of]
+        results = [evaluate(a, observation, outputs) for a in assertion.of]
         failed = [r for r in results if not r.passed]
         return AssertionResult(
             passed=not failed,
@@ -62,7 +73,7 @@ def evaluate(assertion: Assertion, observation: Observation) -> AssertionResult:
         )
 
     if kind is AssertionKind.ANY_OF:
-        results = [evaluate(a, observation) for a in assertion.of]
+        results = [evaluate(a, observation, outputs) for a in assertion.of]
         return AssertionResult(
             passed=any(r.passed for r in results),
             describe=label,
@@ -83,6 +94,17 @@ def evaluate(assertion: Assertion, observation: Observation) -> AssertionResult:
         matched = fnmatch(observation.url, pattern) or bool(_search(pattern, observation.url))
         return AssertionResult(passed=matched, describe=label, observed=f"url is {observation.url}")
 
+    if kind is AssertionKind.OUTPUT_PRESENT:
+        locator = (outputs or {}).get(assertion.output or "")
+        if locator is None:
+            return AssertionResult(False, label, f"no locator for output {assertion.output!r}")
+        resolution = resolve(locator, observation)
+        return AssertionResult(
+            passed=resolution.ref is not None,
+            describe=label,
+            observed=f"{locator.describe}: {resolution.outcome}",
+        )
+
     if kind in (AssertionKind.ELEMENT_PRESENT, AssertionKind.ELEMENT_ABSENT):
         if assertion.locator is None:
             return AssertionResult(False, label, "assertion has no locator")
@@ -102,9 +124,11 @@ def evaluate(assertion: Assertion, observation: Observation) -> AssertionResult:
 
 
 def evaluate_all(
-    assertions: list[Assertion], observation: Observation
+    assertions: list[Assertion],
+    observation: Observation,
+    outputs: dict[str, Locator] | None = None,
 ) -> tuple[bool, list[AssertionResult]]:
-    results = [evaluate(a, observation) for a in assertions]
+    results = [evaluate(a, observation, outputs) for a in assertions]
     return all(r.passed for r in results), results
 
 

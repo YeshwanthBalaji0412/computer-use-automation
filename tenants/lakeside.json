@@ -2,6 +2,141 @@
   "tenant_id": "lakeside",
   "display_name": "Lakeside Federal CU",
   "base_url": "http://localhost:4000/tenants/lakeside",
-  "vars": { "defaultBranch": "MAIN" },
-  "capability_overrides": {}
+  "product_version": "8.4.02",
+  "vars": {
+    "defaultBranch": "MAIN"
+  },
+  "capability_overrides": {
+    "member.savings-balance": {
+      "version_range": ">=1.0 <2",
+      "steps": {
+        "s4": {
+          "prepend_strategies": [
+            {
+              "tier": 3,
+              "note": "Lakeside's label for the same field",
+              "role": null,
+              "name": null,
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": null,
+              "label": "Member Number",
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            }
+          ],
+          "skip": false,
+          "value_literal": null,
+          "describe": "Lakeside labels the identifier field \"Member Number\"."
+        },
+        "s5": {
+          "prepend_strategies": [
+            {
+              "tier": 1,
+              "note": "Lakeside's label for the search button",
+              "role": "button",
+              "name": "Find Member",
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            }
+          ],
+          "skip": false,
+          "value_literal": null,
+          "describe": "Lakeside labels the submit control \"Find Member\"."
+        }
+      },
+      "outputs": {
+        "savingsBalance": {
+          "prepend_strategies": [
+            {
+              "tier": 5,
+              "note": "the value following the 'Savings' term",
+              "role": "definition",
+              "name": null,
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": "Savings",
+              "bbox": null
+            }
+          ],
+          "skip": false,
+          "value_literal": null,
+          "describe": "Lakeside renders balances as a definition list rather than a table, so the recorded row/column strategy has nothing to match and the text anchor needs the definition role."
+        }
+      },
+      "insert_before": {
+        "s5": [
+          {
+            "id": "lakeside-branch",
+            "intent": "Lakeside requires a branch before it will run a member search",
+            "action": "select",
+            "target": {
+              "describe": "the Branch dropdown in the Member Search form",
+              "frame_path": [
+                "contentFrame"
+              ],
+              "any_frame": false,
+              "strategies": [
+                {
+                  "tier": 3,
+                  "note": "Lakeside-only control; found by its label",
+                  "role": null,
+                  "name": null,
+                  "name_match": "exact",
+                  "scope_section": null,
+                  "ordinal": null,
+                  "label": "Branch",
+                  "row_key": null,
+                  "column_header": null,
+                  "anchor_text": null,
+                  "bbox": null
+                },
+                {
+                  "tier": 2,
+                  "note": "role + name fallback",
+                  "role": "combobox",
+                  "name": "Branch",
+                  "name_match": "normalised",
+                  "scope_section": null,
+                  "ordinal": null,
+                  "label": null,
+                  "row_key": null,
+                  "column_header": null,
+                  "anchor_text": null,
+                  "bbox": null
+                }
+              ]
+            },
+            "control_name": "Branch",
+            "value": {
+              "literal": "MAIN",
+              "param": null,
+              "secret_ref": null
+            },
+            "url": null,
+            "output": null,
+            "risk": "read_only",
+            "wait_for": [],
+            "pre_assert": [],
+            "post_assert": [],
+            "on_failure": "classify",
+            "timeout_ms": 15000,
+            "retries": 1
+          }
+        ]
+      }
+    }
+  }
 }

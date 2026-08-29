@@ -25,7 +25,7 @@ _FORM_ROLES = frozenset({"textbox", "searchbox", "combobox", "checkbox", "radio"
 
 #: Roles whose accessible name *is* their content, rather than a label describing it.
 #: For these, a name-based strategy on an element you intend to *read* is circular.
-_CONTENT_ROLES = frozenset({"cell", "columnheader", "rowheader", "definition", "term"})
+CONTENT_ROLES = frozenset({"cell", "columnheader", "rowheader", "definition", "term"})
 
 
 def describe_element(node: ElementNode, *, for_extraction: bool = False) -> str:
@@ -36,7 +36,7 @@ def describe_element(node: ElementNode, *, for_extraction: bool = False) -> str:
     committed file - so "the Balance cell in the row where Account = Savings" is both
     safer and more accurate than quoting what it happened to say when recorded.
     """
-    hide_value = for_extraction and node.role in _CONTENT_ROLES
+    hide_value = for_extraction and node.role in CONTENT_ROLES
     column = node.row_context.column_header if node.row_context else ""
     parts = [f"the {column} {node.role}".strip() if hide_value else f"the {node.role}"]
     if node.name and not hide_value:
@@ -73,7 +73,7 @@ def generate(
     """
     candidates = _candidates(node, observation)
 
-    if for_extraction and node.role in _CONTENT_ROLES:
+    if for_extraction and node.role in CONTENT_ROLES:
         candidates = [
             s for s in candidates if s.tier not in (Tier.ROLE_NAME_EXACT, Tier.ROLE_NAME_NORMALISED)
         ]
@@ -292,4 +292,11 @@ def bind(locator: Locator, values: dict[str, str]) -> Locator:
     return locator.model_copy(update={"strategies": bound, "describe": sub(locator.describe)})
 
 
-__all__ = ["bind", "describe_element", "generate", "normalise", "parameterise"]
+__all__ = [
+    "CONTENT_ROLES",
+    "bind",
+    "describe_element",
+    "generate",
+    "normalise",
+    "parameterise",
+]

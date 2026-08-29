@@ -156,8 +156,31 @@ def verify(
     capability: Annotated[str, typer.Option(help="Capability to smoke-test.")],
     tenants: Annotated[str, typer.Option(help="'all' or a comma-separated list.")] = "all",
 ) -> None:
-    """Read-only conformance sweep across tenants: resolve locators, assert preconditions."""
-    raise NotImplementedError("phase 6")
+    """Read-only conformance sweep across tenants. Never clicks; safe to schedule.
+
+    Reports which locator tier each step resolves at, per tenant. A step recorded at
+    tier 1 that starts resolving at tier 4 means somebody relabelled a control - and you
+    want that from a nightly sweep, not from a failed transaction.
+    """
+    import asyncio
+    from pathlib import Path
+
+    from cua.app.replay import TENANTS_DIR
+    from cua.app.verify import render, sweep, tenants_in
+
+    wanted = (
+        tenants_in(TENANTS_DIR) if tenants == "all" else [t.strip() for t in tenants.split(",")]
+    )
+    results = asyncio.run(
+        sweep(
+            capability_name=capability,
+            tenant_ids=wanted,
+            capabilities_dir=Path("capabilities"),
+            tenants_dir=TENANTS_DIR,
+        )
+    )
+    typer.echo(render(results, capability))
+    raise typer.Exit(1 if any(r.unresolved or r.error for r in results) else 0)
 
 
 @app.command()

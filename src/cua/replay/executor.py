@@ -246,7 +246,11 @@ class ReplayExecutor:
             return entry
         self._check_drift(ctx)
 
-        ok, results = evaluate_all(self._cap.preconditions, ctx.observation)  # type: ignore[arg-type]
+        ok, results = evaluate_all(
+            self._cap.preconditions,
+            ctx.observation,  # type: ignore[arg-type]
+            self._output_locators(),
+        )
         if not ok:
             failed = next(r for r in results if not r.passed)
             return self._error(
@@ -298,7 +302,7 @@ class ReplayExecutor:
         ctx.traces.append(trace)
 
         assert ctx.observation is not None
-        ok, results = evaluate_all(step.pre_assert, ctx.observation)
+        ok, results = evaluate_all(step.pre_assert, ctx.observation, self._output_locators())
         if not ok:
             trace.status = StepStatus.FAILED
             failed = next(r for r in results if not r.passed)
@@ -400,7 +404,7 @@ class ReplayExecutor:
                 ErrorClass.SURFACE_ERROR, step, step.intent, outcome.error or "", ctx
             )
 
-        ok, results = evaluate_all(step.post_assert, ctx.observation)
+        ok, results = evaluate_all(step.post_assert, ctx.observation, self._output_locators())
         if not ok:
             trace.status = StepStatus.FAILED
             failed = next(r for r in results if not r.passed)
@@ -486,7 +490,7 @@ class ReplayExecutor:
     async def _extract(self, step: Step, ctx: _Ctx, trace: StepTrace) -> ReplayResult | None:
         assert ctx.observation is not None
         field_def = next((o for o in self._cap.outputs if o.name == step.output), None)
-        locator = (field_def.locator if field_def else None) or step.target
+        locator = self._cap.effective_locator(step)
         if field_def is None or locator is None:
             trace.status = StepStatus.FAILED
             return self._error(
@@ -536,7 +540,9 @@ class ReplayExecutor:
         if self._cap.success_condition is None:
             return None
         assert ctx.observation is not None
-        ok, results = evaluate_all([self._cap.success_condition], ctx.observation)
+        ok, results = evaluate_all(
+            [self._cap.success_condition], ctx.observation, self._output_locators()
+        )
         if ok:
             return None
         failed = results[0]
@@ -669,7 +675,9 @@ class ReplayExecutor:
             )
 
         if self._cap.success_condition is not None:
-            done, _ = evaluate_all([self._cap.success_condition], ctx.observation)
+            done, _ = evaluate_all(
+                [self._cap.success_condition], ctx.observation, self._output_locators()
+            )
             if done:
                 # The operator finished the whole flow by hand. Outputs still have to be
                 # read, and the result records who actually completed it.
@@ -684,7 +692,7 @@ class ReplayExecutor:
                 )
 
         if step is not None:
-            advanced, _ = evaluate_all(step.post_assert, ctx.observation)
+            advanced, _ = evaluate_all(step.post_assert, ctx.observation, self._output_locators())
             if advanced and step.post_assert:
                 self._log.event(
                     EventType.STEP_FINISHED,
@@ -694,7 +702,7 @@ class ReplayExecutor:
                 )
                 return None  # type: ignore[return-value]
 
-            ready, _ = evaluate_all(step.pre_assert, ctx.observation)
+            ready, _ = evaluate_all(step.pre_assert, ctx.observation, self._output_locators())
             if ready or not step.pre_assert:
                 return RETRY_STEP
 
@@ -758,6 +766,10 @@ class ReplayExecutor:
             return str(path)
         except Exception:  # a screenshot is evidence, never a reason to fail a run
             return None
+
+    def _output_locators(self) -> dict[str, Locator]:
+        """Output name -> the locator in force for this run, after any tenant overlay."""
+        return {o.name: o.locator for o in self._cap.outputs if o.locator is not None}
 
     def _sensitive_locators(self) -> list[Locator]:
         return [

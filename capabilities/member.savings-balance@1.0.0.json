@@ -404,23 +404,27 @@
               "describe": "heading 'Navigation' appeared after this step",
               "locator": null,
               "pattern": "Navigation",
-              "of": []
+              "of": [],
+              "output": null
             },
             {
               "kind": "text_present",
               "describe": "link 'Member Search' appeared after this step",
               "locator": null,
               "pattern": "Member\\s+Search",
-              "of": []
+              "of": [],
+              "output": null
             },
             {
               "kind": "text_present",
               "describe": "link 'Transactions' appeared after this step",
               "locator": null,
               "pattern": "Transactions",
-              "of": []
+              "of": [],
+              "output": null
             }
-          ]
+          ],
+          "output": null
         }
       ],
       "on_failure": "classify",
@@ -614,23 +618,27 @@
               "describe": "heading 'Search Results' appeared after this step",
               "locator": null,
               "pattern": "Search\\s+Results",
-              "of": []
+              "of": [],
+              "output": null
             },
             {
               "kind": "text_present",
               "describe": "paragraph '1 record(s) found.' appeared after this step",
               "locator": null,
               "pattern": "1\\s+record\\(s\\)\\s+found\\.",
-              "of": []
+              "of": [],
+              "output": null
             },
             {
               "kind": "text_present",
               "describe": "columnheader 'Member ID' appeared after this step",
               "locator": null,
               "pattern": "Member\\s+ID",
-              "of": []
+              "of": [],
+              "output": null
             }
-          ]
+          ],
+          "output": null
         }
       ],
       "on_failure": "classify",
@@ -692,23 +700,27 @@
               "describe": "heading 'Member Detail' appeared after this step",
               "locator": null,
               "pattern": "Member\\s+Detail",
-              "of": []
+              "of": [],
+              "output": null
             },
             {
               "kind": "text_present",
               "describe": "cell 'Member ID' appeared after this step",
               "locator": null,
               "pattern": "Member\\s+ID",
-              "of": []
+              "of": [],
+              "output": null
             },
             {
               "kind": "text_present",
               "describe": "cell 'Member Name' appeared after this step",
               "locator": null,
               "pattern": "Member\\s+Name",
-              "of": []
+              "of": [],
+              "output": null
             }
-          ]
+          ],
+          "output": null
         }
       ],
       "on_failure": "classify",
@@ -772,7 +784,7 @@
           }
         ]
       },
-      "control_name": "$4,182.55",
+      "control_name": "Balance",
       "value": null,
       "url": null,
       "output": "savingsBalance",
@@ -793,63 +805,12 @@
     }
   ],
   "success_condition": {
-    "kind": "element_present",
+    "kind": "output_present",
     "describe": "output 'savingsBalance' is readable",
-    "locator": {
-      "describe": "the Balance cell in the row where Account = Savings (frame contentFrame)",
-      "frame_path": [
-        "contentFrame"
-      ],
-      "any_frame": false,
-      "strategies": [
-        {
-          "tier": 4,
-          "note": "data-grid row identified by other cells in the row, column by header text; the target's own column is excluded so reading a value does not depend on already knowing it",
-          "role": null,
-          "name": null,
-          "name_match": "exact",
-          "scope_section": null,
-          "ordinal": null,
-          "label": null,
-          "row_key": {
-            "Account": "Savings"
-          },
-          "column_header": "Balance",
-          "anchor_text": null,
-          "bbox": null
-        },
-        {
-          "tier": 5,
-          "note": "the element immediately following a fixed label text",
-          "role": "cell",
-          "name": null,
-          "name_match": "exact",
-          "scope_section": null,
-          "ordinal": null,
-          "label": null,
-          "row_key": null,
-          "column_header": null,
-          "anchor_text": "Savings",
-          "bbox": null
-        },
-        {
-          "tier": 6,
-          "note": "positional fallback; weak, and a signal if it ever wins",
-          "role": "cell",
-          "name": null,
-          "name_match": "exact",
-          "scope_section": "Member Detail",
-          "ordinal": 11,
-          "label": null,
-          "row_key": null,
-          "column_header": null,
-          "anchor_text": null,
-          "bbox": null
-        }
-      ]
-    },
+    "locator": null,
     "pattern": null,
-    "of": []
+    "of": [],
+    "output": "savingsBalance"
   },
   "known_outcomes": [
     {
@@ -860,7 +821,8 @@
         "describe": "the content frame bounced to a sign-in form",
         "locator": null,
         "pattern": "(?i)(session (has )?(timed out|ended)|please sign in again)",
-        "of": []
+        "of": [],
+        "output": null
       },
       "severity": "warn",
       "terminal": false,
@@ -874,7 +836,8 @@
         "describe": "the search screen reported no matching records",
         "locator": null,
         "pattern": "(?i)no\\s+(member\\s+)?records?\\s+found",
-        "of": []
+        "of": [],
+        "output": null
       },
       "severity": "info",
       "terminal": true,
@@ -890,7 +853,8 @@
         "describe": "the console refused access to this record",
         "locator": null,
         "pattern": "(?i)(not authoriz|access restricted|not entitled)",
-        "of": []
+        "of": [],
+        "output": null
       },
       "severity": "warn",
       "terminal": true,
@@ -907,7 +871,8 @@
         "describe": "the search screen showed a validation message",
         "locator": null,
         "pattern": "(?i)invalid\\s+member\\s+id|enter a \\d+-digit",
-        "of": []
+        "of": [],
+        "output": null
       },
       "severity": "info",
       "terminal": true,
@@ -921,7 +886,8 @@
         "describe": "the pre-flight duplicate check fired",
         "locator": null,
         "pattern": "(?i)already exists",
-        "of": []
+        "of": [],
+        "output": null
       },
       "severity": "info",
       "terminal": true,
@@ -935,7 +901,8 @@
         "describe": "the application's error page",
         "locator": null,
         "pattern": "(?i)server error in .* application|unhandled exception",
-        "of": []
+        "of": [],
+        "output": null
       },
       "severity": "warn",
       "terminal": true,
@@ -951,7 +918,8 @@
         "describe": "the maintenance notice dialog",
         "locator": null,
         "pattern": "(?i)scheduled maintenance",
-        "of": []
+        "of": [],
+        "output": null
       },
       "action": {
         "kind": "dismiss",
@@ -990,7 +958,8 @@
         "describe": "a step timed out waiting for the screen",
         "locator": null,
         "pattern": "(?!)never-matches-by-detector",
-        "of": []
+        "of": [],
+        "output": null
       },
       "action": {
         "kind": "wait_and_retry",
@@ -1015,8 +984,8 @@
     "discovered_by": "llm",
     "model": "scripted-stand-in",
     "prompt_version": null,
-    "discovery_run_id": "dis_07a2927b6b3d",
-    "recorded_at": "2026-08-28T22:37:13.485354Z",
+    "discovery_run_id": "dis_354759e855d0",
+    "recorded_at": "2026-08-29T02:05:46.783370Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "1c9f3fffe18a91e2",
     "reviewed_by": null,

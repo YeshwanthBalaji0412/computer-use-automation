@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
-from cua.locator.generate import generate
+from cua.locator.generate import CONTENT_ROLES, generate
 from cua.schema.capability import ActionKind
 from cua.schema.locator import Locator
 from cua.surface.base import ElementNode, Observation
@@ -148,7 +148,7 @@ class Recorder:
             why=why,
             target=locator,
             element_describe=element.describe() if element else "",
-            control_name=element.name if element else "",
+            control_name=_control_name(element, action),
             value_literal=value,
             is_parameter=is_parameter,
             parameter_name=parameter_name,
@@ -218,3 +218,20 @@ class Recorder:
             for a in self.actions
             if a.is_parameter and a.parameter_name and a.value_literal and not a.is_secret
         }
+
+
+def _control_name(element: ElementNode | None, action: ActionKind) -> str:
+    """What to record as the name of the control a step acts on.
+
+    For an extraction target whose accessible name *is* its content - a table cell, a
+    definition list value - the name is the balance being read. Putting that in the
+    artifact would commit a member's regulated data to git, and would be circular
+    besides. The column header or preceding label identifies the same control without
+    quoting what it currently says.
+    """
+    if element is None:
+        return ""
+    if action is ActionKind.EXTRACT and element.role in CONTENT_ROLES:
+        column = element.row_context.column_header if element.row_context else ""
+        return column or element.anchor_text or ""
+    return element.name

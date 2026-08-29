@@ -455,10 +455,13 @@ def _build_success_condition(
 
     for output in outputs:
         if output.locator is not None:
+            # By name, not by embedded locator: a tenant that renders this value
+            # somewhere else overrides the *output*, and the success condition follows
+            # automatically rather than needing an override of its own.
             parts.append(
                 Assertion(
-                    kind=AssertionKind.ELEMENT_PRESENT,
-                    locator=output.locator,
+                    kind=AssertionKind.OUTPUT_PRESENT,
+                    output=output.name,
                     describe=f"output {output.name!r} is readable",
                 )
             )

@@ -115,6 +115,10 @@ class OutputField(BaseModel):
 
 class AssertionKind(StrEnum):
     ELEMENT_PRESENT = "element_present"
+    #: "the declared output `name` can be read here". Resolved through the *effective*
+    #: output locator at evaluation time, so a tenant overlay that changes where a value
+    #: lives is picked up without the success condition itself being overridden.
+    OUTPUT_PRESENT = "output_present"
     ELEMENT_ABSENT = "element_absent"
     TEXT_PRESENT = "text_present"
     TEXT_ABSENT = "text_absent"
@@ -135,6 +139,7 @@ class Assertion(BaseModel):
     locator: Locator | None = None
     pattern: str | None = Field(default=None, description="Regex for TEXT_* and URL_MATCHES.")
     of: list[Assertion] = Field(default_factory=list, description="For ALL_OF / ANY_OF.")
+    output: str | None = Field(default=None, description="Output name, for OUTPUT_PRESENT.")
 
     @model_validator(mode="after")
     def _check_shape(self) -> Assertion:
@@ -147,6 +152,9 @@ class Assertion(BaseModel):
         elif self.kind is AssertionKind.URL_MATCHES:
             if not self.pattern:
                 raise ValueError("url_matches requires `pattern`")
+        elif self.kind is AssertionKind.OUTPUT_PRESENT:
+            if not self.output:
+                raise ValueError("output_present requires `output`")
         elif self.locator is None:
             raise ValueError(f"{self.kind} requires a `locator`")
         return self
@@ -490,6 +498,22 @@ class Capability(BaseModel):
         if len({s.id for s in self.steps}) != len(self.steps):
             raise ValueError("step ids must be unique")
         return self
+
+    def effective_locator(self, step: Step) -> Locator | None:
+        """The locator a step will really use.
+
+        For an EXTRACT step this is the *output's* locator, not the step's own. The two
+        can differ once a tenant overlay is applied - an institution that renders a
+        balance in a definition list instead of a table overrides the output - and any
+        component that consults `step.target` directly will disagree with the executor
+        about where the value is. Having one method say so is what stopped the
+        conformance sweep reporting a false failure for a step that replays fine.
+        """
+        if step.action is ActionKind.EXTRACT and step.output:
+            field = next((o for o in self.outputs if o.name == step.output), None)
+            if field is not None and field.locator is not None:
+                return field.locator
+        return step.target
 
     def input_json_schema(self) -> dict[str, Any]:
         """The agent-facing argument contract.

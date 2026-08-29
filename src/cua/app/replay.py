@@ -24,7 +24,7 @@ from cua.policy.redactor import Redactor
 from cua.replay.executor import ReplayExecutor
 from cua.schema.capability import Capability
 from cua.schema.result import EXIT_CODES, ReplayResult
-from cua.schema.tenant import TenantProfile
+from cua.schema.tenant import TenantProfile, resolve_for_tenant
 from cua.surface.web_surface import WebSurface
 
 if TYPE_CHECKING:
@@ -98,9 +98,25 @@ async def run_replay(
     tenant = load_tenant(tenant_id, tenants_dir)
     base_url = base_url_override or tenant.base_url
 
+    # Compose the product-level artifact with this institution's overlay. Pure, and the
+    # file on disk is untouched: `git diff` on a capability shows a change to the product
+    # automation, `git diff` on a tenant profile shows one institution's specialisation.
+    base_capability = capability
+    capability = resolve_for_tenant(capability, tenant)
+
     redactor = Redactor()
     redactor.register_capability(capability, inputs)
     logger = EvidenceLogger(evidence_dir, kind="replay", redactor=redactor)
+
+    if capability is not base_capability:
+        overrides = tenant.override_for(base_capability.id)
+        logger.event(
+            EventType.RUN_STARTED,
+            tenant_overlay=tenant.tenant_id,
+            steps_added=len(capability.steps) - len(base_capability.steps),
+            overridden_steps=sorted(overrides.steps) if overrides else [],
+            overridden_outputs=sorted(overrides.outputs) if overrides else [],
+        )
 
     # Policy is data. A different deployment supplies a different file; nothing here
     # lets a capability or a tenant widen what that file permits.
