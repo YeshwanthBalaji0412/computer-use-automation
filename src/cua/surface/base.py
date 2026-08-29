@@ -28,6 +28,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import StrEnum
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
@@ -185,6 +186,15 @@ class Surface(ABC):
         surface-specific: a desktop implementation resolves tier 4 through UIA's Grid
         pattern rather than through table markup. `Locator` itself is pure schema, so
         depending on it here does not couple this seam to any UI technology.
+        """
+
+    @abstractmethod
+    async def screenshot(self, path: Path, *, mask: list[Locator] | None = None) -> None:
+        """Capture the screen, with `mask` regions obscured **before encoding**.
+
+        Masking at capture rather than in post-processing is the whole point: the raw
+        pixels of a member's balance never exist in a file, so there is no window in
+        which an unredacted image sits on disk waiting to be cleaned up.
         """
 
     @abstractmethod

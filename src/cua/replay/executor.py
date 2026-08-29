@@ -38,6 +38,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from cua.control.intervention import Intervention, InterventionStore, suggest
+from cua.control.session import Disposition, SessionController
 from cua.evidence.logger import EventType, EvidenceLogger
 from cua.locator.generate import bind
 from cua.policy.engine import PolicyEngine
@@ -82,6 +84,21 @@ _SURFACE_ACTIONS = {
 }
 
 
+class _RetryStep:
+    """Sentinel: a human handed control back and the step should be attempted again."""
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return "<RETRY_STEP>"
+
+
+RETRY_STEP = _RetryStep()
+
+#: How many times a step may be resumed into before we stop and raise a fresh
+#: intervention. An operator who keeps hitting the same wall needs a different problem
+#: statement, not another attempt.
+MAX_STEP_REPEATS = 3
+
+
 class InputValidationError(ValueError):
     """The caller's arguments do not satisfy the capability's declared contract."""
 
@@ -95,6 +112,9 @@ class _Ctx:
     outputs: dict[str, Any] = field(default_factory=dict)
     observation: Observation | None = None
     drift: bool = False
+    #: How many times this run has come back from a human. Bounds the case where an
+    #: operator keeps resuming into a condition they have not actually cleared.
+    handoffs: int = 0
 
 
 class ReplayExecutor:
@@ -108,6 +128,10 @@ class ReplayExecutor:
         base_url: str,
         tenant: str | None = None,
         secrets: dict[str, str] | None = None,
+        controller: SessionController | None = None,
+        interventions: InterventionStore | None = None,
+        operator_base_url: str = "",
+        goal: str = "",
     ) -> None:
         self._surface = surface
         self._cap = capability
@@ -117,6 +141,13 @@ class ReplayExecutor:
         self._tenant = tenant
         self._secrets = secrets or {}
         self._classifier = StateClassifier(capability)
+        #: Present only when a human can actually be reached. Without them, an
+        #: escalation is still reported honestly - it just terminates the run instead of
+        #: parking it. Unattended and attended execution share one code path.
+        self._controller = controller
+        self._interventions = interventions
+        self._operator_base_url = operator_base_url.rstrip("/")
+        self._goal = goal
 
     # ------------------------------------------------------------------ entry
 
@@ -222,22 +253,45 @@ class ReplayExecutor:
                 ErrorClass.PRECONDITION_FAILED, None, failed.describe, failed.observed, ctx
             )
 
-        for step in self._cap.steps:
+        index = 0
+        repeats = 0
+        while index < len(self._cap.steps):
+            step = self._cap.steps[index]
             began = time.monotonic()
             self._log.event(EventType.STEP_STARTED, step_id=step.id, intent=step.intent)
 
             result = await self._run_step(step, ctx)
+
+            if result is RETRY_STEP:
+                # A human cleared the obstacle and handed control back. Repeat the step,
+                # but boundedly: an operator who keeps resuming into the same wall should
+                # get a fresh intervention rather than an infinite loop.
+                repeats += 1
+                if repeats > MAX_STEP_REPEATS:
+                    exhausted = await self._escalate(
+                        EscalationReason.RECOVERY_EXHAUSTED,
+                        f"step {step.id} was resumed {repeats} times without progressing",
+                        step,
+                        ctx,
+                        allow_handoff=False,
+                    )
+                    # allow_handoff=False cannot return a retry signal.
+                    assert not isinstance(exhausted, _RetryStep)
+                    return exhausted
+                continue
             if result is not None:
-                return result
+                return result  # type: ignore[return-value]
 
             self._log.event(
                 EventType.STEP_FINISHED,
                 step_id=step.id,
                 duration_ms=int((time.monotonic() - began) * 1000),
             )
+            index += 1
+            repeats = 0
         return None
 
-    async def _run_step(self, step: Step, ctx: _Ctx) -> ReplayResult | None:
+    async def _run_step(self, step: Step, ctx: _Ctx) -> ReplayResult | _RetryStep | None:
         trace = StepTrace(
             step_id=step.id, intent=step.intent, action=str(step.action), status=StepStatus.OK
         )
@@ -287,7 +341,9 @@ class ReplayExecutor:
 
         return await self._act(step, ctx, trace)
 
-    async def _act(self, step: Step, ctx: _Ctx, trace: StepTrace) -> ReplayResult | None:
+    async def _act(
+        self, step: Step, ctx: _Ctx, trace: StepTrace
+    ) -> ReplayResult | _RetryStep | None:
         assert ctx.observation is not None
         ref: str | None = None
 
@@ -355,8 +411,8 @@ class ReplayExecutor:
 
     async def _handle(
         self, classification: Classification, step: Step, ctx: _Ctx, trace: StepTrace
-    ) -> ReplayResult | None:
-        """Act on the classifier's verdict. Returns a terminal result, or None to carry on."""
+    ) -> ReplayResult | _RetryStep | None:
+        """Act on the classifier's verdict. Terminal result, retry signal, or None."""
         if classification.state is StateClass.CLEAN:
             return None
 
@@ -493,29 +549,256 @@ class ReplayExecutor:
         )
 
     async def _escalate(
-        self, reason: EscalationReason, detail: str, step: Step | None, ctx: _Ctx
-    ) -> ReplayResult:
+        self,
+        reason: EscalationReason,
+        detail: str,
+        step: Step | None,
+        ctx: _Ctx,
+        *,
+        allow_handoff: bool = True,
+    ) -> ReplayResult | _RetryStep:
+        """Raise an intervention, and if a human can be reached, hand over and wait.
+
+        With no controller wired in - an unattended run - this reports the escalation
+        honestly and stops. Attended and unattended execution share one path; the only
+        difference is whether there is anybody to cede to.
+        """
         self._log.event(
             EventType.ESCALATION_RAISED,
             step_id=step.id if step else None,
             reason=str(reason),
             detail=detail,
         )
+
+        intervention = await self._raise_intervention(reason, detail, step, ctx)
+
+        if not (allow_handoff and self._controller is not None):
+            return self._escalated_result(reason, step, ctx, intervention)
+
+        if self._interventions is not None and intervention is not None:
+            print(f"\n  intervention raised: {intervention.operator_url}", flush=True)
+
+        self._log.event(
+            EventType.CONTROL_TRANSFERRED,
+            actor="system",
+            step_id=step.id if step else None,
+            to="human",
+            epoch=self._controller.epoch + 1,
+        )
+
+        # Parks here. The browser is untouched; the operator console is served by this
+        # same event loop, which is why the async Playwright API is not optional.
+        handoff = await self._controller.cede()
+
+        for action in handoff.actions:
+            self._log.event(
+                EventType.HUMAN_ACTION,
+                actor="human",
+                step_id=step.id if step else None,
+                detail=action.describe(),
+            )
+        self._log.event(
+            EventType.CONTROL_TRANSFERRED,
+            actor="system",
+            to="automation",
+            epoch=self._controller.epoch,
+            disposition=str(handoff.disposition),
+            human_actions=len(handoff.actions),
+        )
+        if self._interventions is not None and intervention is not None:
+            self._interventions.resolve(
+                intervention.id,
+                handoff.disposition,
+                note=handoff.note,
+                actions=handoff.actions,
+            )
+
+        return await self._reorient(handoff, step, ctx, reason, intervention)
+
+    async def _reorient(
+        self,
+        handoff: Any,
+        step: Step | None,
+        ctx: _Ctx,
+        reason: EscalationReason,
+        intervention: Intervention | None,
+    ) -> ReplayResult | _RetryStep:
+        """Work out where the session actually is, now that a human has been in it.
+
+        Resuming is a re-orientation problem, not a resume-from-a-line-number problem.
+        The operator may have done more than asked, less than asked, or something else
+        entirely, and their stated disposition is a *hint* - the assertions are the
+        evidence. Checking the screen first is what stops a mistaken "I did that" from
+        silently skipping a step that never happened.
+        """
+        if handoff.disposition is Disposition.ABORT:
+            return self._escalated_result(reason, step, ctx, intervention, handoff=handoff)
+
+        ctx.observation = await self._surface.observe()
+        assert ctx.observation is not None
+        ctx.handoffs += 1
+
+        # Re-classify before anything else. The operator's disposition is a claim; the
+        # screen is the evidence. Without this a "yes I handled it" while an undeclared
+        # dialog is still up would be accepted, and the run would report success with the
+        # application still waiting on an answer - which at a bank is the wrong direction
+        # to be wrong in.
+        still = self._classifier.classify(ctx.observation)
+        if still.state is StateClass.ESCALATE:
+            if ctx.handoffs >= MAX_STEP_REPEATS:
+                return self._escalated_result(
+                    still.escalation_reason or reason, step, ctx, intervention, handoff=handoff
+                )
+            return await self._escalate(
+                still.escalation_reason or reason,
+                f"control was handed back as {handoff.disposition}, but the condition "
+                f"is still present: {still.detail}",
+                step,
+                ctx,
+            )
+        if still.state is StateClass.BUSINESS_OUTCOME and still.outcome is not None:
+            return BusinessOutcome(
+                capability=self._cap.qualified_name,
+                tenant=self._tenant,
+                steps=ctx.traces,
+                outcome=Outcome(
+                    code=still.outcome.code,
+                    message=still.outcome.message,
+                    data=dict(still.outcome.returns),
+                ),
+            )
+
+        if self._cap.success_condition is not None:
+            done, _ = evaluate_all([self._cap.success_condition], ctx.observation)
+            if done:
+                # The operator finished the whole flow by hand. Outputs still have to be
+                # read, and the result records who actually completed it.
+                await self._extract_all(ctx)
+                return Success(
+                    capability=self._cap.qualified_name,
+                    tenant=self._tenant,
+                    steps=ctx.traces,
+                    outputs=ctx.outputs,
+                    completed_by="human",
+                    drift_suspected=ctx.drift,
+                )
+
+        if step is not None:
+            advanced, _ = evaluate_all(step.post_assert, ctx.observation)
+            if advanced and step.post_assert:
+                self._log.event(
+                    EventType.STEP_FINISHED,
+                    step_id=step.id,
+                    completed_by="human",
+                    note="post-condition satisfied after handoff",
+                )
+                return None  # type: ignore[return-value]
+
+            ready, _ = evaluate_all(step.pre_assert, ctx.observation)
+            if ready or not step.pre_assert:
+                return RETRY_STEP
+
+        # The operator left the session somewhere neither expected nor recognisable.
+        # Guessing here is exactly what must not happen, so ask again with fresh context.
+        return await self._escalate(
+            EscalationReason.AMBIGUOUS_STATE,
+            "control was handed back but the session is in a state this capability "
+            "does not recognise",
+            step,
+            ctx,
+            allow_handoff=False,
+        )
+
+    async def _raise_intervention(
+        self, reason: EscalationReason, detail: str, step: Step | None, ctx: _Ctx
+    ) -> Intervention | None:
+        if self._interventions is None:
+            if ctx.observation is not None:
+                self._log.write_failure_context(
+                    aria_snapshot=ctx.observation.aria_yaml,
+                    observations=[ctx.observation.model_dump(mode="json")],
+                    summary=f"escalated at {step.id if step else 'success check'}: {detail}",
+                )
+            return None
+
+        shot: str | None = None
         if ctx.observation is not None:
             self._log.write_failure_context(
                 aria_snapshot=ctx.observation.aria_yaml,
                 observations=[ctx.observation.model_dump(mode="json")],
                 summary=f"escalated at {step.id if step else 'success check'}: {detail}",
             )
+            shot = await self._capture_screenshot(step)
+
+        item = Intervention(
+            id=f"int_{self._log.run_id}_{len(self._interventions.all_items()) + 1}",
+            run_id=self._log.run_id,
+            capability=self._cap.qualified_name,
+            goal=self._goal,
+            tenant=self._tenant,
+            step_id=step.id if step else None,
+            step_intent=step.intent if step else "verify the capability reached its goal",
+            reason=reason,
+            explain=detail,
+            attempted=[f"{t.step_id}: {t.intent} ({t.status})" for t in ctx.traces[-4:]],
+            url=ctx.observation.url if ctx.observation else "",
+            screenshot_path=shot,
+            aria_snapshot=ctx.observation.aria_yaml if ctx.observation else "",
+            suggested_actions=suggest(reason),
+        )
+        item.operator_url = f"{self._operator_base_url}/interventions/{item.id}"
+        return self._interventions.raise_(item)
+
+    async def _capture_screenshot(self, step: Step | None) -> str | None:
+        """Masked before the PNG is encoded, so raw pixels of regulated data never land
+        on disk - even in an intervention an operator is about to look at."""
+        try:
+            path = self._log.step_screenshot_path(step.id if step else "escalation", "pre")
+            await self._surface.screenshot(path, mask=self._sensitive_locators())
+            return str(path)
+        except Exception:  # a screenshot is evidence, never a reason to fail a run
+            return None
+
+    def _sensitive_locators(self) -> list[Locator]:
+        return [
+            o.locator
+            for o in self._cap.outputs
+            if o.locator is not None and o.sensitivity in ("pii", "secret")
+        ]
+
+    async def _extract_all(self, ctx: _Ctx) -> None:
+        """Read declared outputs from wherever the session ended up."""
+        for step in self._cap.steps:
+            if step.action is ActionKind.EXTRACT and step.output not in ctx.outputs:
+                trace = StepTrace(
+                    step_id=step.id,
+                    intent=step.intent,
+                    action=str(step.action),
+                    status=StepStatus.OK,
+                )
+                await self._extract(step, ctx, trace)
+
+    def _escalated_result(
+        self,
+        reason: EscalationReason,
+        step: Step | None,
+        ctx: _Ctx,
+        intervention: Intervention | None,
+        handoff: Any = None,
+    ) -> Escalated:
         return Escalated(
             capability=self._cap.qualified_name,
             tenant=self._tenant,
             steps=ctx.traces,
             drift_suspected=ctx.drift,
             intervention=InterventionRef(
-                id=f"int_{self._log.run_id}",
+                id=intervention.id if intervention else f"int_{self._log.run_id}",
                 reason=reason,
                 step_id=step.id if step else None,
+                raised_at=intervention.raised_at if intervention else None,
+                resolved_by=handoff.operator if handoff else None,
+                human_actions=[a.describe() for a in handoff.actions] if handoff else [],
+                operator_url=intervention.operator_url if intervention else None,
             ),
         )
 

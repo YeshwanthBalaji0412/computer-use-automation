@@ -90,7 +90,14 @@ def _modal_for(fault: faults.Fault, sid: str, screen: str) -> dict[str, str] | N
             "maintenance. No action is required.",
             "button": "Close",
         }
-    if fault is faults.Fault.UNKNOWN_DIALOG and _fire_once(f"unknown:{sid}:{screen}"):
+    # Only on the member record, not the search list: a regulatory hold notice is a
+    # property of an account, and one that appeared on every screen would be a different
+    # (and less interesting) test - a run that parks repeatedly rather than once.
+    if (
+        fault is faults.Fault.UNKNOWN_DIALOG
+        and screen == "detail"
+        and _fire_once(f"unknown:{sid}:{screen}")
+    ):
         # NOT declared anywhere. Replay cannot know dismissing this is safe -> escalate.
         return {
             "title": "Regulation CC Hold Notice",

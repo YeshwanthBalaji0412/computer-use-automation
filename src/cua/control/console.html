@@ -1,0 +1,213 @@
+<!doctype html>
+<!--
+  Operator console.
+
+  One page, no framework, no build step. The brief puts a full co-browsing console out of
+  scope, so the effort here goes into the three things that have to be real: showing an
+  operator enough context to act, letting them drive the *live* session, and making the
+  hand-back state an explicit choice rather than a guess.
+
+  Note the disposition buttons. "I completed the step" and "I cleared the obstacle" lead
+  to different behaviour on resume, and the operator is the only one who knows which
+  happened - though automation still verifies it against the screen rather than taking
+  their word for it.
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Operator console</title>
+  <style>
+    :root { --ink:#1a1d23; --muted:#6b7280; --line:#d8dae0; --accent:#003366;
+            --warn:#b45309; --bad:#b91c1c; --ok:#15803d; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:13px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;
+           color:var(--ink); background:#f4f5f7; }
+    header { background:var(--accent); color:#fff; padding:10px 16px;
+             display:flex; align-items:center; gap:16px; }
+    header h1 { font-size:14px; margin:0; font-weight:600; letter-spacing:.02em; }
+    #lease { margin-left:auto; font-size:12px; padding:3px 10px; border-radius:10px;
+             background:rgba(255,255,255,.16); }
+    #lease.human { background:#b45309; }
+    main { display:grid; grid-template-columns:380px 1fr; gap:14px; padding:14px;
+           align-items:start; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:6px;
+            padding:12px 14px; margin-bottom:12px; }
+    .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em;
+               color:var(--muted); margin:0 0 8px; }
+    dl { display:grid; grid-template-columns:96px 1fr; gap:4px 10px; margin:0; }
+    dt { color:var(--muted); }
+    dd { margin:0; word-break:break-word; }
+    .reason { color:var(--bad); font-weight:600; }
+    ul { margin:6px 0 0; padding-left:18px; }
+    li { margin-bottom:4px; }
+    pre { background:#f7f8fa; border:1px solid var(--line); border-radius:4px;
+          padding:8px; font-size:11px; max-height:200px; overflow:auto; margin:0; }
+    #screen { width:100%; border:1px solid var(--line); border-radius:4px;
+              background:#fff; display:block; cursor:crosshair; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    button { font:inherit; padding:7px 12px; border-radius:4px; border:1px solid var(--line);
+             background:#fff; cursor:pointer; }
+    button:hover:not(:disabled) { background:#eef1f5; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    button.danger  { background:#fff; color:var(--bad); border-color:#f3b4b4; }
+    .hint { color:var(--muted); font-size:12px; margin:8px 0 0; }
+    .empty { color:var(--muted); padding:20px; text-align:center; }
+    #log li { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Operator console</h1>
+  <span id="cap"></span>
+  <span id="lease">lease: —</span>
+</header>
+
+<main>
+  <section>
+    <div class="card" id="ctx"><div class="empty">No open intervention.</div></div>
+    <div class="card">
+      <h2>Suggested actions</h2>
+      <ul id="suggest"><li class="empty">—</li></ul>
+    </div>
+    <div class="card">
+      <h2>What the system perceived</h2>
+      <pre id="aria">—</pre>
+    </div>
+    <div class="card">
+      <h2>Your actions this handoff</h2>
+      <ul id="log"><li>none yet</li></ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>Live session</h2>
+      <img id="screen" alt="live session">
+      <p class="hint">
+        Click and type directly on the view — you are driving the same browser session
+        the run was using. Automation is parked and cannot act while you hold the lease.
+      </p>
+      <div class="actions">
+        <button id="take" class="primary">Take control</button>
+        <button id="done">I completed the step</button>
+        <button id="recovered">I cleared the obstacle — retry the step</button>
+        <button id="flow">I finished the whole flow</button>
+        <button id="abort" class="danger">Abort the run</button>
+      </div>
+      <p class="hint">
+        Automation re-checks the screen after you hand back. If what it finds does not
+        match what you said, it asks again rather than guessing.
+      </p>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const screenEl = $("screen");
+let current = null, socket = null, holding = false;
+
+async function refresh() {
+  const state = await (await fetch("/api/state")).json();
+  const open = state.interventions.find(i => i.status === "open" || i.status === "taken");
+  current = open || null;
+
+  $("lease").textContent = `lease: ${state.owner}`;
+  $("lease").className = state.owner === "human" ? "human" : "";
+  holding = state.owner === "human";
+  $("take").disabled = !state.awaiting_human || holding;
+  for (const id of ["done", "recovered", "flow", "abort"]) $(id).disabled = !holding;
+
+  $("log").innerHTML = state.human_actions.length
+    ? state.human_actions.map(a => `<li>${esc(a)}</li>`).join("")
+    : "<li>none yet</li>";
+
+  if (!current) {
+    $("ctx").innerHTML = '<div class="empty">No open intervention.</div>';
+    $("cap").textContent = "";
+    return;
+  }
+  $("cap").textContent = current.capability;
+  $("aria").textContent = current.aria_snapshot || "—";
+  $("suggest").innerHTML = (current.suggested_actions || [])
+    .map(s => `<li>${esc(s)}</li>`).join("") || "<li>—</li>";
+  $("ctx").innerHTML = `
+    <h2>Intervention</h2>
+    <dl>
+      <dt>Why</dt><dd class="reason">${esc(current.reason)}</dd>
+      <dt>Detail</dt><dd>${esc(current.explain)}</dd>
+      <dt>Capability</dt><dd>${esc(current.capability)}</dd>
+      <dt>Goal</dt><dd>${esc(current.goal || "—")}</dd>
+      <dt>Step</dt><dd>${esc(current.step_id || "—")} — ${esc(current.step_intent)}</dd>
+      <dt>Tenant</dt><dd>${esc(current.tenant || "—")}</dd>
+      <dt>URL</dt><dd>${esc(current.url)}</dd>
+      <dt>Tried</dt><dd>${(current.attempted || []).map(esc).join("<br>") || "—"}</dd>
+    </dl>`;
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"]/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function connect() {
+  socket = new WebSocket(`ws://${location.host}/api/stream`);
+  socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    if (message.type === "frame") screenEl.src = "data:image/jpeg;base64," + message.data;
+  };
+  socket.onclose = () => setTimeout(connect, 1200);
+}
+
+// Viewport coordinates have to be scaled: the screencast is rendered at whatever width
+// the console happens to be, and the page is 1280x900.
+function pageCoords(event) {
+  const rect = screenEl.getBoundingClientRect();
+  return {
+    x: Math.round((event.clientX - rect.left) * (screenEl.naturalWidth || 1280) / rect.width),
+    y: Math.round((event.clientY - rect.top) * (screenEl.naturalHeight || 900) / rect.height),
+  };
+}
+
+screenEl.addEventListener("click", (event) => {
+  if (!holding || !socket) return;
+  socket.send(JSON.stringify({ type: "mouse", ...pageCoords(event) }));
+});
+screenEl.addEventListener("wheel", (event) => {
+  if (!holding || !socket) return;
+  event.preventDefault();
+  socket.send(JSON.stringify({ type: "scroll", ...pageCoords(event), deltaY: event.deltaY }));
+}, { passive: false });
+window.addEventListener("keydown", (event) => {
+  if (!holding || !socket) return;
+  if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") return;
+  socket.send(JSON.stringify({ type: "key", key: event.key, text: event.key }));
+});
+
+$("take").onclick = async () => {
+  if (!current) return;
+  await fetch(`/api/interventions/${current.id}/take`, { method: "POST" });
+  refresh();
+};
+
+const resumeWith = (disposition) => async () => {
+  if (!current) return;
+  await fetch(`/api/interventions/${current.id}/resume`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ disposition }),
+  });
+  refresh();
+};
+$("done").onclick      = resumeWith("step_completed");
+$("recovered").onclick = resumeWith("recovered");
+$("flow").onclick      = resumeWith("flow_completed");
+$("abort").onclick     = resumeWith("abort");
+
+connect();
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>

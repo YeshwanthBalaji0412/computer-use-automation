@@ -289,3 +289,78 @@ DEFAULT_PRIORITY = 4
 
 def priority(role: str) -> int:
     return PRIORITY.get(role, DEFAULT_PRIORITY)
+
+
+# Installed into every document via `add_init_script`, so it survives navigation and
+# applies inside frames. Captures what a *human operator* does while they hold the
+# control lease, into the same evidence stream as automation's own actions.
+#
+# It reports role and accessible name only - never values. A change event on a password
+# field would otherwise put the credential into the audit trail, which is precisely the
+# leak the rest of the system works to prevent.
+# Note the IIFE. `add_init_script` executes the script as written, unlike `evaluate`,
+# which calls a function expression for you. A bare `() => {...}` here evaluates to a
+# function object and never runs - silently, which is the worst kind of never.
+HUMAN_CAPTURE_JS = r"""
+(() => {
+  if (window.__cuaCaptureInstalled) return;
+  window.__cuaCaptureInstalled = true;
+
+  const norm = (s) => (s || "").replace(/\s+/g, " ").trim().slice(0, 80);
+
+  function roleOf(el) {
+    const explicit = el.getAttribute && el.getAttribute("role");
+    if (explicit) return explicit.toLowerCase();
+    const tag = el.tagName;
+    if (tag === "A") return "link";
+    if (tag === "BUTTON") return "button";
+    if (tag === "SELECT") return "combobox";
+    if (tag === "TEXTAREA") return "textbox";
+    if (tag === "FORM") return "form";
+    if (tag === "INPUT") {
+      const t = (el.getAttribute("type") || "text").toLowerCase();
+      if (t === "submit" || t === "button" || t === "reset") return "button";
+      if (t === "checkbox") return "checkbox";
+      if (t === "radio") return "radio";
+      if (t === "password") return "password";
+      return "textbox";
+    }
+    return (tag || "").toLowerCase();
+  }
+
+  function nameOf(el) {
+    const aria = el.getAttribute && el.getAttribute("aria-label");
+    if (aria) return norm(aria);
+    if (el.tagName === "INPUT") {
+      const t = (el.getAttribute("type") || "text").toLowerCase();
+      if (t === "submit" || t === "button" || t === "reset") {
+        return norm(el.getAttribute("value"));
+      }
+      if (el.id) {
+        const lab = document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+        if (lab) return norm(lab.textContent);
+      }
+      return "";
+    }
+    return norm(el.textContent);
+  }
+
+  function report(kind, el) {
+    if (!el || !el.tagName) return;
+    try {
+      window.__cuaHumanAction({
+        kind: kind,
+        role: roleOf(el),
+        name: nameOf(el),
+        tag: el.tagName.toLowerCase(),
+      });
+    } catch (err) { /* the binding is not always present; never break the page */ }
+  }
+
+  // Capture phase, so an operator's click is recorded even if the application stops
+  // propagation on its own handlers.
+  document.addEventListener("click", (e) => report("click", e.target), true);
+  document.addEventListener("change", (e) => report("change", e.target), true);
+  document.addEventListener("submit", (e) => report("submit", e.target), true);
+})();
+"""

@@ -51,7 +51,7 @@ from cua.surface.base import (
     Surface,
     SurfaceError,
 )
-from cua.surface.snapshot import COLLECT_JS, priority
+from cua.surface.snapshot import COLLECT_JS, HUMAN_CAPTURE_JS, priority
 
 #: Cap on elements handed upstream. A 30-step discovery run that ships an unbounded tree
 #: every turn spends most of its budget on markup nobody reads.
@@ -82,11 +82,16 @@ class WebSurface(Surface):
         *,
         max_elements: int = MAX_ELEMENTS,
         evidence_dir: Path | None = None,
+        lease_guard: Callable[[], None] | None = None,
     ) -> None:
         self._page = page
         self._context = context
         self._max_elements = max_elements
         self._evidence_dir = evidence_dir
+        #: Called before every action. Raises if automation does not hold the control
+        #: lease. Enforced here, below anything that might forget to check it - a
+        #: prohibition that lives in the caller is a convention, not a guarantee.
+        self._lease_guard = lease_guard
         #: global ref -> (frame, per-frame ref stamped in the DOM)
         self._refs: dict[str, tuple[Frame, str]] = {}
 
@@ -101,6 +106,8 @@ class WebSurface(Surface):
         extra_http_headers: dict[str, str] | None = None,
         allow_request: Callable[[str], bool] | None = None,
         on_blocked_request: Callable[[str], None] | None = None,
+        lease_guard: Callable[[], None] | None = None,
+        on_human_action: Callable[[dict[str, str]], None] | None = None,
     ) -> tuple[WebSurface, Playwright, Browser]:
         """Launch a pinned browser context.
 
@@ -137,8 +144,22 @@ class WebSurface(Surface):
 
             await context.route("**/*", _guard)
 
+        if on_human_action is not None:
+            # Installed on the *context* so it survives navigation and reaches every
+            # frame. This is how "record what the human did" works without a co-browsing
+            # protocol: the page tells us, in the same vocabulary the agent uses.
+            await context.expose_binding(
+                "__cuaHumanAction",
+                lambda _source, payload: on_human_action(payload),
+            )
+            await context.add_init_script(HUMAN_CAPTURE_JS)
+
         page = await context.new_page()
-        return cls(page, context, evidence_dir=evidence_dir), pw, browser
+        return (
+            cls(page, context, evidence_dir=evidence_dir, lease_guard=lease_guard),
+            pw,
+            browser,
+        )
 
     async def close(self) -> None:
         await self._context.close()
@@ -219,9 +240,39 @@ class WebSurface(Surface):
         obs = observation or await self.observe()
         return match_resolve(locator, obs)
 
+    async def screenshot(self, path: Path, *, mask: list[Locator] | None = None) -> None:
+        """Playwright paints the mask regions over the page before encoding the PNG.
+
+        The locators are resolved through the same ladder everything else uses, so a
+        field declared `pii` in the capability is obscured wherever it has moved to -
+        rather than at a coordinate recorded weeks ago.
+        """
+        path.parent.mkdir(parents=True, exist_ok=True)
+        regions = []
+        if mask:
+            observation = await self.observe()
+            for locator in mask:
+                resolution = match_resolve(locator, observation)
+                if resolution.ref is None:
+                    continue
+                entry = self._refs.get(resolution.ref)
+                if entry is None:
+                    continue
+                frame, dom_ref = entry
+                regions.append(frame.locator(f'[data-cua-ref="{dom_ref}"]'))
+
+        with contextlib.suppress(PlaywrightError):
+            await self._page.screenshot(path=str(path), mask=regions or None)
+
     # ------------------------------------------------------------------ act
 
     async def act(self, action: Action) -> ActResult:
+        if self._lease_guard is not None:
+            # Deliberately *not* caught and turned into a failed ActResult. A lease
+            # violation is a programming error in the orchestration, not a runtime
+            # condition the caller should paper over.
+            self._lease_guard()
+
         started = time.monotonic()
         before = self._url_snapshot()
 

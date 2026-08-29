@@ -7,10 +7,17 @@ a structural property rather than a promise.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import json
 import os
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from cua.control.intervention import InterventionStore
+from cua.control.server import build_app
+from cua.control.session import HumanAction, SessionController
 from cua.evidence.logger import EventType, EvidenceLogger
 from cua.policy.engine import PolicyEngine, load_policy
 from cua.policy.redactor import Redactor
@@ -19,6 +26,9 @@ from cua.schema.capability import Capability
 from cua.schema.result import EXIT_CODES, ReplayResult
 from cua.schema.tenant import TenantProfile
 from cua.surface.web_surface import WebSurface
+
+if TYPE_CHECKING:
+    import uvicorn
 
 CAPABILITIES_DIR = Path("capabilities")
 TENANTS_DIR = Path("tenants")
@@ -81,6 +91,8 @@ async def run_replay(
     evidence_dir: Path = EVIDENCE_DIR,
     base_url_override: str | None = None,
     policy_path: Path | None = None,
+    operator_port: int | None = None,
+    goal: str = "",
 ) -> ReplayResult:
     capability = load_capability(capability_name, capabilities_dir)
     tenant = load_tenant(tenant_id, tenants_dir)
@@ -103,6 +115,24 @@ async def run_replay(
     # untouched by test scaffolding.
     headers = {"X-CUA-Fault": fault} if fault else {}
 
+    # Attended mode. Without an operator port the run is unattended: escalations are
+    # still raised and reported honestly, they just terminate instead of parking. One
+    # code path, two deployment shapes.
+    controller = SessionController() if operator_port else None
+    store = InterventionStore(logger.dir) if operator_port else None
+
+    def note_human_action(payload: dict[str, str]) -> None:
+        if controller is None:
+            return
+        controller.record_human_action(
+            HumanAction(
+                at=datetime.now(UTC),
+                kind=payload.get("kind", "action"),
+                role=payload.get("role", ""),
+                name=payload.get("name", ""),
+            )
+        )
+
     surface, pw, browser = await WebSurface.launch(
         headed=headed,
         evidence_dir=logger.steps_dir,
@@ -111,7 +141,19 @@ async def run_replay(
         on_blocked_request=lambda url: logger.event(
             EventType.POLICY_DECISION, decision="block", rule="network_allowlist", url=url
         ),
+        lease_guard=controller.guard() if controller else None,
+        on_human_action=note_human_action if controller else None,
     )
+
+    console: tuple[object, object] | None = None
+    if controller is not None and store is not None and operator_port:
+        console = await _serve_console(
+            store=store,
+            controller=controller,
+            page_provider=lambda: surface.page,
+            port=operator_port,
+        )
+        print(f"operator console -> http://localhost:{operator_port}/", flush=True)
 
     try:
         executor = ReplayExecutor(
@@ -122,9 +164,23 @@ async def run_replay(
             base_url=base_url,
             tenant=tenant_id,
             secrets=secrets_from_env(),
+            controller=controller,
+            interventions=store,
+            operator_base_url=f"http://localhost:{operator_port}" if operator_port else "",
+            goal=goal,
         )
         result = await executor.run(inputs)
     finally:
+        if controller is not None:
+            # Never leave a parked coroutine waiting on a future nobody will complete.
+            controller.abandon("run finished")
+        if console is not None:
+            # Awaited, not fire-and-forget: an un-awaited shutdown leaves the port bound
+            # and the next run fails to bind it.
+            server, serving = console
+            server.should_exit = True  # type: ignore[attr-defined]
+            with contextlib.suppress(TimeoutError, asyncio.CancelledError):
+                await asyncio.wait_for(serving, timeout=5)  # type: ignore[arg-type]
         await surface.close()
         await browser.close()
         await pw.stop()
@@ -187,3 +243,34 @@ def render(result: ReplayResult) -> str:
 
 def exit_code(result: ReplayResult) -> int:
     return EXIT_CODES.get(result.status, 1)
+
+
+async def _serve_console(
+    *,
+    store: InterventionStore,
+    controller: SessionController,
+    page_provider: object,
+    port: int,
+) -> tuple[uvicorn.Server, asyncio.Task[None]]:
+    """Run the operator console in the *same* event loop as the browser session.
+
+    Not a subprocess and not a thread: ceding control parks a coroutine on a future that
+    only an HTTP request can complete, so the server and the parked automation have to
+    share a loop. This is the concrete reason the project uses async Playwright.
+    """
+    import uvicorn
+
+    app = build_app(store=store, controller=controller, page_provider=page_provider)
+    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="error")
+    server = uvicorn.Server(config)
+    serving = asyncio.create_task(server.serve())
+
+    deadline = asyncio.get_running_loop().time() + 10
+    while not server.started:
+        if serving.done():
+            serving.result()  # re-raise whatever stopped it (usually a bound port)
+            raise RuntimeError("operator console exited during startup")
+        if asyncio.get_running_loop().time() > deadline:
+            raise RuntimeError("operator console did not start")
+        await asyncio.sleep(0.05)
+    return server, serving
