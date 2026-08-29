@@ -1,8 +1,8 @@
 {
-  "run_id": "rep_3f5d81ed37b2",
+  "run_id": "rep_df49fdf597b9",
   "kind": "replay",
-  "finished_at": "2026-08-29T03:13:35+00:00",
-  "duration_ms": 27574,
+  "finished_at": "2026-08-29T16:15:25+00:00",
+  "duration_ms": 27567,
   "capability": "member.savings-balance@1.0.0",
   "tenant": "meridian",
   "inputs": {

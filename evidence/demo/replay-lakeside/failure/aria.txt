@@ -1,0 +1,75 @@
+# frame: main
+- document:
+  - iframe
+  - iframe
+
+# frame: navFrame
+- table:
+  - rowgroup:
+    - row "Lakeside Federal CU | Servicing Console":
+      - cell "Lakeside Federal CU | Servicing Console"
+    - row "Navigation Member Search Transactions Reports Admin Sign Out":
+      - cell "Navigation Member Search Transactions Reports Admin Sign Out":
+        - table:
+          - rowgroup:
+            - row "Navigation Member Search Transactions Reports Admin Sign Out":
+              - cell "Navigation Member Search Transactions Reports Admin Sign Out":
+                - heading "Navigation" [level=2]
+                - table:
+                  - rowgroup:
+                    - row "Member Search":
+                      - cell "Member Search":
+                        - link "Member Search":
+                    - row "Transactions":
+                      - cell "Transactions":
+                        - link "Transactions":
+                    - row "Reports":
+                      - cell "Reports":
+                        - link "Reports":
+                    - row "Admin":
+                      - cell "Admin":
+                        - link "Admin":
+                    - row:
+                      - cell
+                    - row "Sign Out":
+                      - cell "Sign Out":
+                        - link "Sign Out":
+    - row "CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.":
+      - cell "CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc."
+
+# frame: contentFrame
+- table:
+  - rowgroup:
+    - row "Lakeside Federal CU | Servicing Console":
+      - cell "Lakeside Federal CU | Servicing Console"
+    - row "Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+      - cell "Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+        - table:
+          - rowgroup:
+            - row "Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+              - cell "Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+                - heading "Member Detail" [level=2]
+                - table:
+                  - rowgroup:
+                    - row "Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+                      - cell "Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+                        - term: Member Number
+                        - definition: "100042"
+                        - term: Member Name
+                        - definition: J. RIVERA
+                        - term: Status
+                        - definition: ACTIVE
+                        - term: Home Branch
+                        - definition: MAIN
+                        - term: Member Since
+                        - definition: «redacted:dob»
+                        - term: Savings
+                        - definition: «redacted:savingsBalance»
+                        - term: Checking
+                        - definition: $1,203.11
+                        - paragraph:
+                          - link "Open Sub-Account":
+                          - text: "|"
+                          - link "New Search":
+    - row "CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.":
+      - cell "CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc."

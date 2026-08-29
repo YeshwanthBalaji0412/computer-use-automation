@@ -1,0 +1,3 @@
+checkpoint_failed at success check
+expected: the capability reached its goal state
+observed: the member detail screen for member 100042: the cell '{{memberId}}' in the 'Member Detail' section (frame contentFrame); the member detail screen for member 100042: the cell 'J. RIVERA' in the 'Member Detail' section (frame contentFrame)

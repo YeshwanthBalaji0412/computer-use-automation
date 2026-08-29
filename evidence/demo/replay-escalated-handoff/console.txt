@@ -7,6 +7,6 @@ intervention  unknown_dialog at s6
 
 status     success
 capability member.savings-balance@1.0.0   tenant=meridian
-duration   32731 ms
+duration   32723 ms
 outputs    {"savingsBalance": "4182.55"}
-evidence   evidence/runs/rep_87fd7bc8fc4c
+evidence   evidence/runs/rep_8d212700db9e

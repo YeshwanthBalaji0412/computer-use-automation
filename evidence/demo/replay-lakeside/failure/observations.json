@@ -1,0 +1,562 @@
+[
+  {
+    "observation_id": "obs_30a0ebe1a3cf",
+    "url": "http://localhost:4000/tenants/lakeside/home",
+    "title": "Lakeside Federal CU - CoreLink Servicing Console",
+    "frame_paths": [
+      [],
+      [
+        "navFrame"
+      ],
+      [
+        "contentFrame"
+      ]
+    ],
+    "elements": [
+      {
+        "ref": "e0",
+        "role": "cell",
+        "name": "Lakeside Federal CU | Servicing Console",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 0.0,
+          "w": 170.0,
+          "h": 44.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e1",
+        "role": "heading",
+        "name": "Navigation",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 64.0,
+          "w": 130.0,
+          "h": 16.0
+        },
+        "tag": "h2"
+      },
+      {
+        "ref": "e2",
+        "role": "link",
+        "name": "Member Search",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 92.0,
+          "w": 86.5625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e3",
+        "role": "link",
+        "name": "Transactions",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 111.0,
+          "w": 68.5625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e4",
+        "role": "link",
+        "name": "Reports",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 130.0,
+          "w": 42.234375,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e5",
+        "role": "link",
+        "name": "Admin",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 149.0,
+          "w": 35.0625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e6",
+        "role": "link",
+        "name": "Sign Out",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 187.0,
+          "w": 48.1875,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e7",
+        "role": "cell",
+        "name": "CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 224.0,
+          "w": 170.0,
+          "h": 42.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e8",
+        "role": "cell",
+        "name": "Lakeside Federal CU | Servicing Console",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 0.0,
+          "w": 1108.0,
+          "h": 28.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e9",
+        "role": "heading",
+        "name": "Member Detail",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 48.0,
+          "w": 1068.0,
+          "h": 16.0
+        },
+        "tag": "h2"
+      },
+      {
+        "ref": "e10",
+        "role": "term",
+        "name": "Member Number",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 83.0,
+          "w": 1068.0,
+          "h": 13.0
+        },
+        "tag": "dt"
+      },
+      {
+        "ref": "e11",
+        "role": "definition",
+        "name": "100042",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Member Number",
+        "bbox": {
+          "x": 60.0,
+          "y": 96.0,
+          "w": 1028.0,
+          "h": 13.0
+        },
+        "tag": "dd"
+      },
+      {
+        "ref": "e12",
+        "role": "term",
+        "name": "Member Name",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 109.0,
+          "w": 1068.0,
+          "h": 13.0
+        },
+        "tag": "dt"
+      },
+      {
+        "ref": "e13",
+        "role": "definition",
+        "name": "J. RIVERA",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Member Name",
+        "bbox": {
+          "x": 60.0,
+          "y": 122.0,
+          "w": 1028.0,
+          "h": 13.0
+        },
+        "tag": "dd"
+      },
+      {
+        "ref": "e14",
+        "role": "term",
+        "name": "Status",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 135.0,
+          "w": 1068.0,
+          "h": 13.0
+        },
+        "tag": "dt"
+      },
+      {
+        "ref": "e15",
+        "role": "definition",
+        "name": "ACTIVE",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Status",
+        "bbox": {
+          "x": 60.0,
+          "y": 148.0,
+          "w": 1028.0,
+          "h": 13.0
+        },
+        "tag": "dd"
+      },
+      {
+        "ref": "e16",
+        "role": "term",
+        "name": "Home Branch",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 161.0,
+          "w": 1068.0,
+          "h": 13.0
+        },
+        "tag": "dt"
+      },
+      {
+        "ref": "e17",
+        "role": "definition",
+        "name": "MAIN",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Home Branch",
+        "bbox": {
+          "x": 60.0,
+          "y": 174.0,
+          "w": 1028.0,
+          "h": 13.0
+        },
+        "tag": "dd"
+      },
+      {
+        "ref": "e18",
+        "role": "term",
+        "name": "Member Since",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 187.0,
+          "w": 1068.0,
+          "h": 13.0
+        },
+        "tag": "dt"
+      },
+      {
+        "ref": "e19",
+        "role": "definition",
+        "name": "«redacted:dob»",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Member Since",
+        "bbox": {
+          "x": 60.0,
+          "y": 200.0,
+          "w": 1028.0,
+          "h": 13.0
+        },
+        "tag": "dd"
+      },
+      {
+        "ref": "e20",
+        "role": "term",
+        "name": "Savings",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 213.0,
+          "w": 1068.0,
+          "h": 13.0
+        },
+        "tag": "dt"
+      },
+      {
+        "ref": "e21",
+        "role": "definition",
+        "name": "«redacted:savingsBalance»",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Savings",
+        "bbox": {
+          "x": 60.0,
+          "y": 226.0,
+          "w": 1028.0,
+          "h": 13.0
+        },
+        "tag": "dd"
+      },
+      {
+        "ref": "e22",
+        "role": "term",
+        "name": "Checking",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 239.0,
+          "w": 1068.0,
+          "h": 13.0
+        },
+        "tag": "dt"
+      },
+      {
+        "ref": "e23",
+        "role": "definition",
+        "name": "$1,203.11",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Checking",
+        "bbox": {
+          "x": 60.0,
+          "y": 252.0,
+          "w": 1028.0,
+          "h": 13.0
+        },
+        "tag": "dd"
+      },
+      {
+        "ref": "e24",
+        "role": "link",
+        "name": "Open Sub-Account",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 300.0,
+          "w": 102.875,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e25",
+        "role": "link",
+        "name": "New Search",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 143.34375,
+          "y": 300.0,
+          "w": 65.71875,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e26",
+        "role": "cell",
+        "name": "CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 344.0,
+          "w": 1108.0,
+          "h": 18.0
+        },
+        "tag": "td"
+      }
+    ],
+    "aria_yaml": "# frame: main\n- document:\n  - iframe\n  - iframe\n\n# frame: navFrame\n- table:\n  - rowgroup:\n    - row \"Lakeside Federal CU | Servicing Console\":\n      - cell \"Lakeside Federal CU | Servicing Console\"\n    - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n      - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n        - table:\n          - rowgroup:\n            - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n              - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n                - heading \"Navigation\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member Search\":\n                      - cell \"Member Search\":\n                        - link \"Member Search\":\n                    - row \"Transactions\":\n                      - cell \"Transactions\":\n                        - link \"Transactions\":\n                    - row \"Reports\":\n                      - cell \"Reports\":\n                        - link \"Reports\":\n                    - row \"Admin\":\n                      - cell \"Admin\":\n                        - link \"Admin\":\n                    - row:\n                      - cell\n                    - row \"Sign Out\":\n                      - cell \"Sign Out\":\n                        - link \"Sign Out\":\n    - row \"CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.\"\n\n# frame: contentFrame\n- table:\n  - rowgroup:\n    - row \"Lakeside Federal CU | Servicing Console\":\n      - cell \"Lakeside Federal CU | Servicing Console\"\n    - row \"Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n      - cell \"Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n        - table:\n          - rowgroup:\n            - row \"Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n              - cell \"Member Detail Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                - heading \"Member Detail\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                      - cell \"Member Number 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                        - term: Member Number\n                        - definition: \"100042\"\n                        - term: Member Name\n                        - definition: J. RIVERA\n                        - term: Status\n                        - definition: ACTIVE\n                        - term: Home Branch\n                        - definition: MAIN\n                        - term: Member Since\n                        - definition: «redacted:dob»\n                        - term: Savings\n                        - definition: «redacted:savingsBalance»\n                        - term: Checking\n                        - definition: $1,203.11\n                        - paragraph:\n                          - link \"Open Sub-Account\":\n                          - text: \"|\"\n                          - link \"New Search\":\n    - row \"CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.4.02 | (c) CoreLink Systems Inc.\"",
+    "screenshot_path": null,
+    "fingerprint": "5144f576d90f0200",
+    "truncated": false
+  }
+]
