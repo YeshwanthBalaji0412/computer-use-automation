@@ -189,7 +189,13 @@ class Surface(ABC):
         """
 
     @abstractmethod
-    async def screenshot(self, path: Path, *, mask: list[Locator] | None = None) -> None:
+    async def screenshot(
+        self,
+        path: Path,
+        *,
+        mask: list[Locator] | None = None,
+        observation: Observation | None = None,
+    ) -> None:
         """Capture the screen, with `mask` regions obscured **before encoding**.
 
         Masking at capture rather than in post-processing is the whole point: the raw

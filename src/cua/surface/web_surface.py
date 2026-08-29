@@ -83,7 +83,9 @@ class WebSurface(Surface):
         max_elements: int = MAX_ELEMENTS,
         evidence_dir: Path | None = None,
         lease_guard: Callable[[], None] | None = None,
+        trace_path: Path | None = None,
     ) -> None:
+        self._trace_path = trace_path
         self._page = page
         self._context = context
         self._max_elements = max_elements
@@ -108,6 +110,7 @@ class WebSurface(Surface):
         on_blocked_request: Callable[[str], None] | None = None,
         lease_guard: Callable[[], None] | None = None,
         on_human_action: Callable[[dict[str, str]], None] | None = None,
+        trace_path: Path | None = None,
     ) -> tuple[WebSurface, Playwright, Browser]:
         """Launch a pinned browser context.
 
@@ -130,6 +133,12 @@ class WebSurface(Surface):
             extra_http_headers=extra_http_headers or {},
         )
         context.set_default_timeout(ACTION_TIMEOUT_MS)
+
+        if trace_path is not None:
+            # The rich failure signal requirement 3.5 asks for. A trace.zip opens in
+            # Playwright's viewer with a DOM snapshot per action, so a failure can be
+            # stepped through after the fact rather than reproduced.
+            await context.tracing.start(screenshots=True, snapshots=True, sources=True)
 
         if allow_request is not None:
 
@@ -156,12 +165,22 @@ class WebSurface(Surface):
 
         page = await context.new_page()
         return (
-            cls(page, context, evidence_dir=evidence_dir, lease_guard=lease_guard),
+            cls(
+                page,
+                context,
+                evidence_dir=evidence_dir,
+                lease_guard=lease_guard,
+                trace_path=trace_path,
+            ),
             pw,
             browser,
         )
 
     async def close(self) -> None:
+        if self._trace_path is not None:
+            self._trace_path.parent.mkdir(parents=True, exist_ok=True)
+            with contextlib.suppress(PlaywrightError):
+                await self._context.tracing.stop(path=str(self._trace_path))
         await self._context.close()
 
     @property
@@ -240,17 +259,27 @@ class WebSurface(Surface):
         obs = observation or await self.observe()
         return match_resolve(locator, obs)
 
-    async def screenshot(self, path: Path, *, mask: list[Locator] | None = None) -> None:
+    async def screenshot(
+        self,
+        path: Path,
+        *,
+        mask: list[Locator] | None = None,
+        observation: Observation | None = None,
+    ) -> None:
         """Playwright paints the mask regions over the page before encoding the PNG.
 
         The locators are resolved through the same ladder everything else uses, so a
         field declared `pii` in the capability is obscured wherever it has moved to -
         rather than at a coordinate recorded weeks ago.
+
+        `observation` lets a caller that has just looked at the screen avoid a second
+        perception pass. Capturing a shot after every step is only affordable because of
+        that; re-observing each time would roughly double a run.
         """
         path.parent.mkdir(parents=True, exist_ok=True)
         regions = []
         if mask:
-            observation = await self.observe()
+            observation = observation or await self.observe()
             for locator in mask:
                 resolution = match_resolve(locator, observation)
                 if resolution.ref is None:

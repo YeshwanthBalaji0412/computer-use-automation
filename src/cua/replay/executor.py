@@ -94,6 +94,25 @@ class _RetryStep:
 
 RETRY_STEP = _RetryStep()
 
+
+@dataclass(frozen=True)
+class _RestartFrom:
+    """Sentinel: a recovery put the session back somewhere earlier in the flow.
+
+    Session expiry is the case this exists for. Re-authenticating does not put you back
+    on the screen the step failed on - it puts you back at the start - so retrying the
+    failed step would just fail again against a screen that no longer exists. The
+    artifact declares where to pick up instead, and the loop honours it.
+    """
+
+    step_id: str
+
+
+#: How many times a run may jump backwards before we stop. A flow that keeps being sent
+#: back to sign-in is not recovering, it is looping, and the difference matters in a write
+#: flow where each pass could post again.
+MAX_RESTARTS = 2
+
 #: How many times a step may be resumed into before we stop and raise a fresh
 #: intervention. An operator who keeps hitting the same wall needs a different problem
 #: statement, not another attempt.
@@ -261,12 +280,42 @@ class ReplayExecutor:
 
         index = 0
         repeats = 0
+        restarts = 0
         while index < len(self._cap.steps):
             step = self._cap.steps[index]
             began = time.monotonic()
             self._log.event(EventType.STEP_STARTED, step_id=step.id, intent=step.intent)
 
             result = await self._run_step(step, ctx)
+
+            if isinstance(result, _RestartFrom):
+                restarts += 1
+                if restarts > MAX_RESTARTS:
+                    exhausted = await self._escalate(
+                        EscalationReason.RECOVERY_EXHAUSTED,
+                        f"the run was sent back to {result.step_id} {restarts} times; "
+                        f"the session will not stay established",
+                        step,
+                        ctx,
+                        allow_handoff=False,
+                    )
+                    assert not isinstance(exhausted, _RetryStep | _RestartFrom)
+                    return exhausted
+                target = next(
+                    (i for i, s in enumerate(self._cap.steps) if s.id == result.step_id), None
+                )
+                # The schema validates this reference at load time, so a miss here would
+                # be a bug rather than bad data - fail loudly instead of silently going on.
+                assert target is not None, f"restart target {result.step_id!r} vanished"
+                self._log.event(
+                    EventType.RECOVERY,
+                    step_id=step.id,
+                    detail=f"restarting from {result.step_id}",
+                    restart=restarts,
+                )
+                index = target
+                repeats = 0
+                continue
 
             if result is RETRY_STEP:
                 # A human cleared the obstacle and handed control back. Repeat the step,
@@ -281,13 +330,14 @@ class ReplayExecutor:
                         ctx,
                         allow_handoff=False,
                     )
-                    # allow_handoff=False cannot return a retry signal.
-                    assert not isinstance(exhausted, _RetryStep)
+                    # allow_handoff=False cannot return a retry or restart signal.
+                    assert not isinstance(exhausted, _RetryStep | _RestartFrom)
                     return exhausted
                 continue
             if result is not None:
                 return result  # type: ignore[return-value]
 
+            await self._capture_step(step, ctx)
             self._log.event(
                 EventType.STEP_FINISHED,
                 step_id=step.id,
@@ -297,7 +347,9 @@ class ReplayExecutor:
             repeats = 0
         return None
 
-    async def _run_step(self, step: Step, ctx: _Ctx) -> ReplayResult | _RetryStep | None:
+    async def _run_step(
+        self, step: Step, ctx: _Ctx
+    ) -> ReplayResult | _RetryStep | _RestartFrom | None:
         trace = StepTrace(
             step_id=step.id, intent=step.intent, action=str(step.action), status=StepStatus.OK
         )
@@ -351,7 +403,7 @@ class ReplayExecutor:
 
     async def _act(
         self, step: Step, ctx: _Ctx, trace: StepTrace
-    ) -> ReplayResult | _RetryStep | None:
+    ) -> ReplayResult | _RetryStep | _RestartFrom | None:
         assert ctx.observation is not None
         ref: str | None = None
 
@@ -421,7 +473,7 @@ class ReplayExecutor:
 
     async def _handle(
         self, classification: Classification, step: Step, ctx: _Ctx, trace: StepTrace
-    ) -> ReplayResult | _RetryStep | None:
+    ) -> ReplayResult | _RetryStep | _RestartFrom | None:
         """Act on the classifier's verdict. Terminal result, retry signal, or None."""
         if classification.state is StateClass.CLEAN:
             return None
@@ -459,7 +511,10 @@ class ReplayExecutor:
                 recovery=recovery.id,
                 attempt=attempt,
                 succeeded=applied,
+                restart_from=recovery.restart_from_step,
             )
+            if applied and recovery.restart_from_step:
+                return _RestartFrom(recovery.restart_from_step)
             return None
 
         reason = classification.escalation_reason or EscalationReason.AMBIGUOUS_STATE
@@ -475,7 +530,21 @@ class ReplayExecutor:
         action = recovery.action
         applied = False
 
-        if action.kind is RecoveryActionKind.DISMISS and action.locator is not None:
+        if recovery.restart_from_step:
+            # Restarting the flow means going back to where the flow starts, not
+            # reloading whatever screen we happen to be looking at. After a session
+            # expires the app leaves a sign-in form *inside the content frame*; the
+            # recorded first step targets the entry page's own sign-in form, which is a
+            # different element in a different frame. Re-entering through the front door
+            # is what puts the session back in the state the recording began from.
+            outcome = await self._surface.act(
+                Action(
+                    type=ActionType.NAVIGATE,
+                    url=self._expand(self._cap.target.entry_url_pattern, ctx),
+                )
+            )
+            applied = outcome.ok
+        elif action.kind is RecoveryActionKind.DISMISS and action.locator is not None:
             resolution = await self._resolve(action.locator, ctx)
             if resolution.ref:
                 outcome = await self._surface.act(Action(type=ActionType.CLICK, ref=resolution.ref))
@@ -571,7 +640,7 @@ class ReplayExecutor:
         ctx: _Ctx,
         *,
         allow_handoff: bool = True,
-    ) -> ReplayResult | _RetryStep:
+    ) -> ReplayResult | _RetryStep | _RestartFrom:
         """Raise an intervention, and if a human can be reached, hand over and wait.
 
         With no controller wired in - an unattended run - this reports the escalation
@@ -626,6 +695,7 @@ class ReplayExecutor:
                 handoff.disposition,
                 note=handoff.note,
                 actions=handoff.actions,
+                operator=handoff.operator,
             )
 
         return await self._reorient(handoff, step, ctx, reason, intervention)
@@ -637,7 +707,7 @@ class ReplayExecutor:
         ctx: _Ctx,
         reason: EscalationReason,
         intervention: Intervention | None,
-    ) -> ReplayResult | _RetryStep:
+    ) -> ReplayResult | _RetryStep | _RestartFrom:
         """Work out where the session actually is, now that a human has been in it.
 
         Resuming is a re-orientation problem, not a resume-from-a-line-number problem.
@@ -771,6 +841,26 @@ class ReplayExecutor:
         )
         item.operator_url = f"{self._operator_base_url}/interventions/{item.id}"
         return self._interventions.raise_(item)
+
+    async def _capture_step(self, step: Step, ctx: _Ctx) -> None:
+        """One masked screenshot per step, for the evidence trail.
+
+        Affordable only because the observation taken moments ago is reused for mask
+        resolution - re-perceiving the screen for each shot would roughly double a run.
+        A screenshot is evidence, never a reason to fail: any error here is swallowed.
+        """
+        try:
+            path = self._log.step_screenshot_path(step.id, "post")
+            await self._surface.screenshot(
+                path,
+                mask=self._sensitive_locators(),
+                observation=ctx.observation,
+            )
+            for trace in ctx.traces:
+                if trace.step_id == step.id:
+                    trace.screenshot_path = str(path)
+        except Exception:
+            pass
 
     async def _capture_screenshot(self, step: Step | None) -> str | None:
         """Masked before the PNG is encoded, so raw pixels of regulated data never land
