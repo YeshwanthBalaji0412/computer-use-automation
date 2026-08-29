@@ -2,7 +2,7 @@
 
 **Locked decision: all-Python 3.13. One language, one toolchain.**
 
-Companion to [PLAN.md](PLAN.md) (*how to build it, day by day*) and [UNDERSTAND.md](UNDERSTAND.md) (*what the project is and why*). This document is *what it's made of, what each piece actually does, how every requirement in the brief maps to a file and a command, and how to defend all of it.*
+Companion to [UNDERSTAND.md](UNDERSTAND.md) (*what the project is and why anyone wants it*). This document is *what it's made of, what each piece actually does, how every requirement in the brief maps to a file and a command, and how to defend all of it.*
 
 ---
 

@@ -1,6 +1,6 @@
 # What This Project Actually Is
 
-Read this first. [PLAN.md](PLAN.md) is *how to build it*. [STACK.md](STACK.md) is *what it's made of*. This is *what it is and why anyone wants it* — the document to re-read the morning of the interview.
+Read this first. [STACK.md](STACK.md) is *what it's made of* and how every requirement maps to a file and a command. [REPORT.md](REPORT.md) is the design write-up. This is *what it is and why anyone wants it*.
 
 ---
 

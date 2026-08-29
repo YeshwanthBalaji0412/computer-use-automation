@@ -53,6 +53,21 @@ Writes `capabilities/member.savings-balance@1.0.0.json` and a full run log under
 
 > Needs `OPENAI_API_KEY`. To run the identical code path with no key, use `uv run cua discover --mock` — it replays the transcript in `evidence/fixtures/`, which is a **real `gpt-4o` run**, not a stand-in.
 
+**Recording a flow that writes** needs a human present, and that is enforced rather than advised:
+
+```bash
+uv run cua discover --operator-port 4100 \
+  --goal "Open a SAVINGS sub-account nicknamed HOLIDAY FUND for member 100042" \
+  --target http://localhost:4000/tenants/meridian/
+```
+
+Policy escalates every irreversible action *during discovery* — the model is by definition
+working out a UI it does not yet understand, which is the worst possible moment to let it
+press **Confirm and Open Account**. The run parks, the console asks you to authorise that
+one action, and on approval automation performs its own proposed step so the recording
+keeps the model's stated intent. **Without `--operator-port` the answer is no** and the run
+stops: an unattended recording session cannot open an account because nobody was watching.
+
 ### 2. Replay it deterministically — this is the production path
 
 ```bash
@@ -191,6 +206,7 @@ Only `cua discover` calls a model. Everything else — replay, the eval matrix, 
 |---|---|
 | `cua serve-app`, `cua observe` | no |
 | `cua replay`, `cua eval`, `cua verify` | **no, by design** |
+| `cua catalog`, `cua approve` | no |
 | `cua discover --mock` | no — replays a real recorded `gpt-4o` transcript |
 | `cua discover` | yes |
 

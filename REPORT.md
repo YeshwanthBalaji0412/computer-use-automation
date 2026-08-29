@@ -34,6 +34,12 @@ Three of those are enforced by `import-linter` contracts rather than convention,
 
 *A target application I wrote.* No public demo site produces record-not-found, permission denial, session timeout, an undeclared modal and a 500 on demand — and those are the interesting cases. It is deliberately hostile: framesets, nested layout tables, no test IDs, and ASP.NET control IDs regenerated on every render, so a recorded selector is dead on the second run.
 
+**The obvious objection to that, stated before you have to ask it:** I built both the lock and the key, so I could have shaped one to fit the other. `git log -- targetapp/` is the honest answer and it is three commits long. The app was written first; the two changes since both tune *fault injection*, not the surface the automation reads — one scopes the surprise dialog to the member record rather than every screen, and one stops the expiry fault re-arming on each new session, which no real timeout does. I will concede the first makes the escalation demo tidier. Neither touched a locator, a label, or a control ID.
+
+What is not tuned is the part that matters. Control IDs regenerate on every render, so a recorded selector is dead on the second run and the ladder has to work. And Lakeside was written to differ from Meridian *before* I knew what would break — when it turned out to render member detail as a definition list, that did not cost me an overlay, it invalidated my success conditions outright and forced a real fix to the compiler. An app shaped to flatter the automation would not have done that.
+
+Where the convenience is real, and I would rather say so: I chose the *vocabulary*. A genuine legacy console would have unlabelled icon buttons, controls whose accessible name is empty, and text baked into images — and against those the ladder degrades to tier 6/7 or fails outright. That is the honest limit of this evidence, and it is why the tier telemetry is in the output: it is the measurement that would tell you, on a real system, how much of this held.
+
 ---
 
 ## Artifact schema
@@ -75,7 +81,8 @@ The decisions worth defending:
 7. **`risk_class` and `status` are orthogonal.** Risk is what the action does; status is how much this recording is trusted. Unattended execution of a write needs both.
 8. **`idempotent` gates retry.** A non-idempotent step that times out mid-write is *ambiguous*, so replay escalates rather than retrying and double-posting.
 9. **URLs canonicalised to `{{base_url}}` patterns**, so an artifact describes a vendor product rather than one tenant's deployment.
-10. **`success_condition` names outputs rather than embedding their locators.** This one was forced by a bug: the first version embedded them, so a tenant that relocated a value passed every step and then failed its own success check against a locator the overlay had already replaced.
+10. **Money is a string, never a float.** `"4182.55"`, parsed as `Decimal` if a caller needs arithmetic. `0.1 + 0.2` is the oldest bug in financial software and the type system is the only place to refuse it; JSON has one numeric type and it is binary floating point, so a `currency` output that deserialises to `float` has already lost. The `parse` field declares the intent, and the value crosses every boundary — artifact, log, API response — as text.
+11. **`success_condition` names outputs rather than embedding their locators.** This one was forced by a bug: the first version embedded them, so a tenant that relocated a value passed every step and then failed its own success check against a locator the overlay had already replaced.
 
 The result contract has **five variants**, not two:
 
@@ -122,14 +129,16 @@ Two safety rules came out of tests that failed:
 | Class | Examples | Response | Result |
 |---|---|---|---|
 | **Business outcome** | `MEMBER_NOT_FOUND`, `PERMISSION_DENIED`, `VALIDATION_REJECTED`, `DUPLICATE_RECORD` | Return the declared code and payload. Not an error, does not raise. | `business_outcome` |
-| **Recoverable** | known interstitial, transient slow load, stale element | Dismiss / wait-and-re-observe, bounded and logged | `success` with recoveries in the trace |
+| **Recoverable** | known interstitial, transient slow load, expired session | Dismiss / wait / re-authenticate, bounded and logged | `success` with recoveries in the trace |
 | **Needs a human** | undeclared dialog, recovery exhausted, ambiguous write, risky step | Freeze the session, raise an intervention | `escalated` |
 | **Policy** | origin not allowed, risk gate | Refuse before touching the page | `blocked` |
 | **Hard failure** | locator unresolved/ambiguous, checkpoint failed, app 5xx, extraction failed | Stop, dump evidence, report step + expected + observed | `failed` |
 
 Two orderings are load-bearing. **Classification runs before post-conditions**, so an exceptional state is recognised as *itself* rather than as "the checkpoint failed" — get this backwards and "no such member" reaches the caller as a crash. And **policy is checked before the locator is resolved**, so nothing about a refused step ever touches the application.
 
-Detection works from what is *on screen*, not from HTTP status codes: the failures that matter in these applications render as HTTP 200 with a red sentence on the page.
+Detection works from what is *on screen*, not from HTTP status codes: the failures that matter in these applications render as HTTP 200 with a red sentence on the page. Session expiry is the clearest case — the content frame swaps to a sign-in form and the top-level URL never changes, so anything watching the address bar sees a healthy run.
+
+**Recovering is not the same as retrying**, and session expiry is where that stops being a distinction and starts being a bug. Signing in again lands on the *entry* screen, not on the one the step failed at, so repeating the failed step just fails again against a screen that no longer exists. The artifact declares `restart_from_step`, the recovery re-enters through the front door, and the run picks up from there — bounded, because a flow that keeps being sent back to sign-in is looping rather than recovering, and in a write flow each pass could post again. There is no bespoke "re-authenticate" action: the sign-in steps are already the first steps of the capability, so restarting from them *is* re-authenticating, and a second copy of the credentials and the login form's locators would only rot.
 
 All ten scenarios are in `uv run cua eval` and in [`evidence/demo/eval-matrix.txt`](evidence/demo/eval-matrix.txt).
 
@@ -186,6 +195,10 @@ The console streams the live session over CDP (`Page.startScreencast`) and forwa
 
 That ordering caught a real bug: an operator who claimed "I completed the step" without acting got a `success`, balance read, with an unanswered regulatory hold notice still on screen.
 
+**The same machinery answers a second question.** Replay escalates because it is *stuck*. Discovery escalates because it is about to do something *irreversible* — and until late in the build it had nowhere to escalate to, so the run simply ended one step before the only step that mattered, and a write flow could not be recorded at all. `cua discover --operator-port` gives discovery the same lease, the same intervention store and the same console: the operator is asked to authorise one named action, and answers yes or no.
+
+Two details earn their place. Automation performs its **own** proposed action once authorised, rather than the operator clicking it — so the recorded step keeps the model's stated intent, and an artifact that replays comes out instead of a note that something once happened. And with no console attached the answer is **no**: an unattended recording session must not be able to open an account merely because nobody was watching.
+
 **Cut**: operator identity and authz on every route, per-tenant routing and SLAs, multiple concurrent sessions, and recording an operator's fix as a proposed artifact patch for review — the obvious flywheel, and the thing I would build next.
 
 ---
@@ -214,12 +227,15 @@ Four leaks were found by tests during the build, all of the same shape — *the 
 
 **Deliberately not built:**
 
-- **A second live-recorded capability.** The shipped artifact *was* recorded by `gpt-4o` against the live API, and the transcript in `evidence/fixtures/` is that run — so `--mock` replays a real model, not a stand-in. But only one capability has been through the live loop.
+- **A second *live-recorded* capability.** The shipped artifact *was* recorded by `gpt-4o` against the live API, and the transcript in `evidence/fixtures/` is that run — so `--mock` replays a real model, not a stand-in. Only one capability has been through the live loop.
 - **An MCP server in front of the catalogue.** `cua catalog` *is* built — every artifact is rendered as a tool definition, with its declared business outcomes in the description so a calling agent knows `MEMBER_NOT_FOUND` is a possible answer before it invokes. What is not built is the MCP transport that would let a model discover it over a wire; the contract is generated, the serving of it is a shim.
 - **Desktop and terminal surfaces.** Designed against the `Surface` ABC, not implemented. The mapping table above is the deliverable.
 - **Assisted LLM recovery on replay failure.** The policy envelope is designed — one step, bounded, policy-checked, recorded as evidence — but a bounded model call inside the deterministic path needs more care than a week allows.
 - **Infrastructure**: queues, workers, a database, Docker, multi-tenant plumbing. The brief says explicitly this is not rewarded, and the seams that would become service boundaries already exist.
 - **Operator identity and authz.** The console has no login. Fine for a local demo, unacceptable in production, and the fix is ordinary.
+- **`preflight` and `auth_capability`.** Two schema fields with no implementation behind them, kept because they name the shape of something real and cut because inventing a use for them here would be worse than leaving them declared. `preflight` is where a duplicate check belongs — the sub-account flow already does one server-side, and hoisting it into the artifact is what would let a caller safely retry a *capability* that must never retry a *step*. `auth_capability` is what sign-in becomes once it is shared: right now re-authentication is expressed as `restart_from_step` pointing at this capability's own first step, which works precisely because sign-in is inlined into every recording. The moment two capabilities share a session, that inlining is the thing you would remove.
+
+**Two schema fields that were dead and are not any more**, because a field nobody feeds is worse than no field: `stability` is now written by the `verify` sweep, so `cua approve` reports real evidence instead of `0/0`; and `restart_from_step` is what makes session-expiry recoverable rather than an escalation.
 
 **What the live run changed.** Three bugs only a real model surfaced, all of them cases where the scripted stand-in had been quietly generous:
 
