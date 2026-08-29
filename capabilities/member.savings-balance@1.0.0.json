@@ -370,8 +370,8 @@
             "column_header": null,
             "anchor_text": null,
             "bbox": {
-              "x": 119.953125,
-              "y": 140.0,
+              "x": 97.953125,
+              "y": 136.0,
               "w": 63.8125,
               "h": 19.0
             }
@@ -869,118 +869,10 @@
         "output": null
       },
       {
-        "kind": "element_present",
-        "describe": "the member detail screen for member 100042: the cell '{{memberId}}' in the 'Member Detail' section (frame contentFrame)",
-        "locator": {
-          "describe": "the cell '{{memberId}}' in the 'Member Detail' section (frame contentFrame)",
-          "frame_path": [
-            "contentFrame"
-          ],
-          "any_frame": false,
-          "strategies": [
-            {
-              "tier": 1,
-              "note": "role + exact accessible name, scoped to its section",
-              "role": "cell",
-              "name": "{{memberId}}",
-              "name_match": "exact",
-              "scope_section": "Member Detail",
-              "ordinal": null,
-              "label": null,
-              "row_key": null,
-              "column_header": null,
-              "anchor_text": null,
-              "bbox": null
-            },
-            {
-              "tier": 2,
-              "note": "role + normalised name; survives case and punctuation drift",
-              "role": "cell",
-              "name": "{{memberId}}",
-              "name_match": "normalised",
-              "scope_section": null,
-              "ordinal": null,
-              "label": null,
-              "row_key": null,
-              "column_header": null,
-              "anchor_text": null,
-              "bbox": null
-            }
-          ]
-        },
-        "pattern": null,
-        "of": [],
-        "output": null
-      },
-      {
-        "kind": "element_present",
-        "describe": "the member detail screen for member 100042: the cell 'J. RIVERA' in the 'Member Detail' section (frame contentFrame)",
-        "locator": {
-          "describe": "the cell 'J. RIVERA' in the 'Member Detail' section (frame contentFrame)",
-          "frame_path": [
-            "contentFrame"
-          ],
-          "any_frame": false,
-          "strategies": [
-            {
-              "tier": 1,
-              "note": "role + exact accessible name, scoped to its section",
-              "role": "cell",
-              "name": "J. RIVERA",
-              "name_match": "exact",
-              "scope_section": "Member Detail",
-              "ordinal": null,
-              "label": null,
-              "row_key": null,
-              "column_header": null,
-              "anchor_text": null,
-              "bbox": null
-            },
-            {
-              "tier": 2,
-              "note": "role + normalised name; survives case and punctuation drift",
-              "role": "cell",
-              "name": "J. RIVERA",
-              "name_match": "normalised",
-              "scope_section": null,
-              "ordinal": null,
-              "label": null,
-              "row_key": null,
-              "column_header": null,
-              "anchor_text": null,
-              "bbox": null
-            },
-            {
-              "tier": 5,
-              "note": "the element immediately following a fixed label text",
-              "role": "cell",
-              "name": null,
-              "name_match": "exact",
-              "scope_section": null,
-              "ordinal": null,
-              "label": null,
-              "row_key": null,
-              "column_header": null,
-              "anchor_text": "Member Name",
-              "bbox": null
-            },
-            {
-              "tier": 6,
-              "note": "positional fallback; weak, and a signal if it ever wins",
-              "role": "cell",
-              "name": null,
-              "name_match": "exact",
-              "scope_section": "Member Detail",
-              "ordinal": 3,
-              "label": null,
-              "row_key": null,
-              "column_header": null,
-              "anchor_text": null,
-              "bbox": null
-            }
-          ]
-        },
-        "pattern": null,
+        "kind": "text_present",
+        "describe": "the member detail screen for member 100042: the text {{memberId}} appears on screen",
+        "locator": null,
+        "pattern": "{{memberId}}",
         "of": [],
         "output": null
       },
@@ -1134,6 +1026,26 @@
       "restart_from_step": null
     },
     {
+      "id": "session-expired",
+      "describe": "The session expired mid-flow. Sign in again and pick up where the flow started, because re-authenticating lands on the entry screen rather than the one the step failed on.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the sign-in screen, reached without asking for it",
+        "locator": null,
+        "pattern": "(?i)(session has timed out|please sign in again)",
+        "of": [],
+        "output": null
+      },
+      "action": {
+        "kind": "wait_and_retry",
+        "locator": null,
+        "capability": null
+      },
+      "max_attempts": 1,
+      "backoff_ms": [],
+      "restart_from_step": "s1"
+    },
+    {
       "id": "transient-load",
       "describe": "Wait and retry once for a slow screen.",
       "detect": {
@@ -1167,8 +1079,8 @@
     "discovered_by": "llm",
     "model": "gpt-4o",
     "prompt_version": "discovery/v2",
-    "discovery_run_id": "dis_362562475c83",
-    "recorded_at": "2026-08-29T16:13:53.619214Z",
+    "discovery_run_id": "dis_710fb27b3bb6",
+    "recorded_at": "2026-08-29T18:23:06.972663Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "c1ba2c3478d015c0",
     "reviewed_by": null,

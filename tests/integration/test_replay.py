@@ -255,16 +255,60 @@ async def test_an_undeclared_dialog_escalates_rather_than_being_guessed_at(
     assert result.intervention.step_id
 
 
-async def test_session_expiry_escalates_when_no_reauth_is_declared(
+async def test_session_expiry_re_authenticates_and_restarts_the_flow(
     base_url: str, tenant_dir: Path, tmp_path: Path, policy_file: Path
 ) -> None:
-    """The frame bounces to sign-in and the top-level URL never changes, so detection
-    has to be based on what is on screen. With no re-auth capability declared, the honest
-    outcome is escalation rather than a silent failure."""
+    """The frame bounces to sign-in and the top-level URL never changes, so detection has
+    to be based on what is on screen rather than on where the browser thinks it is.
+
+    Recovering is not a retry. Signing in again lands on the entry screen, not on the one
+    the step failed at, so repeating the failed step would just fail again. The artifact
+    declares `restart_from_step`, and the run picks up from there - which is the whole
+    reason that field exists.
+    """
     result = await replay(
         base_url, tenant_dir, tmp_path, policy_file, {"memberId": "100042"}, fault="expire"
     )
+    assert result.status == "success", getattr(result, "error", None)
+    assert result.outputs["savingsBalance"] == "4182.55"
+
+    recovered = [r.recovery_id for s in result.steps for r in s.recoveries]
+    assert "session-expired" in recovered
+    # Recorded as a recovery, not buried: a run that quietly re-authenticated and
+    # reported plain success would hide the one event an operator needs to see.
+
+
+async def test_session_expiry_escalates_when_no_reauth_is_declared(
+    base_url: str, tenant_dir: Path, tmp_path: Path, policy_file: Path
+) -> None:
+    """The other half, and the one that guards the safety property.
+
+    A capability whose artifact declares no way back from an expired session must not
+    improvise one. It stops and says so - which is the honest outcome, and is what every
+    capability recorded before re-auth existed will still do.
+    """
+    import json
+
+    stripped = json.loads(
+        (CAPABILITIES / "member.savings-balance@1.0.0.json").read_text(encoding="utf-8")
+    )
+    stripped["recoveries"] = [r for r in stripped["recoveries"] if r["id"] != "session-expired"]
+    directory = tmp_path / "capabilities"
+    directory.mkdir()
+    (directory / "member.savings-balance@1.0.0.json").write_text(json.dumps(stripped))
+
+    result = await run_replay(
+        capability_name="member.savings-balance",
+        inputs={"memberId": "100042"},
+        capabilities_dir=directory,
+        tenants_dir=tenant_dir,
+        evidence_dir=tmp_path / "evidence",
+        base_url_override=f"{base_url}/tenants/meridian",
+        policy_path=policy_file,
+        fault="expire",
+    )
     assert result.status == "escalated"
+    assert str(result.intervention.reason) == "recovery_exhausted"
 
 
 async def test_a_server_error_is_reported_as_such(

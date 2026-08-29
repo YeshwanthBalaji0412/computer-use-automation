@@ -133,6 +133,16 @@ async def login(
 
     sid = secrets.token_hex(16)
     _SESSIONS[sid] = username
+    # A session minted *after* an expiry does not immediately expire again. Without this
+    # the expire fault re-arms on every new session id, so re-authenticating loops
+    # forever - which is not what a timeout does in a real system, and would make a
+    # correct recovery look like an unrecoverable one.
+    #
+    # Scoped to expiries specifically. Keying it on "any fault has fired" made the
+    # immunity leak across unrelated faults, and since `_FIRED` lives for the life of the
+    # process that quietly made the outcome depend on test ordering.
+    if any(key.startswith("expire:") for key in _FIRED):
+        _FIRED.add(f"expire:{sid}")
     resp = RedirectResponse(f"/tenants/{slug}/home", status_code=302)
     resp.set_cookie(SESSION_COOKIE, sid, httponly=True, samesite="lax")
     return resp

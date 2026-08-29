@@ -77,9 +77,11 @@ SCENARIOS: list[Scenario] = [
     Scenario(
         "session-expiry",
         {"memberId": "100042"},
-        "escalated",
+        "success",
         fault="expire",
-        why="the frame bounces to sign-in; the URL never changes",
+        expect_recovery=True,
+        why="the frame bounces to sign-in and the URL never changes; re-authenticate "
+        "and restart the flow from its first step",
     ),
     Scenario(
         "unknown-dialog",

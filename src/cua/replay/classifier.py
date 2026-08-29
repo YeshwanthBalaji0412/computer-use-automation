@@ -120,6 +120,13 @@ class StateClassifier:
         return self._recovery_attempts.get(recovery_id, 0)
 
     def _recovery_for(self, code: str) -> Recovery | None:
+        """The recovery paired with a non-terminal known outcome.
+
+        Paired by name - `SESSION_EXPIRED` is handled by `session-expired` - so that a
+        recovery is named for the condition it clears rather than the technique it uses.
+        The alternative was a second field on `Recovery` pointing back at an outcome code,
+        which is more machinery than a naming rule earns.
+        """
         wanted = code.lower().replace("_", "-")
         for recovery in self._capability.recoveries:
             if wanted in recovery.id.lower():

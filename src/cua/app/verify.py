@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cua.app.replay import load_capability, load_tenant
-from cua.schema.capability import ActionKind, RiskClass, Step
+from cua.schema.capability import ActionKind, Capability, RiskClass, Step
 from cua.schema.locator import Tier
 
 if TYPE_CHECKING:
@@ -111,8 +111,15 @@ async def sweep(
     tenants_dir: Path,
     base_url_override: str | None = None,
     policy_path: Path | None = None,
+    record_stability: bool = False,
 ) -> list[TenantConformance]:
-    """Walk each tenant's screens and resolve every step, without acting on anything."""
+    """Walk each tenant's screens and resolve every step, without acting on anything.
+
+    `record_stability` writes the result back into the artifact. Off by default so a test
+    sweeping the committed capabilities directory does not mutate what it is measuring;
+    the CLI turns it on, because the nightly sweep is exactly the controlled measurement
+    an approval decision should rest on.
+    """
     import contextlib
 
     from cua.app.replay import secrets_from_env
@@ -210,7 +217,55 @@ async def sweep(
                 await pw.stop()
 
         results.append(report)
+
+    if record_stability:
+        _record_stability(capability_name, results, capabilities_dir)
     return results
+
+
+def _record_stability(
+    capability_name: str, results: list[TenantConformance], capabilities_dir: Path
+) -> None:
+    """Write what the sweep measured back into the artifact.
+
+    `Stability` is the evidence an approval rests on. Without this it stayed at 0/0
+    forever, which made `cua approve` a rubber stamp with a number next to it - the exact
+    failure mode of a governance control that nobody feeds.
+
+    The tier histogram is the part worth keeping over time. A capability that used to
+    resolve everything at tier 1 and now leans on tier 4 has not broken, but it is on its
+    way there, and that trend is invisible from any single run.
+    """
+    from datetime import UTC, datetime
+
+    path = _artifact_path(capability_name, capabilities_dir)
+    if path is None:
+        return
+
+    capability = Capability.model_validate_json(path.read_text(encoding="utf-8"))
+    stability = capability.stability
+
+    for report in results:
+        stability.replays += 1
+        if not report.error and not report.unresolved:
+            stability.successes += 1
+        for step in report.steps:
+            if step.resolved_tier is not None:
+                key = f"tier{int(step.resolved_tier)}"
+                stability.locator_tier_histogram[key] = (
+                    stability.locator_tier_histogram.get(key, 0) + 1
+                )
+
+    stability.last_verified_at = datetime.now(UTC)
+    path.write_text(capability.model_dump_json(indent=2), encoding="utf-8")
+
+
+def _artifact_path(capability_name: str, capabilities_dir: Path) -> Path | None:
+    if "@" in capability_name:
+        path = capabilities_dir / f"{capability_name}.json"
+        return path if path.exists() else None
+    matches = sorted(capabilities_dir.glob(f"{capability_name}@*.json"))
+    return matches[-1] if matches else None
 
 
 def _surface_action(kind: ActionKind) -> ActionType:
