@@ -1,6 +1,6 @@
 status     business_outcome
 capability member.savings-balance@1.0.0   tenant=meridian
-duration   17025 ms
+duration   17018 ms
 outcome    MEMBER_NOT_FOUND: No member exists with that identifier.
            (a legitimate answer, not a failure)
-evidence   evidence/runs/rep_e9324a89c77f
+evidence   evidence/runs/rep_adea3ffda9f0

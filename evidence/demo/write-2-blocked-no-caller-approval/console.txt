@@ -4,8 +4,8 @@ member.open-subaccount@1.0.0 approved by ops@meridiancu.example.
 
 status     blocked
 capability member.open-subaccount@1.0.0   tenant=meridian
-duration   38874 ms
+duration   38811 ms
 rule       risk_gates.reversible_write
 attempted  click - review the new sub-account
 needs      --approve
-evidence   evidence/runs/rep_5c5ae4f69216
+evidence   evidence/runs/rep_246fcd2047ff

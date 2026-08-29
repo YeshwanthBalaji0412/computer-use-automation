@@ -11,6 +11,7 @@ recovery, a policy refusal, an escalation, a hard failure. A system that returne
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -107,17 +108,30 @@ SCENARIOS: list[Scenario] = [
     ),
     # ---------------------------------------------------------------- the write flow
     #
-    # Every row below is chosen so that *nothing is created*, which is what keeps this
-    # matrix re-runnable. A scenario that successfully opened an account would pass once
-    # and then return DUPLICATE_RECORD on every later run - an eval that only works on a
-    # clean process is not an eval. The successful write is demonstrated in `evidence/`
-    # instead, where the starting state is known.
+    # `{run}` in an input is replaced with a token unique to this invocation. That is not
+    # test scaffolding, it is the constraint a non-idempotent capability puts on anyone
+    # who wants to exercise it repeatedly: you cannot reset a core banking system, so a
+    # regression suite that opens accounts has to open a *different* one each time. The
+    # alternative - a reset endpoint - would be a thing this app has and a real one never
+    # will, and building the matrix around it would prove the wrong thing.
+    #
+    # `write-duplicate` is the deliberate exception: it targets a nickname seeded into the
+    # fixtures, so the collision is guaranteed rather than dependent on run order.
     Scenario(
         "write-blocked",
         {"memberId": "100042", "nickname": "HOLIDAY FUND"},
         "blocked",
         capability="member.open-subaccount",
         why="an irreversible write with no caller approval is refused before it acts",
+    ),
+    Scenario(
+        "write-success",
+        {"memberId": "100042", "nickname": "EVAL {run}"},
+        "success",
+        capability="member.open-subaccount",
+        approve=True,
+        why="an approved capability plus an explicit caller approval really does open the "
+        "account, and returns the confirmation number as a typed output",
     ),
     Scenario(
         "write-duplicate",
@@ -131,14 +145,15 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         "write-ambiguous",
-        {"memberId": "100042", "nickname": "REGATTA FUND"},
+        {"memberId": "100042", "nickname": "AMBIG {run}"},
         "escalated",
         expect_code="ambiguous_write_outcome",
         capability="member.open-subaccount",
         approve=True,
         fault="write-timeout",
-        why="the confirm hung and then errored, so whether it committed is unknown from "
-        "the screen; retrying could open the account twice",
+        why="the confirm committed and then lost its acknowledgement. Nothing on screen "
+        "distinguishes that from a write that never landed, so retrying could open the "
+        "account twice and the only safe answer is to stop and ask",
     ),
 ]
 
@@ -190,10 +205,16 @@ async def run_matrix(
     matrix = Matrix()
     scenarios = [s for s in SCENARIOS if not only or s.name == only]
 
+    # One token per matrix run, so a scenario that opens an account opens a new one each
+    # time. See the note on the write-flow scenarios: this is what replaces a reset that
+    # no real system would offer.
+    run_token = uuid.uuid4().hex[:6].upper()
+
     for scenario in scenarios:
+        inputs = {k: v.replace("{run}", run_token) for k, v in scenario.inputs.items()}
         result = await run_replay(
             capability_name=scenario.capability,
-            inputs=scenario.inputs,
+            inputs=inputs,
             tenant_id=scenario.tenant,
             approve=scenario.approve,
             fault=scenario.fault,

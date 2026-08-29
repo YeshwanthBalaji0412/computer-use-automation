@@ -48,19 +48,37 @@ after the account has been opened. Read them top to bottom.
 | [`write-2-blocked-no-caller-approval`](demo/write-2-blocked-no-caller-approval/) | after `cua approve` | `blocked` · needs only `--approve` |
 | [`write-3-success`](demo/write-3-success/) | approved **and** `--approve` | `success` + confirmation number |
 | [`write-4-duplicate`](demo/write-4-duplicate/) | the identical request again | `business_outcome` · `DUPLICATE_RECORD` |
-| [`write-5-ambiguous-outcome`](demo/write-5-ambiguous-outcome/) | the confirm hangs, then 500s | `escalated` · `ambiguous_write_outcome` |
+| [`write-5-ambiguous-outcome`](demo/write-5-ambiguous-outcome/) | the confirm commits, then loses its acknowledgement | `escalated` · `ambiguous_write_outcome` |
+| [`write-6-the-write-had-landed`](demo/write-6-the-write-had-landed/) | the same request, after a human goes and looks | `DUPLICATE_RECORD` — **it had committed** |
 
 The first two are the same refusal with one gate removed, and that is the point:
 `risk_class` is a property of the action, `status` is how much this *recording* is trusted,
 and `--approve` is this *caller* accepting the consequence. Three decisions, three people,
 three moments.
 
-The last one is the only place in this system where **"I don't know" is the correct
-answer**. The write may or may not have committed before the error page rendered, and the
-screen cannot tell you which — the screen *is* the error. Compare it against
-`write-4-duplicate`, which says *nothing was created*: that is a definitive answer from one
-step earlier, where the application refused before committing. Conflating the two is how
-you either double-open an account or tell a member nothing happened when it did.
+**Read the last two together — they are the argument.**
+
+In `write-5` the confirm commits and *then* loses its acknowledgement, which is the failure
+that actually hurts. Nothing on the screen distinguishes that from a write which never
+landed: the screen is the error. So replay says `ambiguous_write_outcome` — the one place
+in this system where **"I don't know" is the correct answer**.
+
+`write-6` is what a human finds when they go and check the system of record:
+
+```
+status     business_outcome
+outcome    DUPLICATE_RECORD: A record with those details already exists; nothing was created.
+```
+
+**The account had been opened.** Had replay reported `APP_ERROR` — "the application
+returned a server error", which is what it used to do and what the screen literally says —
+a caller would reasonably have retried, and the member would now hold two sub-accounts.
+
+Contrast that with [`write-4-duplicate`](demo/write-4-duplicate/), which returns the *same
+code* from a completely different situation: there the application refused at the review
+screen, one step before committing, so *nothing was created* is a fact rather than a guess.
+Same outcome code, opposite meaning — which is why the distinction lives in `risk_class`
+and `idempotent` on the step, not in the response text.
 
 ### The read flow
 

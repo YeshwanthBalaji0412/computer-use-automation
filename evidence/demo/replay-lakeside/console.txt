@@ -1,7 +1,7 @@
 status     success
 capability member.savings-balance@1.0.0   tenant=lakeside
-duration   28172 ms
+duration   28187 ms
 drift      suspected - the screen's shape differs from the recording
 outputs    {"savingsBalance": "4182.55"}
 locators   2 step(s) resolved at a lower tier than recorded
-evidence   evidence/runs/rep_cc0223752b90
+evidence   evidence/runs/rep_9f5c4cfd1889

@@ -398,9 +398,20 @@ async def subaccount_confirm(
     if member is None:
         return _render(request, "search.html", {"tenant": tenant})
 
-    # The genuinely nasty one: the write may or may not have landed. Any automation that
-    # retries here risks opening the sub-account twice. Correct behaviour is to escalate.
+    # The genuinely nasty one, and it has to be nasty in the right direction.
+    #
+    # The account is opened *first* and the error is returned after, because that is the
+    # failure that actually hurts: the write committed and the acknowledgement was lost.
+    # An earlier version returned the error before writing, which made the case safe and
+    # the demonstration worthless - the automation said "I cannot tell whether this
+    # landed" and it had not, so nothing was being prevented. Now it has, and escalating
+    # is what stops a retry opening the member a second sub-account.
+    #
+    # Note that nothing on the screen distinguishes this from a failure that wrote
+    # nothing. That is the whole point: the screen is the error, and no amount of reading
+    # it settles the question. Only the system of record can.
     if fault is faults.Fault.WRITE_TIMEOUT:
+        data.EXISTING_SUBACCOUNTS.setdefault(memberId, set()).add(nickname.strip().upper())
         await asyncio.sleep(3)
         return _server_error(request, tenant)
 

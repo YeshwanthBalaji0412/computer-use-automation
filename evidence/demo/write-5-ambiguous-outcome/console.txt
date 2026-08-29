@@ -1,6 +1,6 @@
 status     escalated
 capability member.open-subaccount@1.0.0   tenant=meridian
-duration   49970 ms
+duration   49948 ms
 reason     ambiguous_write_outcome
 at step    s11
-evidence   evidence/runs/rep_a5ba921bb50d
+evidence   evidence/runs/rep_fa2e89c35a0e

@@ -16,6 +16,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import uuid
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -309,6 +310,100 @@ async def test_session_expiry_escalates_when_no_reauth_is_declared(
     )
     assert result.status == "escalated"
     assert str(result.intervention.reason) == "recovery_exhausted"
+
+
+async def test_an_ambiguous_write_escalates_and_the_write_really_had_landed(
+    base_url: str, tenant_dir: Path, tmp_path: Path, policy_file: Path
+) -> None:
+    """The hardest case in the system, and the one worth failing the build over.
+
+    The confirm commits and *then* loses its acknowledgement. Nothing on screen tells
+    replay which of those happened - the screen is the error - so the only safe answer is
+    to stop. This test then does what the escalation asks a human to do, and checks the
+    system of record: the account is there.
+
+    That second half is the point. Without it this test would only prove the system is
+    cautious; with it, it proves the caution prevented a member being given two
+    sub-accounts. An earlier version of the target app returned the error *before*
+    writing, which made the case safe and the demonstration worthless.
+    """
+    nickname = f"AMBIG {uuid.uuid4().hex[:6].upper()}"
+    inputs = {"memberId": "100042", "nickname": nickname}
+
+    interrupted = await run_replay(
+        capability_name="member.open-subaccount",
+        inputs=inputs,
+        capabilities_dir=CAPABILITIES,
+        tenants_dir=tenant_dir,
+        evidence_dir=tmp_path / "evidence",
+        base_url_override=f"{base_url}/tenants/meridian",
+        policy_path=policy_file,
+        approve=True,
+        fault="write-timeout",
+    )
+    assert interrupted.status == "escalated", getattr(interrupted, "error", None)
+    assert str(interrupted.intervention.reason) == "ambiguous_write_outcome"
+
+    # Now go and look, which is exactly what the intervention tells the operator to do.
+    checked = await run_replay(
+        capability_name="member.open-subaccount",
+        inputs=inputs,
+        capabilities_dir=CAPABILITIES,
+        tenants_dir=tenant_dir,
+        evidence_dir=tmp_path / "evidence",
+        base_url_override=f"{base_url}/tenants/meridian",
+        policy_path=policy_file,
+        approve=True,
+    )
+    assert checked.status == "business_outcome"
+    assert checked.outcome.code == "DUPLICATE_RECORD", (
+        "the write did not land, so this scenario is not testing ambiguity at all"
+    )
+
+
+async def test_a_definite_refusal_is_not_reported_as_ambiguous(
+    base_url: str, tenant_dir: Path, tmp_path: Path, policy_file: Path
+) -> None:
+    """The other side of the same line, and the reason the escalation is scoped narrowly.
+
+    A duplicate is caught at the *review* screen, one step before anything commits. That
+    is a definite answer and has to stay a clean business outcome - if every write-flow
+    problem escalated, a caller could never safely retry the capability, and the
+    pre-flight duplicate check would be pointless.
+    """
+    result = await run_replay(
+        capability_name="member.open-subaccount",
+        # Seeded into the fixtures, so the collision does not depend on run order.
+        inputs={"memberId": "100042", "nickname": "VACATION FUND"},
+        capabilities_dir=CAPABILITIES,
+        tenants_dir=tenant_dir,
+        evidence_dir=tmp_path / "evidence",
+        base_url_override=f"{base_url}/tenants/meridian",
+        policy_path=policy_file,
+        approve=True,
+    )
+    assert result.status == "business_outcome"
+    assert result.outcome.code == "DUPLICATE_RECORD"
+
+
+async def test_an_irreversible_capability_is_refused_without_both_approvals(
+    base_url: str, tenant_dir: Path, tmp_path: Path, policy_file: Path
+) -> None:
+    """`blocked` is a peer of `failed`, not a flavour of it: nothing went wrong, the run
+    was correctly refused. And it is refused *before* the locator is resolved, so a
+    blocked step never touches the application."""
+    result = await run_replay(
+        capability_name="member.open-subaccount",
+        inputs={"memberId": "100042", "nickname": "SHOULD NOT EXIST"},
+        capabilities_dir=CAPABILITIES,
+        tenants_dir=tenant_dir,
+        evidence_dir=tmp_path / "evidence",
+        base_url_override=f"{base_url}/tenants/meridian",
+        policy_path=policy_file,
+        # No approve=True.
+    )
+    assert result.status == "blocked"
+    assert "--approve" in result.policy.required_approval
 
 
 async def test_a_server_error_is_reported_as_such(

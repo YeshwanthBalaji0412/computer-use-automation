@@ -187,13 +187,26 @@ reason     ambiguous_write_outcome
 at step    s11
 ```
 
-The confirm hung and then returned a server error. **Whether the account was opened is
-unknown, and no amount of reading the screen will settle it** — the screen *is* the error.
-Every ordinary response here is wrong: reporting `APP_ERROR` tells the caller nothing
-happened, retrying opens the account twice, and failing loses the fact that a write is
-outstanding. So the run stops and asks a human to check the system of record. This is the
-only place in the system where "I don't know" is the correct answer, and saying it is the
-whole reason `idempotent` is a field.
+The confirm returned a server error. **Whether the account was opened is unknown, and no
+amount of reading the screen will settle it** — the screen *is* the error. So the run stops
+and asks a human to check the system of record.
+
+Now go and be that human. Ask for the same account again:
+
+```bash
+uv run cua replay --capability member.open-subaccount \
+  --input memberId=100042 --input nickname="KAYAK FUND" --approve
+```
+```
+status     business_outcome
+outcome    DUPLICATE_RECORD: A record with those details already exists; nothing was created.
+```
+
+**It had been opened.** The write committed and only the acknowledgement was lost. Reporting
+`APP_ERROR` — which is what the screen literally says, and what this system used to do —
+would have invited a retry and given the member two sub-accounts. That is the only place
+here where "I don't know" is the correct answer, and being able to say it is the whole
+reason `idempotent` is a field rather than a comment.
 
 ### 5. Hand a stuck run to a human, mid-session
 

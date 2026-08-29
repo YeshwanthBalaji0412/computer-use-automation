@@ -1,6 +1,6 @@
 status     business_outcome
 capability member.savings-balance@1.0.0   tenant=meridian
-duration   6310 ms
+duration   6306 ms
 outcome    APP_ERROR: The application returned a server error.
            (a legitimate answer, not a failure)
-evidence   evidence/runs/rep_a3c5911d4555
+evidence   evidence/runs/rep_431f2b747b34

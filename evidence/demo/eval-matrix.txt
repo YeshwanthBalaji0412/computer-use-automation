@@ -11,7 +11,8 @@ unknown-dialog         escalated                    unknown_dialog              
 app-error              APP_ERROR                    APP_ERROR                    PASS
 slow-load              success                      success                      PASS
 write-blocked          blocked                      blocked                      PASS
+write-success          success                      success                      PASS
 write-duplicate        DUPLICATE_RECORD             DUPLICATE_RECORD             PASS
 write-ambiguous        ambiguous_write_outcome      ambiguous_write_outcome      PASS
 
-13/13 scenarios passed
+14/14 scenarios passed

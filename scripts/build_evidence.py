@@ -184,6 +184,8 @@ def write_flow() -> None:
     )
     capture("rep", "write-4-duplicate", console)
 
+    # The pair that carries the whole argument. The first run cannot tell whether its
+    # write landed and says so; the second is what a human finds when they go and look.
     console = run(
         *WRITE,
         "--input",
@@ -195,6 +197,11 @@ def write_flow() -> None:
         "write-timeout",
     )
     capture("rep", "write-5-ambiguous-outcome", console)
+
+    console = run(
+        *WRITE, "--input", "memberId=100042", "--input", "nickname=KAYAK FUND", "--approve"
+    )
+    capture("rep", "write-6-the-write-had-landed", console)
 
 
 #: Runs whose trace is worth ~1MB in a repository a reviewer clones. A trace answers
@@ -208,6 +215,7 @@ TRACE_KEEP = {
     "replay-escalated-handoff",
     "replay-lakeside",
     "write-5-ambiguous-outcome",
+    "write-6-the-write-had-landed",
 }
 
 

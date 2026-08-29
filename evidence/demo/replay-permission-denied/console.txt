@@ -1,6 +1,6 @@
 status     business_outcome
 capability member.savings-balance@1.0.0   tenant=meridian
-duration   17009 ms
+duration   17039 ms
 outcome    PERMISSION_DENIED: The operator's role is not entitled to view this record.
            (a legitimate answer, not a failure)
-evidence   evidence/runs/rep_8b1576a86a59
+evidence   evidence/runs/rep_e5e1434816d1
