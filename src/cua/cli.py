@@ -111,8 +111,21 @@ def replay(
             "unknown-dialog|write-timeout."
         ),
     ] = "",
+    operator_port: Annotated[
+        int,
+        typer.Option(
+            help="Serve the operator console on this port and hand off to a human when "
+            "the run gets stuck. Omit to run unattended."
+        ),
+    ] = 0,
+    headed: Annotated[bool, typer.Option(help="Show the browser window.")] = False,
 ) -> None:
-    """Deterministically replay a capability. No LLM is involved in any decision."""
+    """Deterministically replay a capability. No LLM is involved in any decision.
+
+    Unattended by default. With --operator-port, an escalation parks the run and opens
+    the live session to a human instead of terminating it; the two modes share one code
+    path and differ only in whether there is anyone to cede control to.
+    """
     import asyncio
 
     from cua.app.replay import exit_code, parse_inputs, render, run_replay
@@ -130,6 +143,8 @@ def replay(
             tenant_id=tenant,
             approve=approve,
             fault=fault or None,
+            headed=headed,
+            operator_port=operator_port or None,
         )
     )
     typer.echo(result.model_dump_json(indent=2) if json_out else render(result))
