@@ -107,15 +107,95 @@ session-expiry         success                      success              PASS
 unknown-dialog         escalated                    unknown_dialog       PASS
 app-error              APP_ERROR                    APP_ERROR            PASS
 slow-load              success                      success              PASS
+write-blocked          blocked                      blocked              PASS
+write-duplicate        DUPLICATE_RECORD             DUPLICATE_RECORD     PASS
+write-ambiguous        ambiguous_write_outcome      ambiguous_write_out  PASS
 
-10/10 scenarios passed
+13/13 scenarios passed
 ```
 
-Ten rows, **six different answers**. A system that returned `failed` for the middle six would pass a naive smoke test and be useless in production — the caller could not tell "this member does not exist" from "the automation is broken".
+Thirteen rows, **nine different answers**. A system that returned `failed` for the middle rows would pass a naive smoke test and be useless in production — the caller could not tell "this member does not exist" from "the automation is broken".
 
-Two rows are worth reading twice. **`session-expiry` succeeds**, and the interesting part is *how*: the content frame swaps to a sign-in form while the top-level URL never changes, so anything watching the address bar sees a healthy run. Detection has to come from the screen. And recovery is not a retry — signing in again lands on the entry screen, not the one that failed — so the artifact declares `restart_from_step` and the run picks up from there. **`unknown-dialog` escalates** rather than recovering, because the application is asking an operator a question and guessing the answer is the one decision this system is not allowed to make.
+The last three rows are the write flow, and they are the ones I would open first. **`write-blocked`** is refused *before it touches the page* — a policy refusal is not a malfunction, so it is `blocked` rather than `failed`, and the caller's response is "get approval", not "retry harder". **`write-duplicate`** is a clean answer: the application refuses at the review screen before committing, which is exactly what makes a capability that must never retry a *step* safe for a caller to retry as a *whole*. And **`write-ambiguous`** is the one that matters most — see below.
 
-### 4. Hand a stuck run to a human, mid-session
+Two other rows are worth reading twice. **`session-expiry` succeeds**, and the interesting part is *how*: the content frame swaps to a sign-in form while the top-level URL never changes, so anything watching the address bar sees a healthy run. Detection has to come from the screen. And recovery is not a retry — signing in again lands on the entry screen, not the one that failed — so the artifact declares `restart_from_step` and the run picks up from there. **`unknown-dialog` escalates** rather than recovering, because the application is asking an operator a question and guessing the answer is the one decision this system is not allowed to make.
+
+### 4. Run something irreversible — two gates, and neither one is optional
+
+`member.open-subaccount` opens a real sub-account. Replaying it takes **two independent
+approvals**, and you can watch them fall away one at a time:
+
+```bash
+uv run cua replay --capability member.open-subaccount \
+  --input memberId=100042 --input nickname="ROOF FUND"
+```
+```
+status     blocked
+rule       risk_gates.reversible_write
+attempted  click - review the new sub-account
+needs      capability.status == approved, --approve
+```
+
+Nothing was clicked. Policy is checked *before* the locator is resolved, so a refused step
+never touches the application at all. Now a human reviews the recording:
+
+```bash
+uv run cua approve member.open-subaccount --reviewer ops@meridiancu.example
+```
+```
+member.open-subaccount@1.0.0 approved by ops@meridiancu.example.
+  No replay history yet - approving on inspection alone.
+  This capability is irreversible_write. Replay will now run its risky steps,
+  and still requires --approve on each run.
+```
+
+Replay again and the refusal is **still there**, but shorter — `needs --approve`. That is
+the design: `risk_class` is a property of the action, `status` is how much this *recording*
+is trusted, and a per-invocation `--approve` is this *caller* accepting the consequence.
+Three different decisions, made by different people at different times.
+
+```bash
+uv run cua replay --capability member.open-subaccount \
+  --input memberId=100042 --input nickname="ROOF FUND" --approve
+```
+```
+status     success
+outputs    {"confirmationNumber": "SA-655584"}
+```
+
+**Now run that exact command again.**
+
+```
+status     business_outcome
+outcome    DUPLICATE_RECORD: A record with those details already exists; nothing was created.
+           (a legitimate answer, not a failure)
+```
+
+That sentence — *nothing was created* — is what makes a non-idempotent capability safe for
+a caller to retry. The application refuses at the review screen, one step before it
+commits.
+
+**And the case that is genuinely hard:**
+
+```bash
+uv run cua replay --capability member.open-subaccount \
+  --input memberId=100042 --input nickname="KAYAK FUND" --approve --fault write-timeout
+```
+```
+status     escalated
+reason     ambiguous_write_outcome
+at step    s11
+```
+
+The confirm hung and then returned a server error. **Whether the account was opened is
+unknown, and no amount of reading the screen will settle it** — the screen *is* the error.
+Every ordinary response here is wrong: reporting `APP_ERROR` tells the caller nothing
+happened, retrying opens the account twice, and failing loses the fact that a write is
+outstanding. So the run stops and asks a human to check the system of record. This is the
+only place in the system where "I don't know" is the correct answer, and saying it is the
+whole reason `idempotent` is a field.
+
+### 5. Hand a stuck run to a human, mid-session
 
 ```bash
 uv run cua replay --capability member.savings-balance \
@@ -126,7 +206,7 @@ The run hits an undeclared dialog, **parks**, and prints an intervention URL. Op
 
 Click **Take control**, dismiss the dialog on the live view, then **I cleared the obstacle**. The run resumes and finishes. It is the *same* browser session throughout — same cookies, same auth, same half-filled form.
 
-### 5. Replay the same artifact at a different institution
+### 6. Replay the same artifact at a different institution
 
 ```bash
 uv run cua replay --capability member.savings-balance --input memberId=100042 --tenant lakeside
@@ -152,7 +232,7 @@ lakeside          8         2           0  s4:t1->t3, s7:t4->t5
 meridian          7         0           0  clean
 ```
 
-### 6. See what the calling AI agent sees
+### 7. See what the calling AI agent sees
 
 ```bash
 uv run cua catalog --show member.savings-balance

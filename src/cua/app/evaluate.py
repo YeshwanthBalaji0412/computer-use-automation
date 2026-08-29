@@ -105,6 +105,41 @@ SCENARIOS: list[Scenario] = [
         fault="slow",
         why="a transient delay is waited out, not failed",
     ),
+    # ---------------------------------------------------------------- the write flow
+    #
+    # Every row below is chosen so that *nothing is created*, which is what keeps this
+    # matrix re-runnable. A scenario that successfully opened an account would pass once
+    # and then return DUPLICATE_RECORD on every later run - an eval that only works on a
+    # clean process is not an eval. The successful write is demonstrated in `evidence/`
+    # instead, where the starting state is known.
+    Scenario(
+        "write-blocked",
+        {"memberId": "100042", "nickname": "HOLIDAY FUND"},
+        "blocked",
+        capability="member.open-subaccount",
+        why="an irreversible write with no caller approval is refused before it acts",
+    ),
+    Scenario(
+        "write-duplicate",
+        {"memberId": "100042", "nickname": "VACATION FUND"},
+        "business_outcome",
+        expect_code="DUPLICATE_RECORD",
+        capability="member.open-subaccount",
+        approve=True,
+        why="the application refuses at the review screen, before committing - which is "
+        "what makes a non-idempotent capability safe for a caller to retry",
+    ),
+    Scenario(
+        "write-ambiguous",
+        {"memberId": "100042", "nickname": "REGATTA FUND"},
+        "escalated",
+        expect_code="ambiguous_write_outcome",
+        capability="member.open-subaccount",
+        approve=True,
+        fault="write-timeout",
+        why="the confirm hung and then errored, so whether it committed is unknown from "
+        "the screen; retrying could open the account twice",
+    ),
 ]
 
 

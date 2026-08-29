@@ -52,6 +52,7 @@ from cua.schema.capability import (
     ApprovalStatus,
     Capability,
     RecoveryActionKind,
+    RiskClass,
     Step,
 )
 from cua.schema.locator import Locator, Resolution, ResolveOutcome
@@ -477,6 +478,35 @@ class ReplayExecutor:
         """Act on the classifier's verdict. Terminal result, retry signal, or None."""
         if classification.state is StateClass.CLEAN:
             return None
+
+        # The most dangerous state in the system, and the one that looks least dangerous.
+        #
+        # An irreversible step that does not come back clean leaves the write in an
+        # *unknown* state: the POST may have committed before the error page rendered. No
+        # amount of reading the screen settles it, because the screen is the error. Every
+        # ordinary response is wrong here - reporting APP_ERROR tells the caller nothing
+        # happened, retrying risks opening the account twice, and failing loses the fact
+        # that a write is outstanding. The only correct move is to stop and get a human to
+        # look at the system of record.
+        #
+        # Scoped to *irreversible* steps deliberately. DUPLICATE_RECORD arrives from the
+        # review screen, one step earlier, where the application has refused before
+        # committing anything - that is a definitive answer and must stay a clean business
+        # outcome, or the capability stops being safe to retry at all.
+        # Anything that is not CLEAN, including - especially - "recoverable": a
+        # wait-and-retry after a confirm click is precisely how a double-post happens.
+        if step.risk is RiskClass.IRREVERSIBLE_WRITE:
+            detail = classification.detail or "the screen after an irreversible step"
+            if classification.outcome is not None:
+                detail = f"{classification.outcome.code}: {classification.outcome.message}"
+            return await self._escalate(
+                EscalationReason.AMBIGUOUS_WRITE_OUTCOME,
+                f"step {step.id} ({step.intent}) is an irreversible write and did not "
+                f"confirm - {detail}. Whether it committed is unknown from the screen; "
+                f"check the system of record before retrying.",
+                step,
+                ctx,
+            )
 
         if classification.state is StateClass.BUSINESS_OUTCOME:
             outcome = classification.outcome

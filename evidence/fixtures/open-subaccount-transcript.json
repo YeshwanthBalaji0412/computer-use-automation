@@ -1,0 +1,273 @@
+{
+  "model": "scripted",
+  "turns": [
+    {
+      "text": "Looking at the sign-in screen.",
+      "tool_calls": [
+        {
+          "id": "call_1",
+          "name": "observe",
+          "arguments": {},
+          "element_hint": ""
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_2",
+          "name": "fill",
+          "arguments": {
+            "text": "operator",
+            "why": "sign in as the servicing operator",
+            "ref": "e2"
+          },
+          "element_hint": "textbox|User ID"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_3",
+          "name": "fill",
+          "arguments": {
+            "text": "<secret:corelink.password>",
+            "why": "supply the operator password",
+            "ref": "e3"
+          },
+          "element_hint": "textbox|Password"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_4",
+          "name": "click",
+          "arguments": {
+            "why": "sign in to the console",
+            "ref": "e4"
+          },
+          "element_hint": "button|Sign In"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_5",
+          "name": "fill",
+          "arguments": {
+            "text": "100042",
+            "why": "enter the member number to look up",
+            "is_parameter": true,
+            "parameter_name": "memberId",
+            "ref": "e10"
+          },
+          "element_hint": "textbox|Member ID"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_6",
+          "name": "click",
+          "arguments": {
+            "why": "submit the member search",
+            "ref": "e11"
+          },
+          "element_hint": "button|Search"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_7",
+          "name": "click",
+          "arguments": {
+            "why": "open the matching member's detail screen",
+            "ref": "e20"
+          },
+          "element_hint": "link|View"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_8",
+          "name": "click",
+          "arguments": {
+            "why": "start the new sub-account form for this member",
+            "ref": "e26"
+          },
+          "element_hint": "link|Open Sub-Account"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_9",
+          "name": "fill",
+          "arguments": {
+            "text": "HOLIDAY FUND",
+            "why": "name the new sub-account",
+            "is_parameter": true,
+            "parameter_name": "nickname",
+            "ref": "e11"
+          },
+          "element_hint": "textbox|Account Nickname"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_10",
+          "name": "select",
+          "arguments": {
+            "value": "SAVINGS",
+            "why": "open it as a savings sub-account",
+            "is_parameter": true,
+            "parameter_name": "accountType",
+            "ref": "e12"
+          },
+          "element_hint": "combobox|Account Type"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_11",
+          "name": "click",
+          "arguments": {
+            "why": "review the new sub-account",
+            "ref": "e14"
+          },
+          "element_hint": "button|Continue"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_12",
+          "name": "click",
+          "arguments": {
+            "why": "commit the new sub-account",
+            "ref": "e23"
+          },
+          "element_hint": "button|Confirm and Open Account"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_13",
+          "name": "extract",
+          "arguments": {
+            "output_name": "confirmationNumber",
+            "output_type": "text",
+            "why": "capture the confirmation number the caller needs as a receipt",
+            "ref": "e14"
+          },
+          "element_hint": "cell|col:Value|Field=Confirmation Number"
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_14",
+          "name": "assert_state",
+          "arguments": {
+            "describe": "the sub-account confirmation screen",
+            "refs": [
+              "e9"
+            ]
+          },
+          "element_hint": ""
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "text": "",
+      "tool_calls": [
+        {
+          "id": "call_15",
+          "name": "finish",
+          "arguments": {
+            "summary": "Signed in, found the member, opened the sub-account form, and confirmed the new account.",
+            "capability_id": "member.open-subaccount",
+            "description": "Open a new sub-account for a member in the CoreLink servicing console and return the confirmation number."
+          },
+          "element_hint": ""
+        }
+      ],
+      "stop_reason": "tool_calls",
+      "input_tokens": 0,
+      "output_tokens": 0
+    }
+  ]
+}

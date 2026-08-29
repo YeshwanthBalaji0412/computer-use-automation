@@ -1,0 +1,1672 @@
+{
+  "schema_version": "1.0.0",
+  "id": "member.open-subaccount",
+  "version": "1.0.0",
+  "display_name": "Member Open-Subaccount",
+  "description": "Open a new sub-account for a member in the CoreLink servicing console and return the confirmation number.",
+  "target": {
+    "surface": "legacy-web",
+    "product": {
+      "vendor": "corelink",
+      "app": "servicing-console",
+      "version_range": "*"
+    },
+    "entry_url_pattern": "{{base_url}}/",
+    "requires_auth": true,
+    "auth_capability": null
+  },
+  "status": "approved",
+  "risk_class": "irreversible_write",
+  "idempotent": false,
+  "inputs": [
+    {
+      "name": "memberId",
+      "type": "string",
+      "required": true,
+      "description": "enter the member number to look up",
+      "pattern": "^\\d{6}$",
+      "enum": null,
+      "default": null,
+      "sensitivity": "internal",
+      "example": "100042"
+    },
+    {
+      "name": "nickname",
+      "type": "string",
+      "required": true,
+      "description": "name the new sub-account",
+      "pattern": null,
+      "enum": null,
+      "default": null,
+      "sensitivity": "internal",
+      "example": "HOLIDAY FUND"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "confirmationNumber",
+      "type": "string",
+      "required": true,
+      "description": "capture the confirmation number the caller needs as a receipt",
+      "sensitivity": "internal",
+      "locator": {
+        "describe": "the Value cell in the row where Field = Confirmation Number (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 4,
+            "note": "data-grid row identified by other cells in the row, column by header text; the target's own column is excluded so reading a value does not depend on already knowing it",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": {
+              "Field": "Confirmation Number"
+            },
+            "column_header": "Value",
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 5,
+            "note": "the element immediately following a fixed label text",
+            "role": "cell",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": "Confirmation Number",
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "cell",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Sub-Account Opened",
+            "ordinal": 1,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "parse": "text",
+      "unit": null
+    }
+  ],
+  "preconditions": [],
+  "preflight": [],
+  "steps": [
+    {
+      "id": "s1",
+      "intent": "sign in as the servicing operator",
+      "action": "fill",
+      "target": {
+        "describe": "the textbox 'User ID' in the 'Operator Sign In' section",
+        "frame_path": [],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "textbox",
+            "name": "User ID",
+            "name_match": "exact",
+            "scope_section": "Operator Sign In",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "textbox",
+            "name": "User ID",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 3,
+            "note": "associated <label> text",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": "User ID",
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 5,
+            "note": "the element immediately following a fixed label text",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": "User ID",
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Operator Sign In",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "User ID",
+      "value": {
+        "literal": "operator",
+        "param": null,
+        "secret_ref": null
+      },
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s2",
+      "intent": "supply the operator password",
+      "action": "fill",
+      "target": {
+        "describe": "the textbox 'Password' in the 'Operator Sign In' section",
+        "frame_path": [],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "textbox",
+            "name": "Password",
+            "name_match": "exact",
+            "scope_section": "Operator Sign In",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "textbox",
+            "name": "Password",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 3,
+            "note": "associated <label> text",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": "Password",
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 5,
+            "note": "the element immediately following a fixed label text",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": "Password",
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Operator Sign In",
+            "ordinal": 1,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "Password",
+      "value": {
+        "literal": null,
+        "param": null,
+        "secret_ref": "corelink.password"
+      },
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s3",
+      "intent": "sign in to the console",
+      "action": "click",
+      "target": {
+        "describe": "the button 'Sign In' in the 'Operator Sign In' section",
+        "frame_path": [],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "button",
+            "name": "Sign In",
+            "name_match": "exact",
+            "scope_section": "Operator Sign In",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "button",
+            "name": "Sign In",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "button",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Operator Sign In",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 7,
+            "note": "coordinates; last resort for surfaces with no semantic layer",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": {
+              "x": 97.953125,
+              "y": 136.0,
+              "w": 63.8125,
+              "h": 19.0
+            }
+          }
+        ]
+      },
+      "control_name": "Sign In",
+      "value": null,
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [
+        {
+          "kind": "any_of",
+          "describe": "the screen advanced as recorded",
+          "locator": null,
+          "pattern": null,
+          "of": [
+            {
+              "kind": "text_present",
+              "describe": "heading 'Navigation' appeared after this step",
+              "locator": null,
+              "pattern": "Navigation",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "link 'Member Search' appeared after this step",
+              "locator": null,
+              "pattern": "Member\\s+Search",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "link 'Transactions' appeared after this step",
+              "locator": null,
+              "pattern": "Transactions",
+              "of": [],
+              "output": null
+            }
+          ],
+          "output": null
+        }
+      ],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s4",
+      "intent": "enter the member number to look up",
+      "action": "fill",
+      "target": {
+        "describe": "the textbox 'Member ID' in the 'Member Search' section (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "textbox",
+            "name": "Member ID",
+            "name_match": "exact",
+            "scope_section": "Member Search",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "textbox",
+            "name": "Member ID",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 3,
+            "note": "associated <label> text",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": "Member ID",
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 5,
+            "note": "the element immediately following a fixed label text",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": "Member ID",
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Member Search",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "Member ID",
+      "value": {
+        "literal": null,
+        "param": "memberId",
+        "secret_ref": null
+      },
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s5",
+      "intent": "submit the member search",
+      "action": "click",
+      "target": {
+        "describe": "the button 'Search' in the 'Member Search' section (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "button",
+            "name": "Search",
+            "name_match": "exact",
+            "scope_section": "Member Search",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "button",
+            "name": "Search",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "button",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Member Search",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "Search",
+      "value": null,
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [
+        {
+          "kind": "any_of",
+          "describe": "the screen advanced as recorded",
+          "locator": null,
+          "pattern": null,
+          "of": [
+            {
+              "kind": "text_present",
+              "describe": "heading 'Search Results' appeared after this step",
+              "locator": null,
+              "pattern": "Search\\s+Results",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "paragraph '1 record(s) found.' appeared after this step",
+              "locator": null,
+              "pattern": "1\\s+record\\(s\\)\\s+found\\.",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "columnheader 'Member ID' appeared after this step",
+              "locator": null,
+              "pattern": "Member\\s+ID",
+              "of": [],
+              "output": null
+            }
+          ],
+          "output": null
+        }
+      ],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s6",
+      "intent": "open the matching member's detail screen",
+      "action": "click",
+      "target": {
+        "describe": "the link 'View' in the row where Member ID = {{memberId}}, Name = J. RIVERA (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 4,
+            "note": "data-grid row identified by other cells in the row, column by header text; the target's own column is excluded so reading a value does not depend on already knowing it",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": {
+              "Member ID": "{{memberId}}"
+            },
+            "column_header": "Action",
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "View",
+      "value": null,
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [
+        {
+          "kind": "any_of",
+          "describe": "the screen advanced as recorded",
+          "locator": null,
+          "pattern": null,
+          "of": [
+            {
+              "kind": "text_present",
+              "describe": "heading 'Member Detail' appeared after this step",
+              "locator": null,
+              "pattern": "Member\\s+Detail",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "cell 'Member ID' appeared after this step",
+              "locator": null,
+              "pattern": "Member\\s+ID",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "cell 'Member Name' appeared after this step",
+              "locator": null,
+              "pattern": "Member\\s+Name",
+              "of": [],
+              "output": null
+            }
+          ],
+          "output": null
+        }
+      ],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s7",
+      "intent": "start the new sub-account form for this member",
+      "action": "click",
+      "target": {
+        "describe": "the link 'Open Sub-Account' in the 'Member Detail' section (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "link",
+            "name": "Open Sub-Account",
+            "name_match": "exact",
+            "scope_section": "Member Detail",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "link",
+            "name": "Open Sub-Account",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "link",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Member Detail",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 7,
+            "note": "coordinates; last resort for surfaces with no semantic layer",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": {
+              "x": 20.0,
+              "y": 277.0,
+              "w": 102.875,
+              "h": 13.0
+            }
+          }
+        ]
+      },
+      "control_name": "Open Sub-Account",
+      "value": null,
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [
+        {
+          "kind": "any_of",
+          "describe": "the screen advanced as recorded",
+          "locator": null,
+          "pattern": null,
+          "of": [
+            {
+              "kind": "text_present",
+              "describe": "heading 'Open Sub-Account' appeared after this step",
+              "locator": null,
+              "pattern": "Open\\s+Sub\\-Account",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "paragraph 'Member 100042 — J. RIVERA' appeared after this step",
+              "locator": null,
+              "pattern": "Member\\s+100042\\s+—\\s+J\\.\\s+RIVERA",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "textbox 'Account Nickname' appeared after this step",
+              "locator": null,
+              "pattern": "Account\\s+Nickname",
+              "of": [],
+              "output": null
+            }
+          ],
+          "output": null
+        }
+      ],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s8",
+      "intent": "name the new sub-account",
+      "action": "fill",
+      "target": {
+        "describe": "the textbox 'Account Nickname' in the 'Open Sub-Account' section (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "textbox",
+            "name": "Account Nickname",
+            "name_match": "exact",
+            "scope_section": "Open Sub-Account",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "textbox",
+            "name": "Account Nickname",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 3,
+            "note": "associated <label> text",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": "Account Nickname",
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 5,
+            "note": "the element immediately following a fixed label text",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": "Account Nickname",
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "textbox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Open Sub-Account",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "Account Nickname",
+      "value": {
+        "literal": null,
+        "param": "nickname",
+        "secret_ref": null
+      },
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s9",
+      "intent": "open it as a savings sub-account",
+      "action": "select",
+      "target": {
+        "describe": "the combobox 'Account Type' in the 'Open Sub-Account' section (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "combobox",
+            "name": "Account Type",
+            "name_match": "exact",
+            "scope_section": "Open Sub-Account",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "combobox",
+            "name": "Account Type",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 3,
+            "note": "associated <label> text",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": "Account Type",
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 5,
+            "note": "the element immediately following a fixed label text",
+            "role": "combobox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": "Account Type",
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "combobox",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Open Sub-Account",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "Account Type",
+      "value": {
+        "literal": "SAVINGS",
+        "param": null,
+        "secret_ref": null
+      },
+      "url": null,
+      "output": null,
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s10",
+      "intent": "review the new sub-account",
+      "action": "click",
+      "target": {
+        "describe": "the button 'Continue' in the 'Open Sub-Account' section (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "button",
+            "name": "Continue",
+            "name_match": "exact",
+            "scope_section": "Open Sub-Account",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "button",
+            "name": "Continue",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "button",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Open Sub-Account",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "Continue",
+      "value": null,
+      "url": null,
+      "output": null,
+      "risk": "reversible_write",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [
+        {
+          "kind": "any_of",
+          "describe": "the screen advanced as recorded",
+          "locator": null,
+          "pattern": null,
+          "of": [
+            {
+              "kind": "text_present",
+              "describe": "heading 'Review Sub-Account Request' appeared after this step",
+              "locator": null,
+              "pattern": "Review\\s+Sub\\-Account\\s+Request",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "paragraph 'Please review. This action cannot be undone.' appeared after this step",
+              "locator": null,
+              "pattern": "Please\\s+review\\.\\s+This\\s+action\\s+cannot\\s+be\\s+undone\\.",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "columnheader 'Field' appeared after this step",
+              "locator": null,
+              "pattern": "Field",
+              "of": [],
+              "output": null
+            }
+          ],
+          "output": null
+        }
+      ],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s11",
+      "intent": "commit the new sub-account",
+      "action": "click",
+      "target": {
+        "describe": "the button 'Confirm and Open Account' in the 'Review Sub-Account Request' section (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 1,
+            "note": "role + exact accessible name, scoped to its section",
+            "role": "button",
+            "name": "Confirm and Open Account",
+            "name_match": "exact",
+            "scope_section": "Review Sub-Account Request",
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 2,
+            "note": "role + normalised name; survives case and punctuation drift",
+            "role": "button",
+            "name": "Confirm and Open Account",
+            "name_match": "normalised",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "button",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Review Sub-Account Request",
+            "ordinal": 0,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 7,
+            "note": "coordinates; last resort for surfaces with no semantic layer",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": {
+              "x": 20.0,
+              "y": 233.0,
+              "w": 172.5625,
+              "h": 19.0
+            }
+          }
+        ]
+      },
+      "control_name": "Confirm and Open Account",
+      "value": null,
+      "url": null,
+      "output": null,
+      "risk": "irreversible_write",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [
+        {
+          "kind": "any_of",
+          "describe": "the screen advanced as recorded",
+          "locator": null,
+          "pattern": null,
+          "of": [
+            {
+              "kind": "text_present",
+              "describe": "heading 'Sub-Account Opened' appeared after this step",
+              "locator": null,
+              "pattern": "Sub\\-Account\\s+Opened",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "paragraph 'The sub-account has been created successfully.' appeared after this step",
+              "locator": null,
+              "pattern": "The\\s+sub\\-account\\s+has\\s+been\\s+created\\s+successfully\\.",
+              "of": [],
+              "output": null
+            },
+            {
+              "kind": "text_present",
+              "describe": "cell 'Confirmation Number' appeared after this step",
+              "locator": null,
+              "pattern": "Confirmation\\s+Number",
+              "of": [],
+              "output": null
+            }
+          ],
+          "output": null
+        }
+      ],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    },
+    {
+      "id": "s12",
+      "intent": "capture the confirmation number the caller needs as a receipt",
+      "action": "extract",
+      "target": {
+        "describe": "the Value cell in the row where Field = Confirmation Number (frame contentFrame)",
+        "frame_path": [
+          "contentFrame"
+        ],
+        "any_frame": false,
+        "strategies": [
+          {
+            "tier": 4,
+            "note": "data-grid row identified by other cells in the row, column by header text; the target's own column is excluded so reading a value does not depend on already knowing it",
+            "role": null,
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": {
+              "Field": "Confirmation Number"
+            },
+            "column_header": "Value",
+            "anchor_text": null,
+            "bbox": null
+          },
+          {
+            "tier": 5,
+            "note": "the element immediately following a fixed label text",
+            "role": "cell",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": null,
+            "ordinal": null,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": "Confirmation Number",
+            "bbox": null
+          },
+          {
+            "tier": 6,
+            "note": "positional fallback; weak, and a signal if it ever wins",
+            "role": "cell",
+            "name": null,
+            "name_match": "exact",
+            "scope_section": "Sub-Account Opened",
+            "ordinal": 1,
+            "label": null,
+            "row_key": null,
+            "column_header": null,
+            "anchor_text": null,
+            "bbox": null
+          }
+        ]
+      },
+      "control_name": "Value",
+      "value": null,
+      "url": null,
+      "output": "confirmationNumber",
+      "risk": "read_only",
+      "wait_for": [
+        {
+          "kind": "network_idle",
+          "locator": null,
+          "pattern": null,
+          "timeout_ms": 10000
+        }
+      ],
+      "pre_assert": [],
+      "post_assert": [],
+      "on_failure": "classify",
+      "timeout_ms": 15000,
+      "retries": 1
+    }
+  ],
+  "success_condition": {
+    "kind": "all_of",
+    "describe": "the capability reached its goal state",
+    "locator": null,
+    "pattern": null,
+    "of": [
+      {
+        "kind": "element_present",
+        "describe": "the sub-account confirmation screen: the heading 'Sub-Account Opened' (frame contentFrame)",
+        "locator": {
+          "describe": "the heading 'Sub-Account Opened' (frame contentFrame)",
+          "frame_path": [
+            "contentFrame"
+          ],
+          "any_frame": false,
+          "strategies": [
+            {
+              "tier": 1,
+              "note": "role + exact accessible name, scoped to its section",
+              "role": "heading",
+              "name": "Sub-Account Opened",
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            },
+            {
+              "tier": 2,
+              "note": "role + normalised name; survives case and punctuation drift",
+              "role": "heading",
+              "name": "Sub-Account Opened",
+              "name_match": "normalised",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            },
+            {
+              "tier": 6,
+              "note": "positional fallback; weak, and a signal if it ever wins",
+              "role": "heading",
+              "name": null,
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": 0,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            }
+          ]
+        },
+        "pattern": null,
+        "of": [],
+        "output": null
+      },
+      {
+        "kind": "output_present",
+        "describe": "output 'confirmationNumber' is readable",
+        "locator": null,
+        "pattern": null,
+        "of": [],
+        "output": "confirmationNumber"
+      }
+    ],
+    "output": null
+  },
+  "known_outcomes": [
+    {
+      "code": "SESSION_EXPIRED",
+      "message": "The operator session timed out.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the content frame bounced to a sign-in form",
+        "locator": null,
+        "pattern": "(?i)(session (has )?(timed out|ended)|please sign in again)",
+        "of": [],
+        "output": null
+      },
+      "severity": "warn",
+      "terminal": false,
+      "returns": {}
+    },
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "message": "No member exists with that identifier.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the search screen reported no matching records",
+        "locator": null,
+        "pattern": "(?i)no\\s+(member\\s+)?records?\\s+found",
+        "of": [],
+        "output": null
+      },
+      "severity": "info",
+      "terminal": true,
+      "returns": {
+        "found": false
+      }
+    },
+    {
+      "code": "PERMISSION_DENIED",
+      "message": "The operator's role is not entitled to view this record.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the console refused access to this record",
+        "locator": null,
+        "pattern": "(?i)(not authoriz|access restricted|not entitled)",
+        "of": [],
+        "output": null
+      },
+      "severity": "warn",
+      "terminal": true,
+      "returns": {
+        "found": true,
+        "authorized": false
+      }
+    },
+    {
+      "code": "VALIDATION_REJECTED",
+      "message": "The application rejected the input as malformed.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the search screen showed a validation message",
+        "locator": null,
+        "pattern": "(?i)invalid\\s+member\\s+id|enter a \\d+-digit",
+        "of": [],
+        "output": null
+      },
+      "severity": "info",
+      "terminal": true,
+      "returns": {}
+    },
+    {
+      "code": "DUPLICATE_RECORD",
+      "message": "A record with those details already exists; nothing was created.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the pre-flight duplicate check fired",
+        "locator": null,
+        "pattern": "(?i)already exists",
+        "of": [],
+        "output": null
+      },
+      "severity": "info",
+      "terminal": true,
+      "returns": {}
+    },
+    {
+      "code": "APP_ERROR",
+      "message": "The application returned a server error.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the application's error page",
+        "locator": null,
+        "pattern": "(?i)server error in .* application|unhandled exception",
+        "of": [],
+        "output": null
+      },
+      "severity": "warn",
+      "terminal": true,
+      "returns": {}
+    }
+  ],
+  "recoveries": [
+    {
+      "id": "dismiss-known-interstitial",
+      "describe": "Dismiss the scheduled-maintenance notice, which is informational.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the maintenance notice dialog",
+        "locator": null,
+        "pattern": "(?i)scheduled maintenance",
+        "of": [],
+        "output": null
+      },
+      "action": {
+        "kind": "dismiss",
+        "locator": {
+          "describe": "the dismiss button on the maintenance notice",
+          "frame_path": [],
+          "any_frame": true,
+          "strategies": [
+            {
+              "tier": 2,
+              "note": "the notice's acknowledge button",
+              "role": "button",
+              "name": "Close",
+              "name_match": "normalised",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            }
+          ]
+        },
+        "capability": null
+      },
+      "max_attempts": 3,
+      "backoff_ms": [],
+      "restart_from_step": null
+    },
+    {
+      "id": "session-expired",
+      "describe": "The session expired mid-flow. Sign in again and pick up where the flow started, because re-authenticating lands on the entry screen rather than the one the step failed on.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "the sign-in screen, reached without asking for it",
+        "locator": null,
+        "pattern": "(?i)(session has timed out|please sign in again)",
+        "of": [],
+        "output": null
+      },
+      "action": {
+        "kind": "wait_and_retry",
+        "locator": null,
+        "capability": null
+      },
+      "max_attempts": 1,
+      "backoff_ms": [],
+      "restart_from_step": "s1"
+    },
+    {
+      "id": "transient-load",
+      "describe": "Wait and retry once for a slow screen.",
+      "detect": {
+        "kind": "text_present",
+        "describe": "a step timed out waiting for the screen",
+        "locator": null,
+        "pattern": "(?!)never-matches-by-detector",
+        "of": [],
+        "output": null
+      },
+      "action": {
+        "kind": "wait_and_retry",
+        "locator": null,
+        "capability": null
+      },
+      "max_attempts": 2,
+      "backoff_ms": [
+        750,
+        2000
+      ],
+      "restart_from_step": null
+    }
+  ],
+  "policy": {
+    "allowed_origins": [],
+    "allowed_actions": [],
+    "max_steps": 40,
+    "max_duration_ms": 120000
+  },
+  "provenance": {
+    "discovered_by": "llm",
+    "model": "scripted",
+    "prompt_version": "discovery/v2",
+    "discovery_run_id": "dis_418eb46a857f",
+    "recorded_at": "2026-08-29T19:37:51.050068Z",
+    "recorded_against_tenant": "meridian",
+    "surface_fingerprint": "c1ba2c3478d015c0",
+    "reviewed_by": "ops@meridiancu.example",
+    "reviewed_at": "2026-08-29T19:39:07.352974Z"
+  },
+  "stability": {
+    "replays": 0,
+    "successes": 0,
+    "last_verified_at": null,
+    "locator_tier_histogram": {}
+  }
+}

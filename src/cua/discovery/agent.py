@@ -342,7 +342,7 @@ class DiscoveryAgent:
                 control=element.name if element else url,
             )
             authorised, note = await self._request_authorisation(
-                call, decision.reason, element, url
+                call, decision.reason, element, url, rule=decision.rule
             )
             if not authorised:
                 return (
@@ -452,6 +452,7 @@ class DiscoveryAgent:
         reason: str,
         element: ElementNode | None,
         url: str | None,
+        rule: str = "",
     ) -> tuple[bool, str]:
         """Ask a human to authorise one irreversible action, and wait for the answer.
 
@@ -468,6 +469,10 @@ class DiscoveryAgent:
             return False, ""
 
         control = (element.name if element else url) or "an unnamed control"
+        # `risk_gates.irreversible_write` -> `irreversible_write`. Naming the actual class
+        # matters: "Continue" is a reversible write and telling an operator it is
+        # irreversible would train them to discount the warning that is not.
+        risk_class = rule.rsplit(".", 1)[-1] if rule.startswith("risk_gates.") else ""
         intervention: Intervention | None = None
 
         if self._interventions is not None:
@@ -484,8 +489,9 @@ class DiscoveryAgent:
                     reason=EscalationReason.RISKY_STEP_NEEDS_APPROVAL,
                     explain=(
                         f"The model wants to {call.name} {control!r}, which policy "
-                        f"classifies as irreversible: {reason}. Discovery does not "
-                        f"perform irreversible actions without a human saying so."
+                        f"classifies as {risk_class or 'a write'}: {reason}. Discovery "
+                        f"does not perform an action it cannot undo without a human "
+                        f"saying so."
                     ),
                     # The model's own stated intent for the last few steps, which is what
                     # an operator needs to judge whether this action makes sense - far
