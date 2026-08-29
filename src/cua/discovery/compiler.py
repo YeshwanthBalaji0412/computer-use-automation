@@ -266,7 +266,7 @@ def compile_capability(
             discovery_run_id=run_id,
             recorded_at=datetime.now(UTC),
             recorded_against_tenant=tenant,
-            surface_fingerprint=recorder.final_fingerprint,
+            surface_fingerprint=recorder.entry_fingerprint or recorder.final_fingerprint,
         ),
     )
     # Validation is not a formality here: it is what catches a step referencing a

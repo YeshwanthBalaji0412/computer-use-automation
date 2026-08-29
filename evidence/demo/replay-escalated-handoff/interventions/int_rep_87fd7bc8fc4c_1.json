@@ -1,0 +1,36 @@
+{
+  "id": "int_rep_87fd7bc8fc4c_1",
+  "run_id": "rep_87fd7bc8fc4c",
+  "raised_at": "2026-08-29T03:14:32.091479Z",
+  "capability": "member.savings-balance@1.0.0",
+  "goal": "Look up member 100042 and read their current savings balance",
+  "tenant": "meridian",
+  "step_id": "s6",
+  "step_intent": "open the matching member's detail screen",
+  "reason": "unknown_dialog",
+  "explain": "a dialog titled 'Regulation CC Hold Notice' appeared and is not declared in this capability's recoveries or known outcomes",
+  "attempted": [
+    "s3: sign in to the console (ok)",
+    "s4: enter the member number to look up (ok)",
+    "s5: submit the member search (ok)",
+    "s6: open the matching member's detail screen (ok)"
+  ],
+  "url": "http://localhost:4000/tenants/meridian/home",
+  "screenshot_path": "evidence/runs/rep_87fd7bc8fc4c/steps/s6-pre.png",
+  "aria_snapshot": "# frame: main\n- document:\n  - iframe\n  - iframe\n\n# frame: navFrame\n- table:\n  - rowgroup:\n    - row \"Meridian Credit Union | Servicing Console\":\n      - cell \"Meridian Credit Union | Servicing Console\"\n    - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n      - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n        - table:\n          - rowgroup:\n            - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n              - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n                - heading \"Navigation\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member Search\":\n                      - cell \"Member Search\":\n                        - link \"Member Search\":\n                    - row \"Transactions\":\n                      - cell \"Transactions\":\n                        - link \"Transactions\":\n                    - row \"Reports\":\n                      - cell \"Reports\":\n                        - link \"Reports\":\n                    - row \"Admin\":\n                      - cell \"Admin\":\n                        - link \"Admin\":\n                    - row:\n                      - cell\n                    - row \"Sign Out\":\n                      - cell \"Sign Out\":\n                        - link \"Sign Out\":\n    - row \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\"\n\n# frame: contentFrame\n- table:\n  - rowgroup:\n    - row \"Meridian Credit Union | Servicing Console\":\n      - cell \"Meridian Credit Union | Servicing Console\"\n    - row \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n      - cell \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n        - table:\n          - rowgroup:\n            - row \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n              - cell \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                - heading \"Member Detail\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                      - cell \"Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                        - table:\n                          - rowgroup:\n                            - row \"Member ID 100042\":\n                              - cell \"Member ID\"\n                              - cell \"100042\"\n                            - row \"Member Name J. RIVERA\":\n                              - cell \"Member Name\"\n                              - cell \"J. RIVERA\"\n                            - row \"Status ACTIVE\":\n                              - cell \"Status\"\n                              - cell \"ACTIVE\"\n                            - row \"Home Branch MAIN\":\n                              - cell \"Home Branch\"\n                              - cell \"MAIN\"\n                            - row \"Member Since «redacted:dob»\":\n                              - cell \"Member Since\"\n                              - cell \"«redacted:dob»\"\n                        - table:\n                          - rowgroup:\n                            - row \"Account Balance\":\n                              - columnheader \"Account\"\n                              - columnheader \"Balance\"\n                            - row \"Savings «redacted:savingsBalance»\":\n                              - cell \"Savings\"\n                              - cell \"«redacted:savingsBalance»\"\n                            - row \"Checking $1,203.11\":\n                              - cell \"Checking\"\n                              - cell \"$1,203.11\"\n                        - paragraph:\n                          - link \"Open Sub-Account\":\n                          - text: \"|\"\n                          - link \"New Search\":\n    - row \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\"\n- dialog \"Regulation CC Hold Notice\":\n  - text: Regulation CC Hold Notice\n  - paragraph: A regulatory hold has been applied to one or more accounts for this member. Review the hold before proceeding with servicing actions.\n  - paragraph:\n    - button \"Acknowledge\"",
+  "suggested_actions": [
+    "Read the dialog, dismiss it if it is safe, then resume as 'recovered'",
+    "Complete the step yourself and resume as 'step completed'",
+    "Abort the run"
+  ],
+  "status": "resolved",
+  "operator": "operator",
+  "taken_at": "2026-08-29T03:14:32.244924Z",
+  "resolved_at": "2026-08-29T03:14:32.282456Z",
+  "disposition": "recovered",
+  "note": "dismissed the notice",
+  "human_actions": [
+    "click button 'Acknowledge'"
+  ],
+  "operator_url": "http://localhost:51187/interventions/int_rep_87fd7bc8fc4c_1"
+}

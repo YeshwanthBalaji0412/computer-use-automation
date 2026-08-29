@@ -1,0 +1,226 @@
+# Computer-Use Automation
+
+**An LLM learns a legacy banking UI once. A typed capability artifact replays it forever — with no model in the loop.**
+
+Banks and credit unions run a long tail of internal applications with no API: core banking screens, servicing tools, admin consoles. The only way in is the way a teller does it — log in, type into a form, click, read the screen.
+
+Pointing an LLM at that screen on every request fails in production on four counts: **cost** (re-reading a screen that hasn't changed in six years, thousands of times a day), **latency** (a member is on the phone), **non-determinism** (auditors dislike "it took a different path today"), and **risk** (a model that improvises can improvise on a screen that moves money).
+
+So this system splits the problem in two:
+
+> **The model discovers.** Once. Slow, expensive, smart.
+> **Deterministic replay invokes it.** Forever. Fast, cheap, auditable, and with no model involved in any decision.
+
+The design write-up is in **[REPORT.md](REPORT.md)**. A plain-language explanation of the problem is in **[UNDERSTAND.md](UNDERSTAND.md)**.
+
+---
+
+## Setup
+
+Requires Python 3.13 (managed by [uv](https://docs.astral.sh/uv/)) and Chromium.
+
+```bash
+git clone https://github.com/YeshwanthBalaji0412/computer-use-automation.git
+cd computer-use-automation
+uv sync
+uv run playwright install chromium
+```
+
+That's it. **No API key is needed for anything below except live discovery** — see [Running without live services](#running-without-live-services).
+
+---
+
+## Demo path
+
+Two terminals. The first runs the fake bank; the second drives it.
+
+```bash
+# terminal 1 — the target application
+uv run cua serve-app
+```
+
+### 1. Discover a flow — an LLM figures it out and a capability is compiled
+
+```bash
+uv run cua discover \
+  --goal "Look up member 100042 and read their current savings balance" \
+  --target http://localhost:4000/tenants/meridian/
+```
+
+Writes `capabilities/member.savings-balance@1.0.0.json` and a full run log under `evidence/runs/`.
+
+> Needs `ANTHROPIC_API_KEY`. To run the identical code path with no key, use `uv run cua discover --mock`, which replays a recorded transcript.
+
+### 2. Replay it deterministically — this is the production path
+
+```bash
+uv run cua replay --capability member.savings-balance --input memberId=100042
+```
+
+```
+status     success
+outputs    {"savingsBalance": "4182.55"}
+```
+
+### 3. Watch it handle everything that goes wrong
+
+```bash
+uv run cua replay --capability member.savings-balance --input memberId=999999
+```
+```
+status     business_outcome
+outcome    MEMBER_NOT_FOUND: No member exists with that identifier.
+           (a legitimate answer, not a failure)
+```
+
+The whole taxonomy, in one command:
+
+```bash
+uv run cua eval
+```
+```
+SCENARIO               EXPECTED                     ACTUAL
+happy-path             success                      success              PASS
+different-member       success                      success              PASS
+not-found              MEMBER_NOT_FOUND             MEMBER_NOT_FOUND     PASS
+permission-denied      PERMISSION_DENIED            PERMISSION_DENIED    PASS
+invalid-input          failed                       invalid_input        PASS
+known-interstitial     success                      success              PASS
+session-expiry         escalated                    recovery_exhausted   PASS
+unknown-dialog         escalated                    unknown_dialog       PASS
+app-error              APP_ERROR                    APP_ERROR            PASS
+slow-load              success                      success              PASS
+
+10/10 scenarios passed
+```
+
+Ten rows, **six different answers**. A system that returned `failed` for the middle six would pass a naive smoke test and be useless in production — the caller could not tell "this member does not exist" from "the automation is broken".
+
+### 4. Hand a stuck run to a human, mid-session
+
+```bash
+uv run cua replay --capability member.savings-balance \
+  --input memberId=100042 --fault unknown-dialog --operator-port 4100
+```
+
+The run hits an undeclared dialog, **parks**, and prints an intervention URL. Open **`http://localhost:4100/`**: you get the live session streamed over CDP, the reason it stopped, what it already tried, and a takeover button.
+
+Click **Take control**, dismiss the dialog on the live view, then **I cleared the obstacle**. The run resumes and finishes. It is the *same* browser session throughout — same cookies, same auth, same half-filled form.
+
+### 5. Replay the same artifact at a different institution
+
+```bash
+uv run cua replay --capability member.savings-balance --input memberId=100042 --tenant lakeside
+```
+
+Lakeside runs the same vendor product, but its search button says **Find Member**, its ID field says **Member Number**, it *requires* a branch selection first, and it renders balances as a definition list instead of a table. The capability was recorded against Meridian and is replayed unmodified:
+
+```
+status     success
+outputs    {"savingsBalance": "4182.55"}
+drift      suspected - the screen's shape differs from the recording
+locators   2 step(s) resolved at a lower tier than recorded
+```
+
+It didn't just work — it **said which two steps leaned on the overlay**. That is the per-tenant drift signal.
+
+```bash
+uv run cua verify --capability member.savings-balance
+```
+```
+TENANT        STEPS  DEGRADED  UNRESOLVED  NOTES
+lakeside          8         2           0  s4:t1->t3, s7:t4->t5
+meridian          7         0           0  clean
+```
+
+---
+
+## Watching it work
+
+```bash
+uv run cua replay --capability member.savings-balance --input memberId=100042 --headed
+```
+
+A real browser window opens and drives itself. Worth doing once — then view source on the page and look at the `ctl00_ContentPlaceHolder1_frmSearch_ctl33_btnSearch` control IDs it is deliberately *not* using. They are regenerated on every render.
+
+```bash
+uv run cua observe --url http://localhost:4000/tenants/meridian/home
+```
+
+Prints exactly what the model sees: roles and accessible names, never HTML.
+
+---
+
+## Running without live services
+
+Only `cua discover` calls a model. Everything else — replay, the eval matrix, escalation, cross-tenant, the whole test suite — runs offline.
+
+| Command | API key |
+|---|---|
+| `cua serve-app`, `cua observe` | no |
+| `cua replay`, `cua eval`, `cua verify` | **no, by design** |
+| `cua discover --mock` | no — replays a recorded transcript |
+| `cua discover` | yes |
+
+Replay never needing a key is not a convenience, it is the thesis. It is enforced two ways: an `import-linter` contract forbids `cua.replay` from importing `anthropic`, and a test runs a real replay in a subprocess and asserts the module was **never loaded**.
+
+For live discovery:
+
+```bash
+cp .env.example .env      # then set ANTHROPIC_API_KEY
+```
+
+---
+
+## Configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | — | Live discovery only |
+| `CUA_MODEL` | `claude-opus-5` | Discovery model |
+| `CUA_DEMO_USERNAME` / `CUA_DEMO_PASSWORD` | `operator` / `demo-pass-not-a-real-secret` | Fake credentials for the local app, resolved through `secret_ref` and never written into artifacts or logs |
+
+Guardrails live in **[`src/cua/policy/policy.default.yaml`](src/cua/policy/policy.default.yaml)** — deliberately YAML, so a compliance reviewer can read what the agent may do without reading Python.
+
+---
+
+## Evidence
+
+Committed, and reproducible with `uv run python scripts/build_evidence.py`:
+
+| Path | What it shows |
+|---|---|
+| [`evidence/demo/member.savings-balance@1.0.0.json`](evidence/demo/) | The capability artifact |
+| [`evidence/demo/discovery/`](evidence/demo/discovery/) | A discovery run: events, transcript, compiled artifact |
+| [`evidence/demo/replay-success/`](evidence/demo/replay-success/) | The production path |
+| [`evidence/demo/replay-not-found/`](evidence/demo/replay-not-found/) | A business outcome, not an error |
+| [`evidence/demo/replay-app-error/`](evidence/demo/replay-app-error/) | A hard failure with debuggable context |
+| [`evidence/demo/replay-escalated-handoff/`](evidence/demo/replay-escalated-handoff/) | A run parked, resolved by a human, resumed |
+| [`evidence/demo/replay-lakeside/`](evidence/demo/replay-lakeside/) | The same artifact at another institution |
+| [`evidence/demo/eval-matrix.txt`](evidence/demo/eval-matrix.txt) | All ten scenarios |
+
+Every run directory contains `events.jsonl` (a structured log of what happened **and why**), `manifest.json`, a rendered `report.md`, per-step screenshots, and on failure an `aria.txt` showing what the system *perceived* — the difference between that and the screenshot is usually the bug.
+
+Nothing in there contains a credential or a member's balance. The build script fails loudly if it does.
+
+---
+
+## Development
+
+```bash
+uv run pytest -m unit           # ~4s, no browser
+uv run pytest -m integration    # ~20min, real Chromium
+uv run ruff check . && uv run mypy && uv run lint-imports
+```
+
+`lint-imports` enforces three architectural contracts: replay may not import the LLM SDK, Playwright is confined to the surface adapter, and the schema layer depends on nothing else.
+
+---
+
+## What this is built on
+
+Python 3.13 · Playwright (async) · Pydantic v2 · FastAPI · Typer · Anthropic SDK. One language, one toolchain, no database, no queue, no Docker. The reasoning for each choice — and for the ones rejected — is in [REPORT.md](REPORT.md) and [STACK.md](STACK.md).
+
+The target application in [`targetapp/`](targetapp/) is a deliberately hostile stand-in: framesets, nested layout tables, zero test IDs, and ASP.NET-style control IDs regenerated on every render. It is built rather than borrowed because no public demo site can produce "record not found", a permission denial, a session timeout, an undeclared modal and a 500 on demand — and those are the interesting cases.
+
+No real credentials, no real PII, nothing automated against a third-party site.

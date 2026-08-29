@@ -403,8 +403,9 @@ class Provenance(BaseModel):
     recorded_against_tenant: str | None = None
     surface_fingerprint: str | None = Field(
         default=None,
-        description="Screen skeleton hash at record time. Compared on every replay; a "
-        "mismatch marks the run drift-suspected without failing it.",
+        description="Skeleton hash of the ENTRY screen at record time. Compared against "
+        "the entry screen on every replay - the same screen, or the comparison is "
+        "meaningless. A mismatch marks the run drift-suspected without failing it.",
     )
     reviewed_by: str | None = None
     reviewed_at: datetime | None = None

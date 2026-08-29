@@ -1,0 +1,5 @@
+status     success
+capability member.savings-balance@1.0.0   tenant=meridian
+duration   22437 ms
+outputs    {"savingsBalance": "4182.55"}
+evidence   evidence/runs/rep_131a8a9419f7

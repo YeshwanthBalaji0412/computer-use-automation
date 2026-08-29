@@ -1,0 +1,94 @@
+# frame: main
+- document:
+  - iframe
+  - iframe
+
+# frame: navFrame
+- table:
+  - rowgroup:
+    - row "Meridian Credit Union | Servicing Console":
+      - cell "Meridian Credit Union | Servicing Console"
+    - row "Navigation Member Search Transactions Reports Admin Sign Out":
+      - cell "Navigation Member Search Transactions Reports Admin Sign Out":
+        - table:
+          - rowgroup:
+            - row "Navigation Member Search Transactions Reports Admin Sign Out":
+              - cell "Navigation Member Search Transactions Reports Admin Sign Out":
+                - heading "Navigation" [level=2]
+                - table:
+                  - rowgroup:
+                    - row "Member Search":
+                      - cell "Member Search":
+                        - link "Member Search":
+                    - row "Transactions":
+                      - cell "Transactions":
+                        - link "Transactions":
+                    - row "Reports":
+                      - cell "Reports":
+                        - link "Reports":
+                    - row "Admin":
+                      - cell "Admin":
+                        - link "Admin":
+                    - row:
+                      - cell
+                    - row "Sign Out":
+                      - cell "Sign Out":
+                        - link "Sign Out":
+    - row "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.":
+      - cell "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc."
+
+# frame: contentFrame
+- table:
+  - rowgroup:
+    - row "Meridian Credit Union | Servicing Console":
+      - cell "Meridian Credit Union | Servicing Console"
+    - row "Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+      - cell "Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+        - table:
+          - rowgroup:
+            - row "Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+              - cell "Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+                - heading "Member Detail" [level=2]
+                - table:
+                  - rowgroup:
+                    - row "Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+                      - cell "Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search":
+                        - table:
+                          - rowgroup:
+                            - row "Member ID 100042":
+                              - cell "Member ID"
+                              - cell "100042"
+                            - row "Member Name J. RIVERA":
+                              - cell "Member Name"
+                              - cell "J. RIVERA"
+                            - row "Status ACTIVE":
+                              - cell "Status"
+                              - cell "ACTIVE"
+                            - row "Home Branch MAIN":
+                              - cell "Home Branch"
+                              - cell "MAIN"
+                            - row "Member Since «redacted:dob»":
+                              - cell "Member Since"
+                              - cell "«redacted:dob»"
+                        - table:
+                          - rowgroup:
+                            - row "Account Balance":
+                              - columnheader "Account"
+                              - columnheader "Balance"
+                            - row "Savings «redacted:savingsBalance»":
+                              - cell "Savings"
+                              - cell "«redacted:savingsBalance»"
+                            - row "Checking $1,203.11":
+                              - cell "Checking"
+                              - cell "$1,203.11"
+                        - paragraph:
+                          - link "Open Sub-Account":
+                          - text: "|"
+                          - link "New Search":
+    - row "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.":
+      - cell "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc."
+- dialog "Regulation CC Hold Notice":
+  - text: Regulation CC Hold Notice
+  - paragraph: A regulatory hold has been applied to one or more accounts for this member. Review the hold before proceeding with servicing actions.
+  - paragraph:
+    - button "Acknowledge"

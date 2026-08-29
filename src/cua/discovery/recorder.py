@@ -103,6 +103,12 @@ class Recorder:
         self.checkpoints: list[RecordedCheckpoint] = []
         self.outcomes: list[RecordedOutcome] = []
         self.entry_url: str = ""
+        #: The shape of the *entry* screen. Drift is checked at the point a run
+        #: starts, so the recorded and observed fingerprints have to be of the same
+        #: screen - comparing the entry screen against the last one recorded means
+        #: every single replay reports drift, and a warning that is always on is
+        #: worse than none.
+        self.entry_fingerprint: str = ""
         self.final_fingerprint: str = ""
         self._seq = 0
 

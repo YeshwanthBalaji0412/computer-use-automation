@@ -18,11 +18,15 @@ import json
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from cua.control.session import Disposition, HumanAction
 from cua.schema.result import EscalationReason
+
+if TYPE_CHECKING:
+    from cua.policy.redactor import Redactor
 
 
 class InterventionStatus(StrEnum):
@@ -94,9 +98,13 @@ class InterventionStore:
     would grow a second implementation, not a design that needs rewriting.
     """
 
-    def __init__(self, evidence_dir: Path | None = None) -> None:
+    def __init__(self, evidence_dir: Path | None = None, redactor: Redactor | None = None) -> None:
         self._items: dict[str, Intervention] = {}
         self._dir = evidence_dir
+        #: Applied on *persist* only. The operator sees the live screen through an
+        #: authenticated console and needs the real values to do their job; the file left
+        #: behind afterwards is committed evidence and must not carry them.
+        self._redactor = redactor
 
     def raise_(self, intervention: Intervention) -> Intervention:
         self._items[intervention.id] = intervention
@@ -150,9 +158,11 @@ class InterventionStore:
             return
         target = self._dir / "interventions"
         target.mkdir(parents=True, exist_ok=True)
+        payload = item.model_dump(mode="json")
+        if self._redactor is not None:
+            payload = self._redactor.value(payload)
         (target / f"{item.id}.json").write_text(
-            json.dumps(item.model_dump(mode="json"), indent=2, ensure_ascii=False),
-            encoding="utf-8",
+            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
         )
 
 

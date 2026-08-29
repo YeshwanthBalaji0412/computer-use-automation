@@ -1,0 +1,9 @@
+
+run      dis_99ab9c84e90f
+stopped  finished
+actions  7 effective of 7 attempted
+
+artifact capabilities/member.savings-balance@1.0.0.json
+  7 steps, 1 input(s), 1 output(s), 6 known outcome(s)
+  status=draft risk=read_only
+evidence evidence/runs/dis_99ab9c84e90f

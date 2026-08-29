@@ -1,0 +1,706 @@
+[
+  {
+    "observation_id": "obs_fb2cc1853ea0",
+    "url": "http://localhost:4000/tenants/meridian/home",
+    "title": "Meridian Credit Union - CoreLink Servicing Console",
+    "frame_paths": [
+      [],
+      [
+        "navFrame"
+      ],
+      [
+        "contentFrame"
+      ]
+    ],
+    "elements": [
+      {
+        "ref": "e0",
+        "role": "cell",
+        "name": "Meridian Credit Union | Servicing Console",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 0.0,
+          "w": 170.0,
+          "h": 60.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e1",
+        "role": "heading",
+        "name": "Navigation",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 80.0,
+          "w": 130.0,
+          "h": 16.0
+        },
+        "tag": "h2"
+      },
+      {
+        "ref": "e2",
+        "role": "link",
+        "name": "Member Search",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 108.0,
+          "w": 86.5625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e3",
+        "role": "link",
+        "name": "Transactions",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 127.0,
+          "w": 68.5625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e4",
+        "role": "link",
+        "name": "Reports",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 146.0,
+          "w": 42.234375,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e5",
+        "role": "link",
+        "name": "Admin",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 165.0,
+          "w": 35.0625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e6",
+        "role": "link",
+        "name": "Sign Out",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 203.0,
+          "w": 48.1875,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e7",
+        "role": "cell",
+        "name": "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 240.0,
+          "w": 170.0,
+          "h": 42.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e8",
+        "role": "cell",
+        "name": "Meridian Credit Union | Servicing Console",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 0.0,
+          "w": 1108.0,
+          "h": 28.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e9",
+        "role": "heading",
+        "name": "Member Detail",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 48.0,
+          "w": 1068.0,
+          "h": 16.0
+        },
+        "tag": "h2"
+      },
+      {
+        "ref": "e10",
+        "role": "cell",
+        "name": "Member ID",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 22.0,
+          "y": 74.0,
+          "w": 98.203125,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e11",
+        "role": "cell",
+        "name": "100042",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Member ID",
+        "bbox": {
+          "x": 122.203125,
+          "y": 74.0,
+          "w": 71.9375,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e12",
+        "role": "cell",
+        "name": "Member Name",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 22.0,
+          "y": 95.0,
+          "w": 98.203125,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e13",
+        "role": "cell",
+        "name": "J. RIVERA",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Member Name",
+        "bbox": {
+          "x": 122.203125,
+          "y": 95.0,
+          "w": 71.9375,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e14",
+        "role": "cell",
+        "name": "Status",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 22.0,
+          "y": 116.0,
+          "w": 98.203125,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e15",
+        "role": "cell",
+        "name": "ACTIVE",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Status",
+        "bbox": {
+          "x": 122.203125,
+          "y": 116.0,
+          "w": 71.9375,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e16",
+        "role": "cell",
+        "name": "Home Branch",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 22.0,
+          "y": 137.0,
+          "w": 98.203125,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e17",
+        "role": "cell",
+        "name": "MAIN",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Home Branch",
+        "bbox": {
+          "x": 122.203125,
+          "y": 137.0,
+          "w": 71.9375,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e18",
+        "role": "cell",
+        "name": "Member Since",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 22.0,
+          "y": 158.0,
+          "w": 98.203125,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e19",
+        "role": "cell",
+        "name": "«redacted:dob»",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Member Since",
+        "bbox": {
+          "x": 122.203125,
+          "y": 158.0,
+          "w": 71.9375,
+          "h": 19.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e20",
+        "role": "columnheader",
+        "name": "Account",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.5,
+          "y": 192.5,
+          "w": 67.28125,
+          "h": 20.0
+        },
+        "tag": "th"
+      },
+      {
+        "ref": "e21",
+        "role": "columnheader",
+        "name": "Balance",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": "Account",
+        "bbox": {
+          "x": 87.78125,
+          "y": 192.5,
+          "w": 73.96875,
+          "h": 20.0
+        },
+        "tag": "th"
+      },
+      {
+        "ref": "e22",
+        "role": "cell",
+        "name": "Savings",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": {
+          "row_key": {
+            "Account": "Savings",
+            "Balance": "«redacted:savingsBalance»"
+          },
+          "column_header": "Account"
+        },
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.5,
+          "y": 212.5,
+          "w": 67.28125,
+          "h": 20.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e23",
+        "role": "cell",
+        "name": "«redacted:savingsBalance»",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": {
+          "row_key": {
+            "Account": "Savings",
+            "Balance": "«redacted:savingsBalance»"
+          },
+          "column_header": "Balance"
+        },
+        "anchor_text": "Savings",
+        "bbox": {
+          "x": 87.78125,
+          "y": 212.5,
+          "w": 73.96875,
+          "h": 20.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e24",
+        "role": "cell",
+        "name": "Checking",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": {
+          "row_key": {
+            "Account": "Checking",
+            "Balance": "$1,203.11"
+          },
+          "column_header": "Account"
+        },
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.5,
+          "y": 232.5,
+          "w": 67.28125,
+          "h": 20.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e25",
+        "role": "cell",
+        "name": "$1,203.11",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": {
+          "row_key": {
+            "Account": "Checking",
+            "Balance": "$1,203.11"
+          },
+          "column_header": "Balance"
+        },
+        "anchor_text": "Checking",
+        "bbox": {
+          "x": 87.78125,
+          "y": 232.5,
+          "w": 73.96875,
+          "h": 20.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e26",
+        "role": "link",
+        "name": "Open Sub-Account",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 277.0,
+          "w": 102.875,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e27",
+        "role": "link",
+        "name": "New Search",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 143.34375,
+          "y": 277.0,
+          "w": 65.71875,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e28",
+        "role": "cell",
+        "name": "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 321.0,
+          "w": 1108.0,
+          "h": 18.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e29",
+        "role": "dialog",
+        "name": "Regulation CC Hold Notice",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 364.0,
+          "y": 60.0,
+          "w": 386.0,
+          "h": 154.5
+        },
+        "tag": "div"
+      },
+      {
+        "ref": "e30",
+        "role": "text",
+        "name": "Regulation CC Hold Notice",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 367.0,
+          "y": 63.0,
+          "w": 380.0,
+          "h": 23.0
+        },
+        "tag": "div"
+      },
+      {
+        "ref": "e31",
+        "role": "paragraph",
+        "name": "A regulatory hold has been applied to one or more accounts for this member. Review the hold before proceeding with servicing actions.",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 379.0,
+          "y": 109.0,
+          "w": 356.0,
+          "h": 49.5
+        },
+        "tag": "p"
+      },
+      {
+        "ref": "e32",
+        "role": "button",
+        "name": "Acknowledge",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Member Detail",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 379.0,
+          "y": 169.5,
+          "w": 96.234375,
+          "h": 19.0
+        },
+        "tag": "input"
+      }
+    ],
+    "aria_yaml": "# frame: main\n- document:\n  - iframe\n  - iframe\n\n# frame: navFrame\n- table:\n  - rowgroup:\n    - row \"Meridian Credit Union | Servicing Console\":\n      - cell \"Meridian Credit Union | Servicing Console\"\n    - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n      - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n        - table:\n          - rowgroup:\n            - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n              - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n                - heading \"Navigation\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member Search\":\n                      - cell \"Member Search\":\n                        - link \"Member Search\":\n                    - row \"Transactions\":\n                      - cell \"Transactions\":\n                        - link \"Transactions\":\n                    - row \"Reports\":\n                      - cell \"Reports\":\n                        - link \"Reports\":\n                    - row \"Admin\":\n                      - cell \"Admin\":\n                        - link \"Admin\":\n                    - row:\n                      - cell\n                    - row \"Sign Out\":\n                      - cell \"Sign Out\":\n                        - link \"Sign Out\":\n    - row \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\"\n\n# frame: contentFrame\n- table:\n  - rowgroup:\n    - row \"Meridian Credit Union | Servicing Console\":\n      - cell \"Meridian Credit Union | Servicing Console\"\n    - row \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n      - cell \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n        - table:\n          - rowgroup:\n            - row \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n              - cell \"Member Detail Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                - heading \"Member Detail\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                      - cell \"Member ID 100042 Member Name J. RIVERA Status ACTIVE Home Branch MAIN Member Since «redacted:dob» Account Balance Savings «redacted:savingsBalance» Checking $1,203.11 Open Sub-Account | New Search\":\n                        - table:\n                          - rowgroup:\n                            - row \"Member ID 100042\":\n                              - cell \"Member ID\"\n                              - cell \"100042\"\n                            - row \"Member Name J. RIVERA\":\n                              - cell \"Member Name\"\n                              - cell \"J. RIVERA\"\n                            - row \"Status ACTIVE\":\n                              - cell \"Status\"\n                              - cell \"ACTIVE\"\n                            - row \"Home Branch MAIN\":\n                              - cell \"Home Branch\"\n                              - cell \"MAIN\"\n                            - row \"Member Since «redacted:dob»\":\n                              - cell \"Member Since\"\n                              - cell \"«redacted:dob»\"\n                        - table:\n                          - rowgroup:\n                            - row \"Account Balance\":\n                              - columnheader \"Account\"\n                              - columnheader \"Balance\"\n                            - row \"Savings «redacted:savingsBalance»\":\n                              - cell \"Savings\"\n                              - cell \"«redacted:savingsBalance»\"\n                            - row \"Checking $1,203.11\":\n                              - cell \"Checking\"\n                              - cell \"$1,203.11\"\n                        - paragraph:\n                          - link \"Open Sub-Account\":\n                          - text: \"|\"\n                          - link \"New Search\":\n    - row \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\"\n- dialog \"Regulation CC Hold Notice\":\n  - text: Regulation CC Hold Notice\n  - paragraph: A regulatory hold has been applied to one or more accounts for this member. Review the hold before proceeding with servicing actions.\n  - paragraph:\n    - button \"Acknowledge\"",
+    "screenshot_path": null,
+    "fingerprint": "58d03d782c6e3d5f",
+    "truncated": false
+  }
+]

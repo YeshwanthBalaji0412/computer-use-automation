@@ -1,0 +1,14 @@
+SCENARIO               EXPECTED                     ACTUAL                           
+-------------------------------------------------------------------------------------
+happy-path             success                      success                      PASS
+different-member       success                      success                      PASS
+not-found              MEMBER_NOT_FOUND             MEMBER_NOT_FOUND             PASS
+permission-denied      PERMISSION_DENIED            PERMISSION_DENIED            PASS
+invalid-input          failed                       invalid_input                PASS
+known-interstitial     success                      success                      PASS
+session-expiry         escalated                    recovery_exhausted           PASS
+unknown-dialog         escalated                    unknown_dialog               PASS
+app-error              APP_ERROR                    APP_ERROR                    PASS
+slow-load              success                      success                      PASS
+
+10/10 scenarios passed

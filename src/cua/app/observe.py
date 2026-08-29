@@ -56,8 +56,13 @@ async def _sign_in(surface: WebSurface, url: str) -> None:
     btn = _find(obs, "button", "Sign In")
     if not (user and pwd and btn):
         return
-    await surface.act(Action(type=ActionType.FILL, ref=user.ref, text="operator"))
-    await surface.act(Action(type=ActionType.FILL, ref=pwd.ref, text="demo-pass"))
+    from cua.app.replay import secrets_from_env
+
+    # One source of truth for the demo credentials, resolved from the environment, so
+    # there is no second copy of a password sitting in the source tree.
+    secrets = secrets_from_env()
+    await surface.act(Action(type=ActionType.FILL, ref=user.ref, text=secrets["corelink.user-id"]))
+    await surface.act(Action(type=ActionType.FILL, ref=pwd.ref, text=secrets["corelink.password"]))
     await surface.act(Action(type=ActionType.CLICK, ref=btn.ref))
 
 

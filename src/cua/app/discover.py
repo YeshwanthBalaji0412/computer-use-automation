@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from cua.app.replay import secrets_from_env
 from cua.discovery.agent import DiscoveryAgent, StopReason
 from cua.discovery.compiler import compile_capability
 from cua.discovery.llm import AnthropicClient, LLMClient, MockLLM
@@ -61,7 +62,13 @@ async def run_discover(
     )
 
     try:
-        agent = DiscoveryAgent(surface=surface, llm=llm, policy=policy_engine, logger=logger)
+        agent = DiscoveryAgent(
+            surface=surface,
+            llm=llm,
+            policy=policy_engine,
+            logger=logger,
+            secrets=secrets_from_env(),
+        )
         result = await agent.run(goal=goal, target=target, tenant=tenant)
     finally:
         await surface.close()

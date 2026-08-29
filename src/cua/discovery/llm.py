@@ -177,8 +177,9 @@ class MockLLM:
             encoding="utf-8",
         )
 
-    #: `  e19  link 'View' [contentFrame]  (row: ...)` in the rendered observation.
+    #: `  e19  link 'View' [contentFrame]  (row: Account=Savings | column: Action)`
     _LINE = re.compile(r"^\s+(e\d+)\s+([\w-]+)\s+'(.*?)'")
+    _ROW = re.compile(r"\(row: (.*?) \| column: (.*?)\)")
 
     async def turn(
         self,
@@ -233,9 +234,19 @@ class MockLLM:
                 index: dict[str, str] = {}
                 for line in str(block.get("content", "")).splitlines():
                     match = cls._LINE.match(line)
-                    if match:
-                        ref, role, name = match.groups()
-                        index.setdefault(f"{role}|{name}".lower(), ref)
+                    if not match:
+                        continue
+                    ref, role, name = match.groups()
+                    index.setdefault(f"{role}|{name}".lower(), ref)
+
+                    # Extraction targets are hinted by column and a sibling cell rather
+                    # than by their own text, so index those forms too.
+                    row = cls._ROW.search(line)
+                    if row:
+                        pairs, column = row.groups()
+                        for pair in pairs.split(", "):
+                            if "=" in pair and not pair.startswith(f"{column}="):
+                                index.setdefault(f"{role}|col:{column}|{pair}".lower(), ref)
                 if index:
                     return index
         return {}

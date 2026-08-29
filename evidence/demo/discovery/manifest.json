@@ -1,0 +1,11 @@
+{
+  "run_id": "dis_99ab9c84e90f",
+  "kind": "discovery",
+  "finished_at": "2026-08-29T03:12:04+00:00",
+  "duration_ms": 22660,
+  "goal": "replay a recorded discovery transcript",
+  "tenant": "meridian",
+  "stop_reason": "finished",
+  "capability": "member.savings-balance@1.0.0",
+  "artifact": "capabilities/«redacted:email»"
+}

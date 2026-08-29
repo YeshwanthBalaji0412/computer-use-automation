@@ -1,0 +1,10 @@
+conformance: member.savings-balance
+
+TENANT        STEPS  DEGRADED  UNRESOLVED  NOTES
+------------------------------------------------
+lakeside          8         2           0  s4:t1->t3, s7:t4->t5
+meridian          7         0           0  clean
+
+A degraded step still works - a better-ranked strategy stopped matching, which
+is the earliest warning that this tenant's UI has moved. Unresolved steps are
+the ones that will fail the next time somebody calls this capability.

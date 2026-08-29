@@ -135,7 +135,7 @@ async def run_replay(
     # still raised and reported honestly, they just terminate instead of parking. One
     # code path, two deployment shapes.
     controller = SessionController() if operator_port else None
-    store = InterventionStore(logger.dir) if operator_port else None
+    store = InterventionStore(logger.dir, redactor=redactor) if operator_port else None
 
     def note_human_action(payload: dict[str, str]) -> None:
         if controller is None:

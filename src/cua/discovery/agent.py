@@ -44,6 +44,7 @@ from cua.discovery.tools import (
     tool_definitions,
 )
 from cua.evidence.logger import EventType, EvidenceLogger
+from cua.locator.generate import CONTENT_ROLES
 from cua.policy.engine import PolicyEngine
 from cua.schema.capability import ActionKind
 from cua.schema.policy import DecisionKind
@@ -51,6 +52,28 @@ from cua.surface.base import Action, ActionType, ElementNode, Observation, Surfa
 
 #: Consecutive acts with an unchanged fingerprint before we call it a dead end.
 NO_PROGRESS_LIMIT = 3
+
+
+#: `<secret:corelink.password>` in a recorded transcript.
+_SECRET_MARKER = re.compile(r"<secret:([\w.\-]+)>")
+
+
+def _extraction_hint(element: ElementNode) -> str:
+    """A replay hint for an extraction target that does not quote its own value.
+
+    For a table cell the accessible name *is* the balance, so the usual `role|name` hint
+    would put a member's regulated data into a committed transcript - the fourth place
+    that same circularity turned up. Identify the cell by its column and a *different*
+    cell in its row instead.
+    """
+    if element.role in CONTENT_ROLES and element.row_context:
+        column = element.row_context.column_header
+        for key, value in element.row_context.row_key.items():
+            if key != column:
+                return f"{element.role}|col:{column}|{key}={value}"
+    if element.role in CONTENT_ROLES and element.anchor_text:
+        return f"{element.role}|anchor:{element.anchor_text}"
+    return f"{element.role}|{element.name}"
 
 
 def _slug(text: str) -> str:
@@ -110,6 +133,7 @@ class DiscoveryAgent:
         policy: PolicyEngine,
         logger: EvidenceLogger,
         recorder: Recorder | None = None,
+        secrets: dict[str, str] | None = None,
     ) -> None:
         self._surface = surface
         self._llm = llm
@@ -118,6 +142,9 @@ class DiscoveryAgent:
         self._recorder = recorder or Recorder()
         self._observation: Observation | None = None
         self._fingerprints: list[str] = []
+        #: Resolves `<secret:name>` markers in a replayed transcript. During a live
+        #: run the real value is typed and the *recording* keeps the marker.
+        self._secrets = secrets or {}
 
     async def run(self, *, goal: str, target: str, tenant: str) -> DiscoveryResult:
         started = time.monotonic()
@@ -302,16 +329,29 @@ class DiscoveryAgent:
             # role and name will not.
             call.element_hint = f"{element.role}|{element.name}"
 
-        # A value typed into a password field is registered with the redactor *before*
-        # the first write, so it is masked in this event, in every later event, and in
-        # the run manifest. Filtering at each call site instead would mean a secret is
-        # masked only where somebody remembered to mask it.
         typed = getattr(args, "text", None)
-        is_secret = bool(element and "secret" in element.states and typed)
+        is_secret = bool(element and "secret" in element.states)
         secret_ref = ""
-        if is_secret and element and typed:
+
+        if is_secret and element is not None:
             secret_ref = f"corelink.{_slug(element.name) or 'secret'}"
-            self._log.register_secret(secret_ref, typed)
+
+            # A replayed transcript carries `<secret:name>` rather than the credential.
+            # Resolve it here, at execution time, from the environment.
+            marker = _SECRET_MARKER.fullmatch(typed or "")
+            if marker:
+                secret_ref = marker.group(1)
+                typed = self._secrets.get(secret_ref, "")
+
+            # Registered with the redactor *before* the first write, so the value is
+            # masked in this event, every later event, and the run manifest. Filtering
+            # per call site would mean a secret is masked only where someone remembered.
+            if typed:
+                self._log.register_secret(secret_ref, typed)
+
+            # And the recorded turn keeps the reference, never the value - so the
+            # transcript is safe to commit and still replays.
+            call.arguments = {**call.arguments, "text": f"<secret:{secret_ref}>"}
 
         self._log.event(EventType.ACTION, tool=call.name, why=why, target=call.arguments)
 
@@ -320,7 +360,7 @@ class DiscoveryAgent:
                 type=_SURFACE_ACTIONS[call.name],
                 ref=element.ref if element else None,
                 url=url,
-                text=getattr(args, "text", None),
+                text=typed if is_secret else getattr(args, "text", None),
                 value=getattr(args, "value", None),
                 key=getattr(args, "key", None),
             )
@@ -335,7 +375,10 @@ class DiscoveryAgent:
             before=before,
             after=after,
             element=element,
-            value=getattr(args, "text", None) or getattr(args, "value", None),
+            # The recorder never sees the credential either.
+            value=None
+            if is_secret
+            else (getattr(args, "text", None) or getattr(args, "value", None)),
             is_parameter=bool(getattr(args, "is_parameter", False)),
             parameter_name=getattr(args, "parameter_name", ""),
             is_secret=is_secret,
@@ -355,7 +398,7 @@ class DiscoveryAgent:
         element = observation.by_ref(args.ref)
         if element is None:
             return f"no element {args.ref!r} in the current observation"
-        call.element_hint = f"{element.role}|{element.name}"
+        call.element_hint = _extraction_hint(element)
 
         value = element.value or element.name
         if args.sensitive and value:
@@ -415,6 +458,7 @@ class DiscoveryAgent:
         await self._surface.act(Action(type=ActionType.NAVIGATE, url=target))
         self._observation = await self._surface.observe()
         self._recorder.entry_url = self._observation.url
+        self._recorder.entry_fingerprint = self._observation.fingerprint
 
     def _stalled(self) -> bool:
         recent = self._fingerprints[-NO_PROGRESS_LIMIT:]

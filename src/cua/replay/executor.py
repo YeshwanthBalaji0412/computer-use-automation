@@ -42,6 +42,7 @@ from cua.control.intervention import Intervention, InterventionStore, suggest
 from cua.control.session import Disposition, SessionController
 from cua.evidence.logger import EventType, EvidenceLogger
 from cua.locator.generate import bind
+from cua.locator.match import resolve as match_resolve
 from cua.policy.engine import PolicyEngine
 from cua.replay.assertions import evaluate_all, screen_text
 from cua.replay.classifier import Classification, StateClass, StateClassifier
@@ -722,6 +723,7 @@ class ReplayExecutor:
     ) -> Intervention | None:
         if self._interventions is None:
             if ctx.observation is not None:
+                self._register_visible_secrets(ctx)
                 self._log.write_failure_context(
                     aria_snapshot=ctx.observation.aria_yaml,
                     observations=[ctx.observation.model_dump(mode="json")],
@@ -731,6 +733,7 @@ class ReplayExecutor:
 
         shot: str | None = None
         if ctx.observation is not None:
+            self._register_visible_secrets(ctx)
             self._log.write_failure_context(
                 aria_snapshot=ctx.observation.aria_yaml,
                 observations=[ctx.observation.model_dump(mode="json")],
@@ -766,6 +769,26 @@ class ReplayExecutor:
             return str(path)
         except Exception:  # a screenshot is evidence, never a reason to fail a run
             return None
+
+    def _register_visible_secrets(self, ctx: _Ctx) -> None:
+        """Mask declared-sensitive values as soon as they are *on screen*.
+
+        Registration otherwise happens at extraction, which is too late for a run that
+        escalates or fails earlier: the failure context captures the whole screen, and a
+        balance is visible on it well before the step that reads it. Currency patterns
+        are deliberately not masked by the backstop - masking every amount would make
+        evidence unreadable - so the declared locator is the only thing that knows this
+        particular number is regulated.
+        """
+        if ctx.observation is None:
+            return
+        for output in self._cap.outputs:
+            if output.sensitivity not in ("pii", "secret") or output.locator is None:
+                continue
+            resolution = match_resolve(bind(output.locator, ctx.values), ctx.observation)
+            node = ctx.observation.by_ref(resolution.ref or "")
+            if node is not None:
+                self._log.register_secret(output.name, node.value or node.name)
 
     def _output_locators(self) -> dict[str, Locator]:
         """Output name -> the locator in force for this run, after any tenant overlay."""
@@ -824,6 +847,7 @@ class ReplayExecutor:
         locator: Locator | None = None,
     ) -> Failed:
         if ctx.observation is not None:
+            self._register_visible_secrets(ctx)
             self._log.write_failure_context(
                 aria_snapshot=ctx.observation.aria_yaml,
                 observations=[ctx.observation.model_dump(mode="json")],
