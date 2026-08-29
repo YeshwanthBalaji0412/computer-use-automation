@@ -78,7 +78,7 @@ Three contracts in `setup.cfg`: replay may not import `openai` or `cua.discovery
 **pytest + pytest-asyncio** — unit tests, browser integration tests, and the eval matrix (three markers).
 **ruff** — lint + format in one tool. Replaces black + isort + flake8.
 **mypy --strict** — Pydantic gives runtime validation; mypy gives compile-time. "Reasonably typed" is a literal rubric row.
-**GitHub Actions** — one workflow: `ruff` → `mypy` → `lint-imports` → `pytest -m unit` → `cua eval` (which needs no API key). ~30 lines. Two things it buys beyond hygiene: the **import-linter contract proving replay never touches the LLM runs publicly on every push**, and a green badge on the README tells a reviewer the eval matrix actually passes before they clone anything.
+**GitHub Actions** — one workflow ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): `ruff` → `mypy` → `lint-imports` → `pytest -m unit` → `pytest -m "integration or eval"` against a real Chromium → `cua eval` → `scripts/check_secrets.py`. **No secrets are configured**, which is the whole point — every gate runs on a fork, on a clean clone. Three things it buys beyond hygiene: the **import-linter contract proving replay never touches the LLM runs publicly on every push**; the redaction rules are enforced rather than reviewed; and a green badge on the README tells a reviewer the eval matrix actually passes before they clone anything.
 
 ### The operator console
 
@@ -138,7 +138,7 @@ Your interview cheat sheet. Every sub-requirement in the brief, the component th
 | Agent must not act outside it | Enforced inside every tool's `run()` — the model gets `blocked by policy:` as a tool result and cannot route around it | `cua discover --target https://evil.example` → refuses |
 | Safe vs. risky classification | `policy/risk.py` — read_only / reversible_write / irreversible_write | `test_risk_classification.py` |
 | Handle risky conservatively | **Fail closed.** Discovery → escalate. Replay → needs `status==approved` **AND** `--approve` **AND** declared step risk | `cua replay --capability account.open-subaccount` → `blocked`; `--approve` → `success` |
-| Never persist secrets / raw PII | `policy/redactor.py` at every egress: logs, artifacts, **screenshots** (masked pre-encode), **and prompts** (model sees `«param:memberId»`, never the value) | `test_redactor.py`; CI greps `evidence/` |
+| Never persist secrets / raw PII | `policy/redactor.py` at every egress: logs, artifacts, **screenshots** (masked pre-encode), **and prompts** (model sees `«param:memberId»`, never the value) | `test_redactor.py`; `scripts/check_secrets.py` in CI |
 
 ### 3.5 Evidence / observability
 

@@ -20,6 +20,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import check_secrets
+
 REPO = Path(__file__).resolve().parents[1]
 DEMO = REPO / "evidence" / "demo"
 RUNS = REPO / "evidence" / "runs"
@@ -173,15 +177,9 @@ def main() -> None:
         DEMO / "member.savings-balance@1.0.0.json",
     )
 
-    scanned = 0
-    for path in DEMO.rglob("*"):
-        if path.suffix in (".json", ".jsonl", ".md", ".txt"):
-            text = path.read_text(encoding="utf-8", errors="ignore")
-            for secret in ("demo-pass", "4,182.55"):
-                if secret in text:
-                    raise SystemExit(f"regulated value {secret!r} leaked into {path}")
-            scanned += 1
-    print(f"\nscanned {scanned} committed files for leaked values: clean")
+    print("\nredaction gate")
+    if check_secrets.main() != 0:
+        raise SystemExit("refusing to leave leaked evidence on disk")
     print(f"evidence written to {DEMO.relative_to(REPO)}")
 
 

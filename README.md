@@ -1,5 +1,7 @@
 # Computer-Use Automation
 
+[![ci](https://github.com/YeshwanthBalaji0412/computer-use-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/YeshwanthBalaji0412/computer-use-automation/actions/workflows/ci.yml)
+
 **An LLM learns a legacy banking UI once. A typed capability artifact replays it forever — with no model in the loop.**
 
 Banks and credit unions run a long tail of internal applications with no API: core banking screens, servicing tools, admin consoles. The only way in is the way a teller does it — log in, type into a form, click, read the screen.
@@ -133,6 +135,36 @@ lakeside          8         2           0  s4:t1->t3, s7:t4->t5
 meridian          7         0           0  clean
 ```
 
+### 6. See what the calling AI agent sees
+
+```bash
+uv run cua catalog --show member.savings-balance
+```
+```json
+{
+  "name": "member_savings_balance",
+  "description": "Looks up a member by ID and retrieves their current savings balance...
+    Returns: savingsBalance (currency). May instead return one of these expected outcomes,
+    which are answers rather than errors: MEMBER_NOT_FOUND, PERMISSION_DENIED,
+    VALIDATION_REJECTED, DUPLICATE_RECORD, APP_ERROR.
+    Status: draft - not yet approved for unattended use.",
+  "arguments_schema": {
+    "type": "object",
+    "properties": {
+      "memberId": { "type": "string", "pattern": "^\\d{6}$", "examples": ["100042"] }
+    },
+    "required": ["memberId"],
+    "additionalProperties": false
+  }
+}
+```
+
+This is the payoff of putting business outcomes in the schema. The tool description tells a
+calling agent that `MEMBER_NOT_FOUND` is a possible **answer** *before it ever invokes* — so
+it can plan around it instead of treating every non-success as an outage. The schema is
+generated from the same Pydantic declaration that types the code and validates the artifact
+on load, so the contract cannot drift from the implementation.
+
 ---
 
 ## Watching it work
@@ -199,9 +231,9 @@ Committed, and reproducible with `uv run python scripts/build_evidence.py`:
 | [`evidence/demo/replay-lakeside/`](evidence/demo/replay-lakeside/) | The same artifact at another institution |
 | [`evidence/demo/eval-matrix.txt`](evidence/demo/eval-matrix.txt) | All ten scenarios |
 
-Every run directory contains `events.jsonl` (a structured log of what happened **and why**), `manifest.json`, a rendered `report.md`, per-step screenshots, and on failure an `aria.txt` showing what the system *perceived* — the difference between that and the screenshot is usually the bug.
+Every run directory contains `events.jsonl` (a structured log of what happened **and why**), `manifest.json`, a rendered `report.md`, `steps/*.png` (per-step screenshots, masked before encoding), a Playwright `trace.zip` you can open in `npx playwright show-trace`, and on failure an `aria.txt` showing what the system *perceived* — the difference between that and the screenshot is usually the bug.
 
-Nothing in there contains a credential or a member's balance. The build script fails loudly if it does.
+Redaction is enforced by a gate, not by review: [`scripts/check_secrets.py`](scripts/check_secrets.py) runs in CI and again at the end of every evidence build. No credential appears in any committed file, in any form, and a member's balance appears in **nothing the system persists** — not the artifact, not the event log, not the manifest, not a failure dump, not the LLM transcript. The one place it does appear is `console.txt`, because a capability whose declared output is a savings balance has to print that balance to the operator who asked for it. Redaction is about incidental retention, not about refusing to answer the question.
 
 ---
 
@@ -211,9 +243,12 @@ Nothing in there contains a credential or a member's balance. The build script f
 uv run pytest -m unit           # ~4s, no browser
 uv run pytest -m integration    # ~20min, real Chromium
 uv run ruff check . && uv run mypy && uv run lint-imports
+uv run python scripts/check_secrets.py
 ```
 
 `lint-imports` enforces three architectural contracts: replay may not import the LLM SDK, Playwright is confined to the surface adapter, and the schema layer depends on nothing else.
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs all of the above on every push, plus the integration suite and the full eval matrix against a real Chromium. **It needs no secrets** — so the badge above is a claim a reviewer can verify from a fork: the eval matrix passes, and the contract proving replay never touches the LLM holds, before they clone anything.
 
 ---
 

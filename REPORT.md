@@ -215,7 +215,7 @@ Four leaks were found by tests during the build, all of the same shape — *the 
 **Deliberately not built:**
 
 - **A second live-recorded capability.** The shipped artifact *was* recorded by `gpt-4o` against the live API, and the transcript in `evidence/fixtures/` is that run — so `--mock` replays a real model, not a stand-in. But only one capability has been through the live loop.
-- **The MCP capability catalogue.** ~40 lines over the existing registry to expose artifacts as tools an agent discovers by name. It closes the brief's own through-line loop and was cut for the write-up.
+- **An MCP server in front of the catalogue.** `cua catalog` *is* built — every artifact is rendered as a tool definition, with its declared business outcomes in the description so a calling agent knows `MEMBER_NOT_FOUND` is a possible answer before it invokes. What is not built is the MCP transport that would let a model discover it over a wire; the contract is generated, the serving of it is a shim.
 - **Desktop and terminal surfaces.** Designed against the `Surface` ABC, not implemented. The mapping table above is the deliverable.
 - **Assisted LLM recovery on replay failure.** The policy envelope is designed — one step, bounded, policy-checked, recorded as evidence — but a bounded model call inside the deterministic path needs more care than a week allows.
 - **Infrastructure**: queues, workers, a database, Docker, multi-tenant plumbing. The brief says explicitly this is not rewarded, and the seams that would become service boundaries already exist.

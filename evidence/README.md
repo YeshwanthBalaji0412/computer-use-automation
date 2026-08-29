@@ -53,10 +53,16 @@ events.jsonl     one JSON object per event, in order, with an `actor` field
 manifest.json    what ran, with what inputs (redacted), and how it ended
 report.md        the same thing rendered for a human
 steps/*.png      per-step screenshots, masked before encoding
+trace.zip        Playwright trace: npx playwright show-trace trace.zip
 failure/         on failure or escalation: aria snapshot, observations, summary
 interventions/   the intervention record and its resolution
 console.txt      what the operator saw in their terminal
 ```
+
+`trace.zip` is the one to open when a step fails for a reason the aria snapshot does not
+explain. It carries the DOM at every action, the network log, and the console — the layer
+this system deliberately does *not* look at during normal operation, which is exactly why
+it is worth having when perception and reality disagree.
 
 Two things worth opening:
 
@@ -133,6 +139,17 @@ Every member, name, balance and credential in here is invented. `100042` and `J.
 are fixtures in [`targetapp/data.py`](../targetapp/data.py). Nothing was automated against
 a third-party site and no real credentials were used anywhere.
 
-The balance and the demo password do not appear in any committed file — not in the
-artifact, not in the transcript, not in an intervention record, not in a log. That is
-checked by the build script rather than by hand.
+The demo password appears in **no committed file, anywhere**. A member's balance appears
+in nothing the system *persists* — not the artifact, not the transcript, not an
+intervention record, not an event log, not a manifest, not a failure dump.
+
+It does appear in `console.txt`, and that is the correct behaviour rather than a gap. The
+capability's declared output *is* a savings balance; a run that refused to print it to the
+operator who asked for it would not have done its job. Redaction here means no
+**incidental retention** — the value must not survive anywhere it was not explicitly
+requested — and drawing that line precisely matters more than drawing it conservatively,
+because a rule stated too broadly is one nobody can actually enforce.
+
+Which is the point of [`scripts/check_secrets.py`](../scripts/check_secrets.py): those
+three rules are encoded there, run in CI on every push and again at the end of every
+evidence build. Not checked by hand, and not taken on trust from this paragraph.

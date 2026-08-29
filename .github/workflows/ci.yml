@@ -1,0 +1,72 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# The whole point of this workflow is that it needs no API key. Discovery replays a
+# recorded transcript and replay never calls a model at all, so every gate below runs on a
+# fork, on a clean clone, with no secrets configured.
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      # Cached separately from the Python environment: the browser is ~150MB and changes
+      # far less often than the lockfile.
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - name: Install Chromium
+        run: uv run playwright install --with-deps chromium
+
+      - name: Format and lint
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+
+      - name: Types
+        run: uv run mypy
+
+      # The contract that matters most: replay may not import `openai` or
+      # `cua.discovery`. "Replay runs without invoking the LLM" is a requirement, and this
+      # is where it is proved rather than asserted.
+      - name: Architecture contracts
+        run: uv run lint-imports
+
+      - name: Unit tests
+        run: uv run pytest -m unit -q
+
+      # Drives a real Chromium against the local target app. Slower, and the only place
+      # the locator ladder, the frame handling and the handoff are exercised for real.
+      - name: Integration tests
+        run: uv run pytest -m "integration or eval" -q
+
+      # The reviewer-facing claim: ten scenarios, six different answers, no API key.
+      - name: Scenario matrix
+        run: uv run cua eval
+
+      # Redaction is a promise about every egress, so it is checked rather than reviewed.
+      - name: Redaction gate
+        run: uv run python scripts/check_secrets.py
