@@ -1,10 +1,7 @@
-status     failed
+status     success
 capability member.savings-balance@1.0.0   tenant=lakeside
-duration   27829 ms
+duration   28172 ms
 drift      suspected - the screen's shape differs from the recording
-error      checkpoint_failed
-at step    None - None
-expected   the capability reached its goal state
-observed   the member detail screen for member 100042: the cell '{{memberId}}' in the 'Member Detail' section (frame contentFrame); the member detail screen for member 100042: the cell 'J. RIVERA' in the 'Member Detail' section (frame contentFrame)
+outputs    {"savingsBalance": "4182.55"}
 locators   2 step(s) resolved at a lower tier than recorded
-evidence   evidence/runs/rep_b82e97c21583
+evidence   evidence/runs/rep_cc0223752b90

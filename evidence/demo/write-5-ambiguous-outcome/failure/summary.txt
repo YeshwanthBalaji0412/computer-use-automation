@@ -1,0 +1,1 @@
+escalated at s11: step s11 (commit the new sub-account) is an irreversible write and did not confirm - APP_ERROR: The application returned a server error.. Whether it committed is unknown from the screen; check the system of record before retrying.

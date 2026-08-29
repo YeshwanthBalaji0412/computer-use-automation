@@ -1079,17 +1079,23 @@
     "discovered_by": "llm",
     "model": "gpt-4o",
     "prompt_version": "discovery/v2",
-    "discovery_run_id": "dis_710fb27b3bb6",
-    "recorded_at": "2026-08-29T18:23:06.972663Z",
+    "discovery_run_id": "dis_4822749a0fba",
+    "recorded_at": "2026-08-29T20:05:20.504528Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "c1ba2c3478d015c0",
     "reviewed_by": null,
     "reviewed_at": null
   },
   "stability": {
-    "replays": 0,
-    "successes": 0,
-    "last_verified_at": null,
-    "locator_tier_histogram": {}
+    "replays": 2,
+    "successes": 2,
+    "last_verified_at": "2026-08-29T20:19:16.261392Z",
+    "locator_tier_histogram": {
+      "tier1": 9,
+      "tier3": 1,
+      "tier2": 1,
+      "tier4": 3,
+      "tier5": 1
+    }
   }
 }

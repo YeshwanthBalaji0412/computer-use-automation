@@ -146,6 +146,84 @@ async def escalation_demo() -> str:
     return "\n".join(log) + "\n\n" + render(result)
 
 
+WRITE = ("replay", "--capability", "member.open-subaccount")
+NICKNAME = "ROOF FUND"
+
+
+def write_flow() -> None:
+    """The two-gate chain, in the order a reviewer should read it.
+
+    Sequential and stateful on purpose. The duplicate refusal only means something
+    *after* the account has been opened, so these runs are ordered rather than
+    independent - which is exactly why they are here and not in the eval matrix, where
+    every row has to be re-runnable.
+
+    Starts by withdrawing the approval so the first run shows *both* gates missing. The
+    committed artifact ships approved; this is the only way to demonstrate the state it
+    was in before a human looked at it.
+    """
+    print("write flow: blocked -> approved -> success -> duplicate -> ambiguous")
+    lines = [run("approve", "member.open-subaccount", "--undo")]
+
+    lines.append(run(*WRITE, "--input", "memberId=100042", "--input", f"nickname={NICKNAME}"))
+    capture("rep", "write-1-blocked-unapproved", "\n".join(lines[-1:]))
+
+    approved = run("approve", "member.open-subaccount", "--reviewer", "ops@meridiancu.example")
+    print(f"  {approved.strip().splitlines()[0]}")
+
+    console = run(*WRITE, "--input", "memberId=100042", "--input", f"nickname={NICKNAME}")
+    capture("rep", "write-2-blocked-no-caller-approval", approved + "\n" + console)
+
+    console = run(
+        *WRITE, "--input", "memberId=100042", "--input", f"nickname={NICKNAME}", "--approve"
+    )
+    capture("rep", "write-3-success", console)
+
+    console = run(
+        *WRITE, "--input", "memberId=100042", "--input", f"nickname={NICKNAME}", "--approve"
+    )
+    capture("rep", "write-4-duplicate", console)
+
+    console = run(
+        *WRITE,
+        "--input",
+        "memberId=100042",
+        "--input",
+        "nickname=KAYAK FUND",
+        "--approve",
+        "--fault",
+        "write-timeout",
+    )
+    capture("rep", "write-5-ambiguous-outcome", console)
+
+
+#: Runs whose trace is worth ~1MB in a repository a reviewer clones. A trace answers
+#: "what did the browser actually do", which is a question you only ask when perception
+#: and reality disagreed - so the failures, the escalations, the cross-tenant run, and one
+#: recording keep theirs. A trace of a run that did exactly what it was supposed to
+#: demonstrates only that traces exist, which the four below already do.
+TRACE_KEEP = {
+    "discovery",
+    "replay-app-error",
+    "replay-escalated-handoff",
+    "replay-lakeside",
+    "write-5-ambiguous-outcome",
+}
+
+
+def prune_traces() -> None:
+    freed = 0
+    for trace in DEMO.rglob("trace.zip"):
+        if trace.parent.name not in TRACE_KEEP:
+            freed += trace.stat().st_size
+            trace.unlink()
+    kept = sum(t.stat().st_size for t in DEMO.rglob("trace.zip"))
+    print(
+        f"\ntraces: kept {len(list(DEMO.rglob('trace.zip')))} ({kept / 1e6:.1f} MB), "
+        f"dropped {freed / 1e6:.1f} MB from runs that went exactly as intended"
+    )
+
+
 def main() -> None:
     DEMO.mkdir(parents=True, exist_ok=True)
     print("discovery (from the recorded transcript, no API key)")
@@ -167,15 +245,29 @@ def main() -> None:
     console = asyncio.run(escalation_demo())
     capture("rep", "replay-escalated-handoff", console)
 
+    print("\nattended discovery of the write flow (authorised by a scripted operator)")
+    recorded = subprocess.run(
+        [sys.executable, str(REPO / "scripts" / "record_flow_b.py")],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+    )
+    if recorded.returncode != 0:
+        raise SystemExit(f"could not record the write flow:\n{recorded.stdout}{recorded.stderr}")
+    capture("dis", "discovery-write-flow", recorded.stdout + recorded.stderr)
+
+    write_flow()
+
     print("matrices")
     (DEMO / "eval-matrix.txt").write_text(run("eval"), encoding="utf-8")
     (DEMO / "conformance-sweep.txt").write_text(
         run("verify", "--capability", "member.savings-balance"), encoding="utf-8"
     )
-    shutil.copy(
-        REPO / "capabilities" / "member.savings-balance@1.0.0.json",
-        DEMO / "member.savings-balance@1.0.0.json",
-    )
+    for name in ("member.savings-balance@1.0.0", "member.open-subaccount@1.0.0"):
+        shutil.copy(REPO / "capabilities" / f"{name}.json", DEMO / f"{name}.json")
+    (DEMO / "catalog.txt").write_text(run("catalog"), encoding="utf-8")
+
+    prune_traces()
 
     print("\nredaction gate")
     if check_secrets.main() != 0:

@@ -1,0 +1,26 @@
+operator console -> http://localhost:57557/
+
+  authorisation needed: http://localhost:57557/#auth-1
+
+  authorisation needed: http://localhost:57557/#auth-2
+
+run      dis_22f4c1d96f94
+stopped  finished
+actions  12 effective of 12 attempted
+
+artifact capabilities/member.open-subaccount@1.0.0.json
+  12 steps, 2 input(s), 1 output(s), 6 known outcome(s)
+  status=draft risk=irreversible_write
+evidence evidence/runs/dis_22f4c1d96f94
+
+authorisation #1  risky_step_needs_approval
+  asked       The model wants to click 'Continue', which policy classifies as reversible_write: control name 'Continue' matches \b(save|update|apply|submit|continue|create)\b; risky actions are escalated during discovery. Discovery does not perform an action it cannot undo without a human saying so.
+  lease       human (epoch 1)
+  operator    approved; automation performs its own step
+authorisation #2  risky_step_needs_approval
+  asked       The model wants to click 'Confirm and Open Account', which policy classifies as irreversible_write: control name 'Confirm and Open Account' matches \b(confirm and open|confirm and submit|open account)\b; risky actions are escalated during discovery. Discovery does not perform an action it cannot undo without a human saying so.
+  lease       human (epoch 3)
+  operator    approved; automation performs its own step
+
+2 irreversible action(s) authorised by a human
+transcript -> evidence/fixtures/open-subaccount-transcript.json

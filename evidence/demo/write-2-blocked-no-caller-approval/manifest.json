@@ -1,0 +1,14 @@
+{
+  "run_id": "rep_5c5ae4f69216",
+  "kind": "replay",
+  "finished_at": "2026-08-29T20:10:06+00:00",
+  "duration_ms": 39167,
+  "capability": "member.open-subaccount@1.0.0",
+  "tenant": "meridian",
+  "inputs": {
+    "memberId": "100042",
+    "nickname": "ROOF FUND"
+  },
+  "status": "blocked",
+  "fault": null
+}

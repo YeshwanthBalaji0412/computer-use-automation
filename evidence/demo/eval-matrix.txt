@@ -6,9 +6,12 @@ not-found              MEMBER_NOT_FOUND             MEMBER_NOT_FOUND            
 permission-denied      PERMISSION_DENIED            PERMISSION_DENIED            PASS
 invalid-input          failed                       invalid_input                PASS
 known-interstitial     success                      success                      PASS
-session-expiry         escalated                    recovery_exhausted           PASS
+session-expiry         success                      success                      PASS
 unknown-dialog         escalated                    unknown_dialog               PASS
 app-error              APP_ERROR                    APP_ERROR                    PASS
 slow-load              success                      success                      PASS
+write-blocked          blocked                      blocked                      PASS
+write-duplicate        DUPLICATE_RECORD             DUPLICATE_RECORD             PASS
+write-ambiguous        ambiguous_write_outcome      ambiguous_write_outcome      PASS
 
-10/10 scenarios passed
+13/13 scenarios passed

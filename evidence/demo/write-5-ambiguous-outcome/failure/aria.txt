@@ -1,0 +1,47 @@
+# frame: main
+- document:
+  - iframe
+  - iframe
+
+# frame: navFrame
+- table:
+  - rowgroup:
+    - row "Meridian Credit Union | Servicing Console":
+      - cell "Meridian Credit Union | Servicing Console"
+    - row "Navigation Member Search Transactions Reports Admin Sign Out":
+      - cell "Navigation Member Search Transactions Reports Admin Sign Out":
+        - table:
+          - rowgroup:
+            - row "Navigation Member Search Transactions Reports Admin Sign Out":
+              - cell "Navigation Member Search Transactions Reports Admin Sign Out":
+                - heading "Navigation" [level=2]
+                - table:
+                  - rowgroup:
+                    - row "Member Search":
+                      - cell "Member Search":
+                        - link "Member Search":
+                    - row "Transactions":
+                      - cell "Transactions":
+                        - link "Transactions":
+                    - row "Reports":
+                      - cell "Reports":
+                        - link "Reports":
+                    - row "Admin":
+                      - cell "Admin":
+                        - link "Admin":
+                    - row:
+                      - cell
+                    - row "Sign Out":
+                      - cell "Sign Out":
+                        - link "Sign Out":
+    - row "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.":
+      - cell "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc."
+
+# frame: contentFrame
+- text: Server Error in '/CoreLink' Application.
+- separator
+- heading "Unhandled exception in servicing module" [level=2]
+- paragraph: "Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code."
+- paragraph: "Exception Details: CoreLink.Servicing.ServiceUnavailableException: The servicing host did not respond."
+- separator
+- paragraph: "Version Information: CoreLink Runtime Version 8.2; Servicing Console Build 14"

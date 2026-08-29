@@ -1,0 +1,282 @@
+[
+  {
+    "observation_id": "obs_e68255241a5f",
+    "url": "http://localhost:4000/tenants/meridian/home",
+    "title": "Meridian Credit Union - CoreLink Servicing Console",
+    "frame_paths": [
+      [],
+      [
+        "navFrame"
+      ],
+      [
+        "contentFrame"
+      ]
+    ],
+    "elements": [
+      {
+        "ref": "e0",
+        "role": "cell",
+        "name": "Meridian Credit Union | Servicing Console",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 0.0,
+          "w": 170.0,
+          "h": 60.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e1",
+        "role": "heading",
+        "name": "Navigation",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 20.0,
+          "y": 80.0,
+          "w": 130.0,
+          "h": 16.0
+        },
+        "tag": "h2"
+      },
+      {
+        "ref": "e2",
+        "role": "link",
+        "name": "Member Search",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 108.0,
+          "w": 86.5625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e3",
+        "role": "link",
+        "name": "Transactions",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 127.0,
+          "w": 68.5625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e4",
+        "role": "link",
+        "name": "Reports",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 146.0,
+          "w": 42.234375,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e5",
+        "role": "link",
+        "name": "Admin",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 165.0,
+          "w": 35.0625,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e6",
+        "role": "link",
+        "name": "Sign Out",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 24.0,
+          "y": 203.0,
+          "w": 48.1875,
+          "h": 13.0
+        },
+        "tag": "a"
+      },
+      {
+        "ref": "e7",
+        "role": "cell",
+        "name": "CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "navFrame"
+        ],
+        "section": "Navigation",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 240.0,
+          "w": 170.0,
+          "h": 42.0
+        },
+        "tag": "td"
+      },
+      {
+        "ref": "e8",
+        "role": "text",
+        "name": "Server Error in '/CoreLink' Application.",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 0.0,
+          "w": 448.78125,
+          "h": 30.0
+        },
+        "tag": "span"
+      },
+      {
+        "ref": "e9",
+        "role": "heading",
+        "name": "Unhandled exception in servicing module",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": null,
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 55.484375,
+          "w": 1108.0,
+          "h": 22.0
+        },
+        "tag": "h2"
+      },
+      {
+        "ref": "e10",
+        "role": "text",
+        "name": "Description:",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Unhandled exception in servicing module",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 92.96875,
+          "w": 77.78125,
+          "h": 15.0
+        },
+        "tag": "b"
+      },
+      {
+        "ref": "e11",
+        "role": "text",
+        "name": "Exception Details:",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Unhandled exception in servicing module",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 136.296875,
+          "w": 115.5625,
+          "h": 15.0
+        },
+        "tag": "b"
+      },
+      {
+        "ref": "e12",
+        "role": "paragraph",
+        "name": "Version Information: CoreLink Runtime Version 8.2; Servicing Console Build 14",
+        "value": null,
+        "states": [],
+        "frame_path": [
+          "contentFrame"
+        ],
+        "section": "Unhandled exception in servicing module",
+        "row_context": null,
+        "anchor_text": null,
+        "bbox": {
+          "x": 0.0,
+          "y": 176.28125,
+          "w": 1108.0,
+          "h": 12.0
+        },
+        "tag": "p"
+      }
+    ],
+    "aria_yaml": "# frame: main\n- document:\n  - iframe\n  - iframe\n\n# frame: navFrame\n- table:\n  - rowgroup:\n    - row \"Meridian Credit Union | Servicing Console\":\n      - cell \"Meridian Credit Union | Servicing Console\"\n    - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n      - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n        - table:\n          - rowgroup:\n            - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n              - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n                - heading \"Navigation\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member Search\":\n                      - cell \"Member Search\":\n                        - link \"Member Search\":\n                    - row \"Transactions\":\n                      - cell \"Transactions\":\n                        - link \"Transactions\":\n                    - row \"Reports\":\n                      - cell \"Reports\":\n                        - link \"Reports\":\n                    - row \"Admin\":\n                      - cell \"Admin\":\n                        - link \"Admin\":\n                    - row:\n                      - cell\n                    - row \"Sign Out\":\n                      - cell \"Sign Out\":\n                        - link \"Sign Out\":\n    - row \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\"\n\n# frame: contentFrame\n- text: Server Error in '/CoreLink' Application.\n- separator\n- heading \"Unhandled exception in servicing module\" [level=2]\n- paragraph: \"Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code.\"\n- paragraph: \"Exception Details: CoreLink.Servicing.ServiceUnavailableException: The servicing host did not respond.\"\n- separator\n- paragraph: \"Version Information: CoreLink Runtime Version 8.2; Servicing Console Build 14\"",
+    "screenshot_path": null,
+    "fingerprint": "61b8006df22fe1f6",
+    "truncated": false
+  }
+]

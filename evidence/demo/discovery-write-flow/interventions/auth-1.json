@@ -1,0 +1,32 @@
+{
+  "id": "auth-1",
+  "run_id": "dis_22f4c1d96f94",
+  "raised_at": "2026-08-29T20:08:35.607997Z",
+  "capability": "(being discovered)",
+  "goal": "Open a new SAVINGS sub-account nicknamed HOLIDAY FUND for member 100042, and read back the confirmation number",
+  "tenant": null,
+  "step_id": "turn-10",
+  "step_intent": "review the new sub-account",
+  "reason": "risky_step_needs_approval",
+  "explain": "The model wants to click 'Continue', which policy classifies as reversible_write: control name 'Continue' matches \\b(save|update|apply|submit|continue|create)\\b; risky actions are escalated during discovery. Discovery does not perform an action it cannot undo without a human saying so.",
+  "attempted": [
+    "click: start the new sub-account form for this member",
+    "fill: name the new sub-account",
+    "select: open it as a savings sub-account"
+  ],
+  "url": "http://localhost:4000/tenants/meridian/home",
+  "screenshot_path": null,
+  "aria_snapshot": "# frame: main\n- document:\n  - iframe\n  - iframe\n\n# frame: navFrame\n- table:\n  - rowgroup:\n    - row \"Meridian Credit Union | Servicing Console\":\n      - cell \"Meridian Credit Union | Servicing Console\"\n    - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n      - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n        - table:\n          - rowgroup:\n            - row \"Navigation Member Search Transactions Reports Admin Sign Out\":\n              - cell \"Navigation Member Search Transactions Reports Admin Sign Out\":\n                - heading \"Navigation\" [level=2]\n                - table:\n                  - rowgroup:\n                    - row \"Member Search\":\n                      - cell \"Member Search\":\n                        - link \"Member Search\":\n                    - row \"Transactions\":\n                      - cell \"Transactions\":\n                        - link \"Transactions\":\n                    - row \"Reports\":\n                      - cell \"Reports\":\n                        - link \"Reports\":\n                    - row \"Admin\":\n                      - cell \"Admin\":\n                        - link \"Admin\":\n                    - row:\n                      - cell\n                    - row \"Sign Out\":\n                      - cell \"Sign Out\":\n                        - link \"Sign Out\":\n    - row \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\"\n\n# frame: contentFrame\n- table:\n  - rowgroup:\n    - row \"Meridian Credit Union | Servicing Console\":\n      - cell \"Meridian Credit Union | Servicing Console\"\n    - row \"Open Sub-Account Member 100042 — J. RIVERA Account Nickname HOLIDAY FUND Account Type SAVINGS Initial Deposit 0.00 Continue\":\n      - cell \"Open Sub-Account Member 100042 — J. RIVERA Account Nickname HOLIDAY FUND Account Type SAVINGS Initial Deposit 0.00 Continue\":\n        - table:\n          - rowgroup:\n            - row \"Open Sub-Account Member 100042 — J. RIVERA Account Nickname HOLIDAY FUND Account Type SAVINGS Initial Deposit 0.00 Continue\":\n              - cell \"Open Sub-Account Member 100042 — J. RIVERA Account Nickname HOLIDAY FUND Account Type SAVINGS Initial Deposit 0.00 Continue\":\n                - heading \"Open Sub-Account\" [level=2]\n                - paragraph: Member 100042 — J. RIVERA\n                - table:\n                  - rowgroup:\n                    - row \"Account Nickname HOLIDAY FUND\":\n                      - cell \"Account Nickname\"\n                      - cell \"HOLIDAY FUND\":\n                        - textbox \"Account Nickname\": HOLIDAY FUND\n                    - row \"Account Type SAVINGS\":\n                      - cell \"Account Type\"\n                      - cell \"SAVINGS\":\n                        - combobox \"Account Type\":\n                          - option \"SAVINGS\" [selected]\n                          - option \"MONEY MARKET\"\n                          - option \"CERTIFICATE\"\n                    - row \"Initial Deposit 0.00\":\n                      - cell \"Initial Deposit\"\n                      - cell \"0.00\":\n                        - textbox \"Initial Deposit\": \"0.00\"\n                    - row \"Continue\":\n                      - cell\n                      - cell \"Continue\":\n                        - button \"Continue\"\n    - row \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\":\n      - cell \"CoreLink Servicing Console v8.2.14 | (c) CoreLink Systems Inc.\"",
+  "suggested_actions": [
+    "Authorise it - resume as 'step completed' and automation will click 'Continue' itself, recording it as a step",
+    "Refuse - abort the run; nothing irreversible has happened yet"
+  ],
+  "status": "resolved",
+  "operator": "operator",
+  "taken_at": "2026-08-29T20:08:35.628069Z",
+  "resolved_at": "2026-08-29T20:08:35.630214Z",
+  "disposition": "step_completed",
+  "note": "authorised for this recording session",
+  "human_actions": [],
+  "operator_url": "http://localhost:57557/#auth-1"
+}

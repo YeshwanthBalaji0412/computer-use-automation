@@ -1,0 +1,17 @@
+2 capability(ies)
+
+  member.open-subaccount@1.0.0
+    Member Open-Subaccount
+    status=approved  risk=irreversible_write  idempotent=False  steps=12
+    in   memberId: string, ^\d{6}$, e.g. 100042
+    in   nickname: string, e.g. HOLIDAY FUND
+    out  confirmationNumber: string [internal]
+    outcomes  MEMBER_NOT_FOUND, PERMISSION_DENIED, VALIDATION_REJECTED, DUPLICATE_RECORD, APP_ERROR
+
+  member.savings-balance@1.0.0
+    Member Savings-Balance
+    status=draft  risk=read_only  idempotent=True  steps=7
+    in   memberId: string, ^\d{6}$, e.g. 100042
+    out  savingsBalance: currency [pii]
+    outcomes  MEMBER_NOT_FOUND, PERMISSION_DENIED, VALIDATION_REJECTED, DUPLICATE_RECORD, APP_ERROR
+
