@@ -21,6 +21,7 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
+from cua.app.replay import secrets_from_env
 from cua.discovery.agent import DiscoveryAgent, StopReason
 from cua.discovery.compiler import compile_capability
 from cua.discovery.llm import Message, MockLLM, Role, ToolCall, ToolSpec, Turn
@@ -189,7 +190,19 @@ async def run_discovery(
 ) -> tuple[Any, Any]:
     policy = _policy_for(base_url)
     logger = EvidenceLogger(tmp_path, kind="discovery", redactor=Redactor(salt="t"))
-    agent = DiscoveryAgent(surface=surface, llm=llm, policy=policy, logger=logger)
+    agent = DiscoveryAgent(
+        surface=surface,
+        llm=llm,
+        policy=policy,
+        logger=logger,
+        # The same secrets the composition root supplies. Omitting them here made this
+        # harness quietly *unlike* `cua discover`: a recorded transcript stores the
+        # credential as `<secret:corelink.password>`, so an agent with no secrets cannot
+        # sign in, and every later step fails to find an element. The run still ends at
+        # `finish` - the transcript says so - it just records two actions instead of
+        # seven. A test double that differs from the real wiring tests the wrong system.
+        secrets=secrets_from_env(),
+    )
 
     result = await agent.run(
         goal=f"Look up member {member_id} and read their current savings balance",

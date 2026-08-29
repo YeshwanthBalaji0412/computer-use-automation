@@ -24,10 +24,11 @@ Six passes:
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 
 from cua.discovery.recorder import RecordedAction, Recorder
-from cua.locator.generate import bind, parameterise
+from cua.locator.generate import CONTENT_ROLES, bind, parameterise
 from cua.policy.engine import load_policy
 from cua.policy.risk import classify
 from cua.schema.capability import (
@@ -199,6 +200,30 @@ def global_recoveries() -> list[Recovery]:
             ),
         ),
         Recovery(
+            # Named for the condition, not the cure: `_recovery_for` pairs a non-terminal
+            # known outcome with its recovery by matching SESSION_EXPIRED -> session-expired.
+            id="session-expired",
+            describe="The session expired mid-flow. Sign in again and pick up where the "
+            "flow started, because re-authenticating lands on the entry screen rather "
+            "than the one the step failed on.",
+            # Once. A session that will not stay established is an environment problem,
+            # and a second attempt would only delay the escalation that says so.
+            max_attempts=1,
+            detect=Assertion(
+                kind=AssertionKind.TEXT_PRESENT,
+                pattern=r"(?i)(session has timed out|please sign in again)",
+                describe="the sign-in screen, reached without asking for it",
+            ),
+            # No action of its own: the sign-in steps are already the first steps of the
+            # capability, so *restarting from them* is what re-authenticating means. The
+            # alternative - a bespoke RE_AUTHENTICATE action holding a second copy of the
+            # credentials and the login form's locators - would be the same steps written
+            # twice, and the copy would rot.
+            action=RecoveryAction(kind=RecoveryActionKind.WAIT_AND_RETRY),
+            # Filled in by the compiler, which is the only place that knows the step ids.
+            restart_from_step=None,
+        ),
+        Recovery(
             id="transient-load",
             describe="Wait and retry once for a slow screen.",
             max_attempts=2,
@@ -258,7 +283,7 @@ def compile_capability(
         steps=steps,
         success_condition=success,
         known_outcomes=_merge_outcomes(recorder),
-        recoveries=global_recoveries(),
+        recoveries=_recoveries_for(steps),
         provenance=Provenance(
             discovered_by="llm",
             model=model,
@@ -445,13 +470,9 @@ def _build_success_condition(
         final = recorder.checkpoints[-1]
         for locator in final.locators[:3]:
             bound = parameterise(locator, params) if params else locator
-            parts.append(
-                Assertion(
-                    kind=AssertionKind.ELEMENT_PRESENT,
-                    locator=bound,
-                    describe=f"{final.describe}: {bound.describe}",
-                )
-            )
+            assertion = _checkpoint_assertion(bound, final.describe)
+            if assertion is not None:
+                parts.append(assertion)
 
     for output in outputs:
         if output.locator is not None:
@@ -473,6 +494,68 @@ def _build_success_condition(
     return Assertion(
         kind=AssertionKind.ALL_OF, describe="the capability reached its goal state", of=parts
     )
+
+
+def _checkpoint_assertion(locator: Locator, describe: str) -> Assertion | None:
+    """Turn one recorded checkpoint into an assertion that survives a different tenant.
+
+    The model records a checkpoint by pointing at elements on the screen it reached. Two
+    of those pointers are traps, and both were found by replaying a Meridian recording at
+    Lakeside - which renders the same member detail as a definition list rather than a
+    nested table, so *there are no cells at all*.
+
+    **A content element's role is the tenant's markup choice.** `cell` versus `definition`
+    says nothing about whether the run succeeded. Asserting on it makes the success
+    condition a claim about HTML structure, which is the exact thing this whole system
+    refuses to depend on everywhere else. The tenant-neutral form of "the member id is on
+    this screen" is text, not an element.
+
+    **A content element's accessible name is the data.** A checkpoint on `cell
+    'J. RIVERA'` verifies that one member's name is displayed - so it is really asserting
+    the answer, and it only holds for the member who happened to be recorded. Dropped:
+    a success condition that is true only for the recording is worse than one less clause.
+
+    Structural elements - a heading, a landmark, a button - keep `ELEMENT_PRESENT`. A
+    heading is a semantic role rather than a markup accident, it survives the layout
+    change, and the ladder already carries a text-based fallback tier for it.
+    """
+    role = next((s.role for s in locator.strategies if s.role), "")
+    if role not in CONTENT_ROLES:
+        return Assertion(
+            kind=AssertionKind.ELEMENT_PRESENT,
+            locator=locator,
+            describe=f"{describe}: {locator.describe}",
+        )
+
+    name = next((s.name for s in locator.strategies if s.name), "")
+    if "{{" not in name:
+        # A literal member value. Asserting it would pin the capability to one member.
+        return None
+
+    return Assertion(
+        kind=AssertionKind.TEXT_PRESENT,
+        pattern=re.escape(name).replace(r"\{\{", "{{").replace(r"\}\}", "}}"),
+        describe=f"{describe}: the text {name} appears on screen",
+    )
+
+
+def _recoveries_for(steps: list[Step]) -> list[Recovery]:
+    """Bind the platform recoveries to this capability's own step ids.
+
+    Only `re-authenticate` needs it, and only because "where do I pick up after signing
+    in again" is a fact about the recorded flow rather than about the platform. If a
+    capability has no steps to go back to, the recovery is dropped rather than shipped
+    pointing at nothing - the schema validates that reference on load, so a dangling one
+    would make the artifact unloadable.
+    """
+    out: list[Recovery] = []
+    for recovery in global_recoveries():
+        if recovery.id == "session-expired":
+            if not steps:
+                continue
+            recovery = recovery.model_copy(update={"restart_from_step": steps[0].id})
+        out.append(recovery)
+    return out
 
 
 def _merge_outcomes(recorder: Recorder) -> list[KnownOutcome]:

@@ -69,9 +69,16 @@ def evaluate(
     here too. Omitting that was a real bug: every action resolved correctly and then the
     success condition failed, because it was looking for a cell literally named
     "{{memberId}}".
+
+    The same is true of text `pattern`s, and for the same reason. A checkpoint compiled
+    against a tenant that renders member data as a definition list rather than a table
+    cannot assert on an *element* at all - the tenant-neutral form is "this text is on the
+    screen" - so patterns carry placeholders too, and binding only locators would leave
+    exactly the same bug one layer over.
     """
     kind = assertion.kind
     label = assertion.describe or str(kind)
+    pattern = _bind_text(assertion.pattern or "", values)
 
     if kind is AssertionKind.ALL_OF:
         results = [evaluate(a, observation, outputs, values) for a in assertion.of]
@@ -91,7 +98,7 @@ def evaluate(
         )
 
     if kind in (AssertionKind.TEXT_PRESENT, AssertionKind.TEXT_ABSENT):
-        found = _search(assertion.pattern or "", screen_text(observation))
+        found = _search(pattern, screen_text(observation))
         want = kind is AssertionKind.TEXT_PRESENT
         return AssertionResult(
             passed=found is want,
@@ -100,7 +107,6 @@ def evaluate(
         )
 
     if kind is AssertionKind.URL_MATCHES:
-        pattern = assertion.pattern or ""
         matched = fnmatch(observation.url, pattern) or bool(_search(pattern, observation.url))
         return AssertionResult(passed=matched, describe=label, observed=f"url is {observation.url}")
 
@@ -141,6 +147,15 @@ def evaluate_all(
 ) -> tuple[bool, list[AssertionResult]]:
     results = [evaluate(a, observation, outputs, values) for a in assertions]
     return all(r.passed for r in results), results
+
+
+def _bind_text(pattern: str, values: dict[str, str] | None) -> str:
+    """Substitute `{{param}}` placeholders, exactly as `locator.bind` does for locators."""
+    if not pattern or not values:
+        return pattern
+    for name, value in values.items():
+        pattern = pattern.replace(f"{{{{{name}}}}}", str(value))
+    return pattern
 
 
 def _search(pattern: str, haystack: str) -> bool:
