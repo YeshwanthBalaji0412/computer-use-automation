@@ -1,181 +1,190 @@
 {
-  "model": "scripted-stand-in",
+  "model": "gpt-4o",
   "turns": [
     {
-      "text": "Looking at the sign-in screen.",
+      "text": "",
       "tool_calls": [
         {
-          "id": "call_1",
-          "name": "observe",
-          "arguments": {},
+          "id": "call_PosSpXQNVeLZ0K3NdPz2naiy",
+          "name": "navigate",
+          "arguments": {
+            "url": "http://localhost:4000/tenants/meridian/",
+            "why": "To start at the entry point for the meridian tenant."
+          },
           "element_hint": ""
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 1622,
+      "output_tokens": 40
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_2",
+          "id": "call_f88pPW5V9QpqETHFie02NVkh",
           "name": "fill",
           "arguments": {
-            "text": "operator",
-            "why": "sign in as the servicing operator",
-            "ref": "e2"
+            "ref": "e2",
+            "text": "<secret:corelink.user-id>",
+            "why": "Enter user ID to sign in."
           },
           "element_hint": "textbox|User ID"
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 1782,
+      "output_tokens": 35
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_3",
+          "id": "call_QLjqJvpRgMafTogypfxo23K1",
           "name": "fill",
           "arguments": {
+            "ref": "e3",
             "text": "<secret:corelink.password>",
-            "why": "supply the operator password",
-            "ref": "e3"
+            "why": "Enter password to sign in."
           },
           "element_hint": "textbox|Password"
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 1941,
+      "output_tokens": 33
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_4",
+          "id": "call_ZiMvnXXQofZ42cTrTkLFXZGy",
           "name": "click",
           "arguments": {
-            "why": "sign in to the console",
-            "ref": "e4"
+            "ref": "e4",
+            "why": "Submit credentials to sign in."
           },
           "element_hint": "button|Sign In"
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 2098,
+      "output_tokens": 23
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_5",
+          "id": "call_JEd7Lu51Pw5k95mLuPh5R6MW",
           "name": "fill",
           "arguments": {
+            "ref": "e10",
             "text": "100042",
-            "why": "enter the member number to look up",
+            "why": "Enter member ID to search for member details.",
             "is_parameter": true,
-            "parameter_name": "memberId",
-            "ref": "e10"
+            "parameter_name": "memberId"
           },
           "element_hint": "textbox|Member ID"
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 2393,
+      "output_tokens": 41
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_6",
+          "id": "call_Q5iY8sEhYoN4xNlZfZuZzETE",
           "name": "click",
           "arguments": {
-            "why": "submit the member search",
-            "ref": "e11"
+            "ref": "e11",
+            "why": "Search for the member with ID 100042."
           },
           "element_hint": "button|Search"
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 2711,
+      "output_tokens": 27
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_7",
+          "id": "call_ilGUvRYpK2N8PzNXgNo0Z71t",
           "name": "click",
           "arguments": {
-            "why": "open the matching member's detail screen",
-            "ref": "e20"
+            "ref": "e20",
+            "why": "View details for member 100042."
           },
           "element_hint": "link|View"
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 3264,
+      "output_tokens": 25
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_8",
+          "id": "call_qnSXADH9OfGJQd25fwscNm21",
           "name": "extract",
           "arguments": {
+            "ref": "e23",
             "output_name": "savingsBalance",
             "output_type": "currency",
-            "sensitive": true,
-            "why": "read the member's current savings balance",
-            "ref": "e23"
+            "why": "Retrieve the current savings balance for member 100042.",
+            "sensitive": true
           },
           "element_hint": "cell|col:Balance|Account=Savings"
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 3848,
+      "output_tokens": 44
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_9",
+          "id": "call_zuBfmrQar5R5tvLJXAaa8uWy",
           "name": "assert_state",
           "arguments": {
-            "describe": "the member detail screen",
-            "refs": []
+            "describe": "the member detail screen for member 100042",
+            "refs": [
+              "e9",
+              "e11",
+              "e13",
+              "e15",
+              "e23"
+            ]
           },
           "element_hint": ""
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 3914,
+      "output_tokens": 40
     },
     {
       "text": "",
       "tool_calls": [
         {
-          "id": "call_10",
+          "id": "call_WxFl0yot6AfQbmNfOtXFhZVh",
           "name": "finish",
           "arguments": {
-            "summary": "Signed in, searched for the member, opened their detail screen and read the savings balance.",
+            "summary": "Looked up member 100042 and retrieved their savings balance.",
             "capability_id": "member.savings-balance",
-            "description": "Look up a member by id in the CoreLink servicing console and return their current savings balance."
+            "description": "Looks up a member by ID and retrieves their current savings balance, ensuring that the user is on the member detail page."
           },
           "element_hint": ""
         }
       ],
-      "stop_reason": "tool_use",
-      "input_tokens": 0,
-      "output_tokens": 0
+      "stop_reason": "tool_calls",
+      "input_tokens": 3978,
+      "output_tokens": 61
     }
   ]
 }

@@ -56,7 +56,7 @@ uv run cua replay   --capability member.savings-balance@1.0.0 --input memberId=9
 | Language | **Python 3.13, everywhere** | Pydantic v2 is one source of truth that simultaneously (a) types the code, (b) validates artifacts at load, (c) emits JSON Schema for the agent-facing capability contract, and (d) emits the LLM tool schemas. One declaration, four consumers. TypeScript would need Zod *on top of* the type system to get (b), because TS types are erased at runtime. One language, one toolchain — `uv sync` and you're running. |
 | Browser control | **Playwright, async API (Chromium)** | Auto-waiting (kills 80% of flake for free), `get_by_role()` accessibility-first locators, `locator.aria_snapshot()` for a stable perception layer, `tracing` for evidence, `route()` for network-level allowlisting, and `new_cdp_session()` for the human-handoff screencast. Selenium has none of the first three. **Async API is mandatory** — the operator console must serve HTTP/WS while automation is parked mid-run. |
 | Schema | **Pydantic v2 → JSON Schema** | See above. One definition, four consumers. |
-| LLM | **Anthropic SDK, `claude-opus-5`** (env-configurable) | Best tool-use reliability for long agentic loops; 1M context so a 40-step discovery run with screenshots never needs compaction. Adaptive thinking, `effort: "high"`. Model ID is an env var so a grader can flip to `claude-sonnet-5` for cost. |
+| LLM | **OpenAI SDK, `gpt-4o`** (env-configurable) | The provider is behind a one-method boundary over neutral message types, so switching is confined to a single file. Model ID is an env var so a grader can flip models for cost. |
 | Target app | **A local, deliberately-hostile "legacy" bank console (FastAPI + Jinja2)** | See §3. |
 | Persistence | **Files on disk** (`capabilities/*.json`, `evidence/runs/<id>/`) | The brief explicitly says building scaling infrastructure is *not* rewarded. A DB would be a negative signal — and artifacts are versioned documents that belong in git next to the code, which is the reviewability requirement. Say so in REPORT.md. |
 | Process model | **One Python process**, Typer CLI, with an embedded FastAPI server for the operator console | Justify in REPORT.md: the control-transfer seam is an interface (`SessionController`), not a network boundary. Splitting into services adds ceremony and zero design insight at this scale. Note where the seam would become a service boundary in production (session broker + run workers). |
@@ -188,7 +188,7 @@ Call these out by name in REPORT.md. They are what "not painting yourself into a
 ```
 /README.md  /REPORT.md  /PLAN.md  /STACK.md  /.env.example
 /pyproject.toml  /uv.lock  /.python-version
-/setup.cfg                   # [importlinter] contracts — replay must not import anthropic
+/setup.cfg                   # [importlinter] contracts — replay must not import the LLM SDK
 /src/cua
   cli.py                     # Typer: discover | replay | serve | catalog | verify | eval
   surface/
@@ -211,7 +211,7 @@ Call these out by name in REPORT.md. They are what "not painting yourself into a
     recorder.py              # captures what actually executed
     compiler.py              # trace → Capability artifact
     mock_llm.py              # fixture replay for --mock (no API key)
-  replay/                    # ← import-linter forbids `anthropic` anywhere in here
+  replay/                    # ← import-linter forbids `openai` anywhere in here
     executor.py              # step machine
     classifier.py            # Observation → business_outcome | recoverable | hard
     recovery.py              # bounded retry, dismiss, re-auth (tenacity)
@@ -223,7 +223,7 @@ Call these out by name in REPORT.md. They are what "not painting yourself into a
     intervention.py          # store + context capture
     server.py                # FastAPI + WebSocket operator API
   catalog/
-    registry.py              # artifacts → Anthropic tool defs
+    registry.py              # artifacts → tool definitions
     demo_agent.py            # an agent invoking a capability by name
   evidence/
     logger.py  artifacts.py  report.py
@@ -386,7 +386,7 @@ Design principle: **the artifact is a contract, not a macro.** A calling AI agen
   "tenantBindings": { "$ref": "tenants/*.json" },   // resolved at replay, never embedded
 
   "provenance": {
-    "discoveredBy":"llm", "model":"claude-opus-5", "promptVersion":"discovery/v3",
+    "discoveredBy":"llm", "model":"gpt-4o", "promptVersion":"discovery/v3",
     "discoveryRunId":"disc_01J...", "recordedAt":"2026-08-27T…Z",
     "recordedAgainst":{"tenant":"meridian","appFingerprint":"sha256:…"},
     "reviewedBy":"balaji.y@northeastern.edu", "reviewedAt":"…"
@@ -499,7 +499,7 @@ Five statuses, not two. **`business_outcome` is not an error and does not throw.
 
 ```python
 runner = client.beta.messages.tool_runner(
-    model=os.getenv("CUA_MODEL", "claude-opus-5"),
+    model=os.getenv("CUA_MODEL", "gpt-4o"),
     max_tokens=16000,
     thinking={"type": "adaptive"},
     output_config={"effort": "high"},
@@ -549,8 +549,8 @@ Key details worth calling out:
 ## 8. Replay engine + error taxonomy (P0 — Day 4, the highest-value day)
 
 **No LLM. Prove it mechanically**, two ways — and mention both in REPORT.md:
-1. An **`import-linter` contract** in `setup.cfg` forbidding `src/cua/replay/**` from importing `anthropic`. Runs in CI.
-2. A test that runs a full replay in a subprocess and asserts `"anthropic" not in sys.modules`. Stronger than the lint rule — it proves the module was never even *loaded*, not merely that the source doesn't name it.
+1. An **`import-linter` contract** in `setup.cfg` forbidding `src/cua/replay/**` from importing `openai`. Runs in CI.
+2. A test that runs a full replay in a subprocess and asserts `"openai" not in sys.modules`. Stronger than the lint rule — it proves the module was never even *loaded*, not merely that the source doesn't name it.
 
 ### Step machine
 
@@ -808,7 +808,7 @@ Paste this table into README.md. It is the most persuasive artifact in the entir
 
 ## 14. Stretch goals — pick exactly these two (P2)
 
-1. **Agent-facing capability catalog, exposed as an MCP server** (Day 6 morning, ~2h + ~40 lines). `CapabilityRegistry` loads `capabilities/*.json` and emits Anthropic tool definitions (name from `id`, description from `description`, `input_schema` from Pydantic-emitted JSON Schema, and the `knownOutcomes` listed in the description so the calling agent knows what can come back). Then `uv run cua agent "What's the savings balance for member 100042?"` — a Claude agent that has *only* the catalog tools, picks the right capability, invokes it, gets typed outputs back from a deterministic replay, and answers. **This closes the brief's own through-line loop and is the best possible closing demo.** ~90 lines.
+1. **Agent-facing capability catalog, exposed as an MCP server** (Day 6 morning, ~2h + ~40 lines). `CapabilityRegistry` loads `capabilities/*.json` and emits tool definitions (name from `id`, description from `description`, `input_schema` from Pydantic-emitted JSON Schema, and the `knownOutcomes` listed in the description so the calling agent knows what can come back). Then `uv run cua agent "What's the savings balance for member 100042?"` — an agent that has *only* the catalog tools, picks the right capability, invokes it, gets typed outputs back from a deterministic replay, and answers. **This closes the brief's own through-line loop and is the best possible closing demo.** ~90 lines.
 
    **Wrap the same registry as an MCP server** (`capabilities` → MCP tools). ~40 extra lines over the registry you already have, and it means any MCP-compatible agent — Claude Desktop, Claude Code, a customer's own agent — can discover and invoke your capabilities by name with typed args. This is the current standard answer to "expose a catalog of callable capabilities," so it's the one *fashionable* choice in the whole build that's also the *correct* one. Screenshot it working from Claude Desktop and put that in `/evidence/`.
 2. **Cross-tenant reuse** (Day 6 afternoon, ~2h). Already 80% built via the tenant variants and overlay resolver from §11. Just run it and capture the evidence.
@@ -823,7 +823,7 @@ Start each day by re-reading the deliverables checklist in §1. End each day wit
 
 ### Day 0 — Setup (2h)
 - `git init`, public GitHub repo, MIT license, `.gitignore` (`.env`, `node_modules`, `evidence/scratch`), `.env.example`.
-- `uv init --python 3.13`; add `playwright pydantic pydantic-settings anthropic fastapi uvicorn typer structlog jinja2 tenacity pyyaml`, dev `pytest pytest-asyncio ruff mypy import-linter`. Exact block in [STACK.md §6](STACK.md).
+- `uv init --python 3.13`; add `playwright pydantic pydantic-settings openai fastapi uvicorn typer structlog jinja2 tenacity pyyaml`, dev `pytest pytest-asyncio ruff mypy import-linter`. Exact block in [STACK.md §6](STACK.md).
 - **GitHub Actions workflow** (~30 lines): `ruff` → `mypy` → `lint-imports` → `pytest -m unit` → `cua eval`. Needs no API key, so it runs on every push. Put the badge in the README — a reviewer sees the eval matrix passing before they clone.
 - Commit `PLAN.md`. **Commit often with real messages** — the commit history is read as evidence of process.
 - Stub `src/cua/cli.py` with all six subcommands printing "not implemented." Vertical skeleton first.
@@ -855,7 +855,7 @@ Start each day by re-reading the deliverables checklist in §1. End each day wit
 - **Gate:** an unknown-dialog replay pauses, appears in the console with context, a human dismisses the dialog, clicks resume, and the run completes with `completedBy` recorded.
 
 ### Day 6 — Stretch + hardening (6h)
-- **AM:** capability catalog → Anthropic tool defs → `uv run cua agent` demo.
+- **AM:** capability catalog → tool definitions → `uv run cua agent` demo.
 - **PM:** cross-tenant demo on Lakeside. Full eval matrix run. Fix whatever it exposes. Multi-run stability x10.
 
 ### Day 7 — Write-up, evidence, polish (6h) 🔑
@@ -912,4 +912,4 @@ See **[STACK.md §6](STACK.md)** for the exact Day-0 command block (uv + Playwri
 1. `playwright.async_api`, never `sync_api`. The operator console must serve requests while automation is parked.
 2. `Surface` returns `Observation`/`ElementNode` — **no field can hold a CSS selector.** The type system forbids the mistake.
 3. Build `Redactor` on Day 2, before any evidence exists, and make it the only writer to disk.
-4. Pin `anthropic>=1.1,<2`. The SDK went 1.0 recently; most tutorials online are 0.x and fail confusingly.
+4. Keep the LLM SDK behind `discovery/llm.py`. The agent must build provider-neutral messages, or the wire format leaks through the boundary and a provider switch stops being one file.

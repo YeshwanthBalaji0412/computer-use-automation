@@ -5,7 +5,7 @@ answers it demands: a system that returned "failed" for the six middle rows woul
 naive smoke test and be useless in production, because the caller could not tell "this
 member does not exist" from "the automation is broken".
 
-`test_replay_never_loads_the_anthropic_sdk` is the other one that matters. Requirement
+`test_replay_never_loads_the_llm_sdk` is the other one that matters. Requirement
 3.3 says replay runs "without invoking the LLM for decisions"; this proves the module is
 never even imported, which is a stronger claim than grepping the source.
 """
@@ -115,7 +115,7 @@ def test_the_matrix_covers_every_result_status() -> None:
 # ------------------------------------------------------------------ no LLM
 
 
-def test_replay_never_loads_the_anthropic_sdk() -> None:
+def test_replay_never_loads_the_llm_sdk() -> None:
     """Requirement 3.3, proved rather than promised.
 
     Runs in a subprocess so the assertion is about a *real* replay's import graph, not
@@ -133,7 +133,7 @@ asyncio.run(run_replay(
     tenants_dir=pathlib.Path(sys.argv[2]),
     evidence_dir=pathlib.Path(sys.argv[3]),
 ))
-print("anthropic" in sys.modules)
+print("openai" in sys.modules)
 """
     with tempfile.TemporaryDirectory() as tmp:
         result = subprocess.run(
@@ -144,7 +144,7 @@ print("anthropic" in sys.modules)
             timeout=180,
         )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip().endswith("False"), "the anthropic SDK was imported during a replay"
+    assert result.stdout.strip().endswith("False"), "the LLM SDK was imported during a replay"
 
 
 # ------------------------------------------------------------------ the contract

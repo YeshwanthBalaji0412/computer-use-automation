@@ -10,9 +10,11 @@ else, which is the only way to reproduce what a grader's shell actually does.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -75,3 +77,40 @@ def test_the_default_policy_ships_with_the_package() -> None:
     origins, signals = (int(x) for x in result.stdout.split())
     assert origins > 0, "shipped policy has an empty origin allowlist"
     assert signals > 0, "shipped policy has no irreversible-action signals"
+
+
+def test_the_cli_reads_dotenv(tmp_path: Path) -> None:
+    """Copying .env.example to .env has to actually do something.
+
+    It did not: the example file existed and the README told people to copy it, but
+    nothing ever loaded it - so a correctly-filled key produced a "missing credentials"
+    error with no clue why. A config file that looks like it works and does not is worse
+    than no config file.
+    """
+    (tmp_path / ".env").write_text("OPENAI_API_KEY=sk-test-from-dotenv\n")
+    result = subprocess.run(
+        [sys.executable, "-c", "import cua.cli, os; print(os.environ.get('OPENAI_API_KEY'))"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env={k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"},
+    )
+    assert result.returncode == 0, result.stderr
+    assert "sk-test-from-dotenv" in result.stdout
+
+
+def test_a_real_environment_variable_beats_the_dotenv_file(tmp_path: Path) -> None:
+    """The precedence a deployment expects: the file is a convenience for local work,
+    not something that can override what the platform injected."""
+    (tmp_path / ".env").write_text("OPENAI_API_KEY=sk-from-file\n")
+    result = subprocess.run(
+        [sys.executable, "-c", "import cua.cli, os; print(os.environ.get('OPENAI_API_KEY'))"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env={**os.environ, "OPENAI_API_KEY": "sk-from-real-env"},
+    )
+    assert result.returncode == 0, result.stderr
+    assert "sk-from-real-env" in result.stdout

@@ -49,7 +49,7 @@ uv run cua discover \
 
 Writes `capabilities/member.savings-balance@1.0.0.json` and a full run log under `evidence/runs/`.
 
-> Needs `ANTHROPIC_API_KEY`. To run the identical code path with no key, use `uv run cua discover --mock`, which replays a recorded transcript.
+> Needs `OPENAI_API_KEY`. To run the identical code path with no key, use `uv run cua discover --mock` — it replays the transcript in `evidence/fixtures/`, which is a **real `gpt-4o` run**, not a stand-in.
 
 ### 2. Replay it deterministically — this is the production path
 
@@ -159,15 +159,15 @@ Only `cua discover` calls a model. Everything else — replay, the eval matrix, 
 |---|---|
 | `cua serve-app`, `cua observe` | no |
 | `cua replay`, `cua eval`, `cua verify` | **no, by design** |
-| `cua discover --mock` | no — replays a recorded transcript |
+| `cua discover --mock` | no — replays a real recorded `gpt-4o` transcript |
 | `cua discover` | yes |
 
-Replay never needing a key is not a convenience, it is the thesis. It is enforced two ways: an `import-linter` contract forbids `cua.replay` from importing `anthropic`, and a test runs a real replay in a subprocess and asserts the module was **never loaded**.
+Replay never needing a key is not a convenience, it is the thesis. It is enforced two ways: an `import-linter` contract forbids `cua.replay` from importing `openai`, and a test runs a real replay in a subprocess and asserts the module was **never loaded**.
 
 For live discovery:
 
 ```bash
-cp .env.example .env      # then set ANTHROPIC_API_KEY
+cp .env.example .env      # then set OPENAI_API_KEY
 ```
 
 ---
@@ -176,8 +176,8 @@ cp .env.example .env      # then set ANTHROPIC_API_KEY
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | — | Live discovery only |
-| `CUA_MODEL` | `claude-opus-5` | Discovery model |
+| `OPENAI_API_KEY` | — | Live discovery only |
+| `CUA_MODEL` | `gpt-4o` | Discovery model |
 | `CUA_DEMO_USERNAME` / `CUA_DEMO_PASSWORD` | `operator` / `demo-pass-not-a-real-secret` | Fake credentials for the local app, resolved through `secret_ref` and never written into artifacts or logs |
 
 Guardrails live in **[`src/cua/policy/policy.default.yaml`](src/cua/policy/policy.default.yaml)** — deliberately YAML, so a compliance reviewer can read what the agent may do without reading Python.
@@ -219,7 +219,7 @@ uv run ruff check . && uv run mypy && uv run lint-imports
 
 ## What this is built on
 
-Python 3.13 · Playwright (async) · Pydantic v2 · FastAPI · Typer · Anthropic SDK. One language, one toolchain, no database, no queue, no Docker. The reasoning for each choice — and for the ones rejected — is in [REPORT.md](REPORT.md) and [STACK.md](STACK.md).
+Python 3.13 · Playwright (async) · Pydantic v2 · FastAPI · Typer · OpenAI SDK. One language, one toolchain, no database, no queue, no Docker. The reasoning for each choice — and for the ones rejected — is in [REPORT.md](REPORT.md) and [STACK.md](STACK.md).
 
 The target application in [`targetapp/`](targetapp/) is a deliberately hostile stand-in: framesets, nested layout tables, zero test IDs, and ASP.NET-style control IDs regenerated on every render. It is built rather than borrowed because no public demo site can produce "record not found", a permission denial, a session timeout, an undeclared modal and a 500 on demand — and those are the interesting cases.
 

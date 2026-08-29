@@ -7,9 +7,18 @@ the import-linter contracts in setup.cfg satisfiable.
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Annotated
 
 import typer
+from dotenv import load_dotenv
+
+# Read .env before any command runs. Without this, copying .env.example to .env and
+# filling in a key does exactly nothing - which is a confusing failure, because the file
+# looks like it is doing something. `override=False` so a real environment variable
+# always beats the file: that is the precedence a deployment expects.
+load_dotenv(Path.cwd() / ".env", override=False)
 
 app = typer.Typer(
     name="cua",
@@ -77,6 +86,17 @@ def discover(
 
     if not mock and not (goal and target):
         typer.echo("--goal and --target are required (or use --mock)")
+        raise typer.Exit(2)
+
+    if not mock and not os.environ.get("OPENAI_API_KEY"):
+        # Fail here with something actionable rather than letting the SDK raise a
+        # generic credentials error three frames deep.
+        typer.echo(
+            "OPENAI_API_KEY is not set.\n\n"
+            "  cp .env.example .env    # then put your key in OPENAI_API_KEY\n\n"
+            "Or run `cua discover --mock` to exercise the same code path from a "
+            "recorded transcript, with no key and no network."
+        )
         raise typer.Exit(2)
 
     code = asyncio.run(

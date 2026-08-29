@@ -251,6 +251,7 @@ class ReplayExecutor:
             self._cap.preconditions,
             ctx.observation,  # type: ignore[arg-type]
             self._output_locators(),
+            ctx.values,
         )
         if not ok:
             failed = next(r for r in results if not r.passed)
@@ -303,7 +304,9 @@ class ReplayExecutor:
         ctx.traces.append(trace)
 
         assert ctx.observation is not None
-        ok, results = evaluate_all(step.pre_assert, ctx.observation, self._output_locators())
+        ok, results = evaluate_all(
+            step.pre_assert, ctx.observation, self._output_locators(), ctx.values
+        )
         if not ok:
             trace.status = StepStatus.FAILED
             failed = next(r for r in results if not r.passed)
@@ -405,7 +408,9 @@ class ReplayExecutor:
                 ErrorClass.SURFACE_ERROR, step, step.intent, outcome.error or "", ctx
             )
 
-        ok, results = evaluate_all(step.post_assert, ctx.observation, self._output_locators())
+        ok, results = evaluate_all(
+            step.post_assert, ctx.observation, self._output_locators(), ctx.values
+        )
         if not ok:
             trace.status = StepStatus.FAILED
             failed = next(r for r in results if not r.passed)
@@ -542,7 +547,10 @@ class ReplayExecutor:
             return None
         assert ctx.observation is not None
         ok, results = evaluate_all(
-            [self._cap.success_condition], ctx.observation, self._output_locators()
+            [self._cap.success_condition],
+            ctx.observation,
+            self._output_locators(),
+            ctx.values,
         )
         if ok:
             return None
@@ -693,7 +701,9 @@ class ReplayExecutor:
                 )
 
         if step is not None:
-            advanced, _ = evaluate_all(step.post_assert, ctx.observation, self._output_locators())
+            advanced, _ = evaluate_all(
+                step.post_assert, ctx.observation, self._output_locators(), ctx.values
+            )
             if advanced and step.post_assert:
                 self._log.event(
                     EventType.STEP_FINISHED,
@@ -703,7 +713,9 @@ class ReplayExecutor:
                 )
                 return None  # type: ignore[return-value]
 
-            ready, _ = evaluate_all(step.pre_assert, ctx.observation, self._output_locators())
+            ready, _ = evaluate_all(
+                step.pre_assert, ctx.observation, self._output_locators(), ctx.values
+            )
             if ready or not step.pre_assert:
                 return RETRY_STEP
 

@@ -13,7 +13,8 @@ from pathlib import Path
 from cua.app.replay import secrets_from_env
 from cua.discovery.agent import DiscoveryAgent, StopReason
 from cua.discovery.compiler import compile_capability
-from cua.discovery.llm import AnthropicClient, LLMClient, MockLLM
+from cua.discovery.llm import LLMClient, MockLLM, OpenAIClient
+from cua.discovery.prompt import PROMPT_VERSION
 from cua.evidence.logger import EventType, EvidenceLogger
 from cua.policy.engine import PolicyEngine, load_policy
 from cua.policy.redactor import Redactor
@@ -46,7 +47,7 @@ async def run_discover(
             return 2
         llm = MockLLM.from_fixture(path)
     else:
-        llm = AnthropicClient()
+        llm = OpenAIClient()
 
     redactor = Redactor()
     logger = EvidenceLogger(evidence_dir, kind="discovery", redactor=redactor)
@@ -100,6 +101,7 @@ async def run_discover(
         tenant=tenant,
         base_url=base_url,
         model=llm.model_name,
+        prompt_version=PROMPT_VERSION,
         run_id=logger.run_id,
     )
 

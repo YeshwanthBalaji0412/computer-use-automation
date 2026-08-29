@@ -13,7 +13,7 @@ belongs, rather than being guessed at up front.
 
 from __future__ import annotations
 
-PROMPT_VERSION = "discovery/v1"
+PROMPT_VERSION = "discovery/v2"
 
 SYSTEM_PROMPT = """\
 You are operating a legacy back-office application used by a US credit union, the way a
@@ -44,6 +44,13 @@ follow from that:
 - Call `assert_state` when you reach a screen that matters, especially the last one. Those
   checkpoints are how replay knows it actually arrived rather than assuming a click worked.
 
+## Signing in
+
+You do not have any credentials and you must never ask for one. If a screen needs
+sign-in, type the placeholder `<secret:NAME>` into the field and the system substitutes
+the real value locally - it is never shown to you and never stored in the recording. The
+names available to you are listed with the goal below.
+
 ## Rules
 
 1. Work in small steps. One action, then observe, then decide.
@@ -61,10 +68,14 @@ follow from that:
 """
 
 
-def build_goal_message(goal: str, target: str, tenant: str) -> str:
+def build_goal_message(
+    goal: str, target: str, tenant: str, secret_names: list[str] | None = None
+) -> str:
+    secrets = ", ".join(f"<secret:{n}>" for n in sorted(secret_names or [])) or "none"
     return (
         f"Goal: {goal}\n"
         f"Entry point: {target}\n"
-        f"Tenant: {tenant}\n\n"
+        f"Tenant: {tenant}\n"
+        f"Credentials available to type: {secrets}\n\n"
         "Begin by calling `observe` to see where you are."
     )

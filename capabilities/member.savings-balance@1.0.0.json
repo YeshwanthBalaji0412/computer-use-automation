@@ -3,7 +3,7 @@
   "id": "member.savings-balance",
   "version": "1.0.0",
   "display_name": "Member Savings-Balance",
-  "description": "Look up a member by id in the CoreLink servicing console and return their current savings balance.",
+  "description": "Looks up a member by ID and retrieves their current savings balance, ensuring that the user is on the member detail page.",
   "target": {
     "surface": "legacy-web",
     "product": {
@@ -23,7 +23,7 @@
       "name": "memberId",
       "type": "string",
       "required": true,
-      "description": "enter the member number to look up",
+      "description": "Enter member ID to search for member details.",
       "pattern": "^\\d{6}$",
       "enum": null,
       "default": null,
@@ -36,7 +36,7 @@
       "name": "savingsBalance",
       "type": "currency",
       "required": true,
-      "description": "read the member's current savings balance",
+      "description": "Retrieve the current savings balance for member 100042.",
       "sensitivity": "pii",
       "locator": {
         "describe": "the Balance cell in the row where Account = Savings (frame contentFrame)",
@@ -100,7 +100,7 @@
   "steps": [
     {
       "id": "s1",
-      "intent": "sign in as the servicing operator",
+      "intent": "Enter user ID to sign in.",
       "action": "fill",
       "target": {
         "describe": "the textbox 'User ID' in the 'Operator Sign In' section",
@@ -181,9 +181,9 @@
       },
       "control_name": "User ID",
       "value": {
-        "literal": "operator",
+        "literal": null,
         "param": null,
-        "secret_ref": null
+        "secret_ref": "corelink.user-id"
       },
       "url": null,
       "output": null,
@@ -204,7 +204,7 @@
     },
     {
       "id": "s2",
-      "intent": "supply the operator password",
+      "intent": "Enter password to sign in.",
       "action": "fill",
       "target": {
         "describe": "the textbox 'Password' in the 'Operator Sign In' section",
@@ -308,7 +308,7 @@
     },
     {
       "id": "s3",
-      "intent": "sign in to the console",
+      "intent": "Submit credentials to sign in.",
       "action": "click",
       "target": {
         "describe": "the button 'Sign In' in the 'Operator Sign In' section",
@@ -370,8 +370,8 @@
             "column_header": null,
             "anchor_text": null,
             "bbox": {
-              "x": 97.953125,
-              "y": 136.0,
+              "x": 119.953125,
+              "y": 140.0,
               "w": 63.8125,
               "h": 19.0
             }
@@ -433,7 +433,7 @@
     },
     {
       "id": "s4",
-      "intent": "enter the member number to look up",
+      "intent": "Enter member ID to search for member details.",
       "action": "fill",
       "target": {
         "describe": "the textbox 'Member ID' in the 'Member Search' section (frame contentFrame)",
@@ -539,7 +539,7 @@
     },
     {
       "id": "s5",
-      "intent": "submit the member search",
+      "intent": "Search for the member with ID 100042.",
       "action": "click",
       "target": {
         "describe": "the button 'Search' in the 'Member Search' section (frame contentFrame)",
@@ -647,7 +647,7 @@
     },
     {
       "id": "s6",
-      "intent": "open the matching member's detail screen",
+      "intent": "View details for member 100042.",
       "action": "click",
       "target": {
         "describe": "the link 'View' in the row where Member ID = {{memberId}}, Name = J. RIVERA (frame contentFrame)",
@@ -729,7 +729,7 @@
     },
     {
       "id": "s7",
-      "intent": "read the member's current savings balance",
+      "intent": "Retrieve the current savings balance for member 100042.",
       "action": "extract",
       "target": {
         "describe": "the Balance cell in the row where Account = Savings (frame contentFrame)",
@@ -805,12 +805,195 @@
     }
   ],
   "success_condition": {
-    "kind": "output_present",
-    "describe": "output 'savingsBalance' is readable",
+    "kind": "all_of",
+    "describe": "the capability reached its goal state",
     "locator": null,
     "pattern": null,
-    "of": [],
-    "output": "savingsBalance"
+    "of": [
+      {
+        "kind": "element_present",
+        "describe": "the member detail screen for member 100042: the heading 'Member Detail' (frame contentFrame)",
+        "locator": {
+          "describe": "the heading 'Member Detail' (frame contentFrame)",
+          "frame_path": [
+            "contentFrame"
+          ],
+          "any_frame": false,
+          "strategies": [
+            {
+              "tier": 1,
+              "note": "role + exact accessible name, scoped to its section",
+              "role": "heading",
+              "name": "Member Detail",
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            },
+            {
+              "tier": 2,
+              "note": "role + normalised name; survives case and punctuation drift",
+              "role": "heading",
+              "name": "Member Detail",
+              "name_match": "normalised",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            },
+            {
+              "tier": 6,
+              "note": "positional fallback; weak, and a signal if it ever wins",
+              "role": "heading",
+              "name": null,
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": 0,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            }
+          ]
+        },
+        "pattern": null,
+        "of": [],
+        "output": null
+      },
+      {
+        "kind": "element_present",
+        "describe": "the member detail screen for member 100042: the cell '{{memberId}}' in the 'Member Detail' section (frame contentFrame)",
+        "locator": {
+          "describe": "the cell '{{memberId}}' in the 'Member Detail' section (frame contentFrame)",
+          "frame_path": [
+            "contentFrame"
+          ],
+          "any_frame": false,
+          "strategies": [
+            {
+              "tier": 1,
+              "note": "role + exact accessible name, scoped to its section",
+              "role": "cell",
+              "name": "{{memberId}}",
+              "name_match": "exact",
+              "scope_section": "Member Detail",
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            },
+            {
+              "tier": 2,
+              "note": "role + normalised name; survives case and punctuation drift",
+              "role": "cell",
+              "name": "{{memberId}}",
+              "name_match": "normalised",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            }
+          ]
+        },
+        "pattern": null,
+        "of": [],
+        "output": null
+      },
+      {
+        "kind": "element_present",
+        "describe": "the member detail screen for member 100042: the cell 'J. RIVERA' in the 'Member Detail' section (frame contentFrame)",
+        "locator": {
+          "describe": "the cell 'J. RIVERA' in the 'Member Detail' section (frame contentFrame)",
+          "frame_path": [
+            "contentFrame"
+          ],
+          "any_frame": false,
+          "strategies": [
+            {
+              "tier": 1,
+              "note": "role + exact accessible name, scoped to its section",
+              "role": "cell",
+              "name": "J. RIVERA",
+              "name_match": "exact",
+              "scope_section": "Member Detail",
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            },
+            {
+              "tier": 2,
+              "note": "role + normalised name; survives case and punctuation drift",
+              "role": "cell",
+              "name": "J. RIVERA",
+              "name_match": "normalised",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            },
+            {
+              "tier": 5,
+              "note": "the element immediately following a fixed label text",
+              "role": "cell",
+              "name": null,
+              "name_match": "exact",
+              "scope_section": null,
+              "ordinal": null,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": "Member Name",
+              "bbox": null
+            },
+            {
+              "tier": 6,
+              "note": "positional fallback; weak, and a signal if it ever wins",
+              "role": "cell",
+              "name": null,
+              "name_match": "exact",
+              "scope_section": "Member Detail",
+              "ordinal": 3,
+              "label": null,
+              "row_key": null,
+              "column_header": null,
+              "anchor_text": null,
+              "bbox": null
+            }
+          ]
+        },
+        "pattern": null,
+        "of": [],
+        "output": null
+      },
+      {
+        "kind": "output_present",
+        "describe": "output 'savingsBalance' is readable",
+        "locator": null,
+        "pattern": null,
+        "of": [],
+        "output": "savingsBalance"
+      }
+    ],
+    "output": null
   },
   "known_outcomes": [
     {
@@ -982,10 +1165,10 @@
   },
   "provenance": {
     "discovered_by": "llm",
-    "model": "scripted-stand-in",
-    "prompt_version": null,
-    "discovery_run_id": "dis_99ab9c84e90f",
-    "recorded_at": "2026-08-29T03:12:04.097381Z",
+    "model": "gpt-4o",
+    "prompt_version": "discovery/v2",
+    "discovery_run_id": "dis_362562475c83",
+    "recorded_at": "2026-08-29T16:13:53.619214Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "c1ba2c3478d015c0",
     "reviewed_by": null,

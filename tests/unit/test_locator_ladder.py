@@ -363,3 +363,40 @@ def test_parameterised_row_keys_are_minimal() -> None:
 
     assert row.row_key == {"Member ID": "{{memberId}}"}
     assert "Name" not in (row.row_key or {}), "correlated columns must not be pinned"
+
+
+def test_assertion_locators_are_bound_like_step_locators() -> None:
+    """A checkpoint on "the cell showing {{memberId}}" is a reasonable thing for a
+    discovery run to record, so assertions must bind parameters exactly as actions do.
+
+    Omitting that was a real bug, and one only a live model surfaced: every action
+    resolved correctly and then the success condition failed, because it was hunting for
+    a cell literally named "{{memberId}}". The scripted stand-in never recorded a
+    parameterised checkpoint, so the gap stayed invisible.
+    """
+    from cua.replay.assertions import evaluate
+    from cua.schema.capability import Assertion, AssertionKind
+
+    observation = obs(
+        node("e0", "heading", "Member Detail"),
+        node("e1", "cell", "100042", section="Member Detail"),
+    )
+    parameterised = Locator(
+        describe="the member id cell",
+        frame_path=["contentFrame"],
+        strategies=[
+            LocatorStrategy(
+                tier=Tier.ROLE_NAME_EXACT,
+                role="cell",
+                name="{{memberId}}",
+                scope_section="Member Detail",
+            )
+        ],
+    )
+    assertion = Assertion(
+        kind=AssertionKind.ELEMENT_PRESENT, locator=parameterised, describe="on detail"
+    )
+
+    assert not evaluate(assertion, observation).passed, "unbound should not match"
+    assert evaluate(assertion, observation, None, {"memberId": "100042"}).passed
+    assert not evaluate(assertion, observation, None, {"memberId": "999999"}).passed

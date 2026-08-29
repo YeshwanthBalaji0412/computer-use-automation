@@ -214,12 +214,20 @@ Four leaks were found by tests during the build, all of the same shape — *the 
 
 **Deliberately not built:**
 
-- **A live discovery run against the real API.** The one claim resting on a stand-in. `AnthropicClient` is written behind a one-method protocol and `MockLLM` satisfies the same interface, so the wiring is exercised — but the live request shape is unproven. This is the first thing to close.
+- **A second live-recorded capability.** The shipped artifact *was* recorded by `gpt-4o` against the live API, and the transcript in `evidence/fixtures/` is that run — so `--mock` replays a real model, not a stand-in. But only one capability has been through the live loop.
 - **The MCP capability catalogue.** ~40 lines over the existing registry to expose artifacts as tools an agent discovers by name. It closes the brief's own through-line loop and was cut for the write-up.
 - **Desktop and terminal surfaces.** Designed against the `Surface` ABC, not implemented. The mapping table above is the deliverable.
 - **Assisted LLM recovery on replay failure.** The policy envelope is designed — one step, bounded, policy-checked, recorded as evidence — but a bounded model call inside the deterministic path needs more care than a week allows.
 - **Infrastructure**: queues, workers, a database, Docker, multi-tenant plumbing. The brief says explicitly this is not rewarded, and the seams that would become service boundaries already exist.
 - **Operator identity and authz.** The console has no login. Fine for a local demo, unacceptable in production, and the fix is ordinary.
+
+**What the live run changed.** Three bugs only a real model surfaced, all of them cases where the scripted stand-in had been quietly generous:
+
+- *The model had no way to sign in.* It navigated, saw a login form, and escalated — correctly. The stand-in "knew" the credentials because I had written them into the test plan. Fixed by telling the model it can type `<secret:NAME>` placeholders, which the agent substitutes locally: the model authenticates **without ever receiving a credential**, so it cannot leak one into a transcript, a log, or its own context.
+- *The no-progress detector stopped a healthy run.* It compared only the screen fingerprint, which ignores field values by design — so a model filling in a login form looked identical to one clicking a dead button. Thrashing is now defined as the same action on the same element, not merely a screen that has not moved.
+- *Assertions never bound input parameters.* The live model recorded a checkpoint on "the cell showing `{{memberId}}`" — a perfectly reasonable thing to record. Every action resolved, and then the success condition failed hunting for a cell literally named `{{memberId}}`. Only action resolution had been binding parameters.
+
+Each is now covered by a test written from the failure. The general lesson is the one worth carrying: **a stand-in tests the code you wrote, not the assumptions you made.**
 
 **What I would build next, in order:**
 

@@ -28,9 +28,8 @@ from __future__ import annotations
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
-from cua.discovery.llm import LLMClient, ToolCall, Turn
+from cua.discovery.llm import LLMClient, Message, Role, ToolCall, ToolResult, Turn
 from cua.discovery.prompt import PROMPT_VERSION, SYSTEM_PROMPT, build_goal_message
 from cua.discovery.recorder import Recorder
 from cua.discovery.tools import (
@@ -50,7 +49,8 @@ from cua.schema.capability import ActionKind
 from cua.schema.policy import DecisionKind
 from cua.surface.base import Action, ActionType, ElementNode, Observation, Surface
 
-#: Consecutive acts with an unchanged fingerprint before we call it a dead end.
+#: Consecutive *identical* acts - same action, same element, same resulting screen -
+#: before we call it a dead end.
 NO_PROGRESS_LIMIT = 3
 
 
@@ -141,7 +141,9 @@ class DiscoveryAgent:
         self._log = logger
         self._recorder = recorder or Recorder()
         self._observation: Observation | None = None
-        self._fingerprints: list[str] = []
+        #: (action, target ref, resulting screen fingerprint) per act. A stall is the
+        #: same signature repeating - not merely a screen that has not moved.
+        self._signatures: list[tuple[str, str, str]] = []
         #: Resolves `<secret:name>` markers in a replayed transcript. During a live
         #: run the real value is typed and the *recording* keeps the marker.
         self._secrets = secrets or {}
@@ -150,8 +152,11 @@ class DiscoveryAgent:
         started = time.monotonic()
         limits = self._policy.policy
         tools = tool_definitions()
-        messages: list[dict[str, Any]] = [
-            {"role": "user", "content": build_goal_message(goal, target, tenant)}
+        messages: list[Message] = [
+            Message(
+                role=Role.USER,
+                text=build_goal_message(goal, target, tenant, list(self._secrets)),
+            )
         ]
         result = DiscoveryResult(stop_reason=StopReason.MODEL_ENDED, recorder=self._recorder)
 
@@ -181,9 +186,11 @@ class DiscoveryAgent:
                 result.stop_reason = StopReason.MODEL_ENDED
                 break
 
-            messages.append({"role": "assistant", "content": self._assistant_content(turn)})
+            messages.append(
+                Message(role=Role.ASSISTANT, text=turn.text, tool_calls=turn.tool_calls)
+            )
 
-            results: list[dict[str, Any]] = []
+            results: list[ToolResult] = []
             terminal: str | None = None
 
             for call in turn.tool_calls:
@@ -216,7 +223,7 @@ class DiscoveryAgent:
                     terminal = StopReason.POLICY_ESCALATION
                     break
 
-            messages.append({"role": "user", "content": results})
+            messages.append(Message(role=Role.TOOL, tool_results=results))
 
             if terminal:
                 result.stop_reason = terminal
@@ -245,7 +252,7 @@ class DiscoveryAgent:
 
     # ------------------------------------------------------------------ dispatch
 
-    async def _dispatch(self, call: ToolCall) -> tuple[dict[str, Any], bool]:
+    async def _dispatch(self, call: ToolCall) -> tuple[ToolResult, bool]:
         """Run one tool call. Returns (tool_result, escalated)."""
         try:
             if call.name == "observe":
@@ -274,7 +281,7 @@ class DiscoveryAgent:
         )
         return self._render(self._observation)
 
-    async def _do_action(self, call: ToolCall) -> tuple[dict[str, Any], bool]:
+    async def _do_action(self, call: ToolCall) -> tuple[ToolResult, bool]:
         args = parse_args(call.name, call.arguments)
         kind = _ACTION_KINDS[call.name]
         before = self._observation or await self._surface.observe()
@@ -330,18 +337,30 @@ class DiscoveryAgent:
             call.element_hint = f"{element.role}|{element.name}"
 
         typed = getattr(args, "text", None)
-        is_secret = bool(element and "secret" in element.states)
+
+        # `<secret:name>` is how a credential is typed without anybody seeing it: the
+        # model asks for a named secret, the value is substituted here at execution time,
+        # and the *recording* keeps the reference. The model never receives the
+        # credential, so it cannot leak one into a transcript, a log, or its own context.
+        marker = _SECRET_MARKER.fullmatch((typed or "").strip())
+        is_secret = bool(marker) or bool(element and "secret" in element.states)
         secret_ref = ""
 
         if is_secret and element is not None:
-            secret_ref = f"corelink.{_slug(element.name) or 'secret'}"
-
-            # A replayed transcript carries `<secret:name>` rather than the credential.
-            # Resolve it here, at execution time, from the environment.
-            marker = _SECRET_MARKER.fullmatch(typed or "")
             if marker:
                 secret_ref = marker.group(1)
-                typed = self._secrets.get(secret_ref, "")
+                if secret_ref not in self._secrets:
+                    return (
+                        self._err(
+                            call,
+                            f"no secret named {secret_ref!r} is available. "
+                            f"Known secrets: {sorted(self._secrets) or 'none'}",
+                        ),
+                        False,
+                    )
+                typed = self._secrets[secret_ref]
+            else:
+                secret_ref = f"corelink.{_slug(element.name) or 'secret'}"
 
             # Registered with the redactor *before* the first write, so the value is
             # masked in this event, every later event, and the run manifest. Filtering
@@ -367,7 +386,9 @@ class DiscoveryAgent:
         )
         after = await self._surface.observe()
         self._observation = after
-        self._fingerprints.append(after.fingerprint)
+        self._signatures.append(
+            (call.name, element.ref if element else (url or ""), after.fingerprint)
+        )
 
         self._recorder.record_action(
             action=kind,
@@ -461,7 +482,15 @@ class DiscoveryAgent:
         self._recorder.entry_fingerprint = self._observation.fingerprint
 
     def _stalled(self) -> bool:
-        recent = self._fingerprints[-NO_PROGRESS_LIMIT:]
+        """Thrashing, not merely a still screen.
+
+        The first version compared only the screen fingerprint, which ignores field
+        values by design - so a model filling in a login form looked identical to one
+        clicking a dead button, and a perfectly good live run was stopped two steps in.
+        Typing into three different fields is three different signatures; clicking the
+        same control three times is one.
+        """
+        recent = self._signatures[-NO_PROGRESS_LIMIT:]
         return len(recent) == NO_PROGRESS_LIMIT and len(set(recent)) == 1
 
     @staticmethod
@@ -489,25 +518,14 @@ class DiscoveryAgent:
         return "\n".join(lines)
 
     @staticmethod
-    def _assistant_content(turn: Turn) -> list[dict[str, Any]]:
-        content: list[dict[str, Any]] = []
-        if turn.text:
-            content.append({"type": "text", "text": turn.text})
-        for call in turn.tool_calls:
-            content.append(
-                {"type": "tool_use", "id": call.id, "name": call.name, "input": call.arguments}
-            )
-        return content
+    def _ok(call: ToolCall, content: str) -> ToolResult:
+        return ToolResult(tool_call_id=call.id, content=content)
 
     @staticmethod
-    def _ok(call: ToolCall, content: str) -> dict[str, Any]:
-        return {"type": "tool_result", "tool_use_id": call.id, "content": content}
+    def _err(call: ToolCall, content: str) -> ToolResult:
+        """A refusal is a tool *result*, not an exception.
 
-    @staticmethod
-    def _err(call: ToolCall, content: str) -> dict[str, Any]:
-        return {
-            "type": "tool_result",
-            "tool_use_id": call.id,
-            "content": content,
-            "is_error": True,
-        }
+        The model reads it, adapts, and cannot route around the check that produced it -
+        because the check happened on our side of the boundary.
+        """
+        return ToolResult(tool_call_id=call.id, content=content, is_error=True)

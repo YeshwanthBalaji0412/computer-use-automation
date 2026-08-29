@@ -23,6 +23,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from cua.discovery.llm import ToolSpec
+
 
 class ObserveArgs(BaseModel):
     """Look at the current screen."""
@@ -167,27 +169,29 @@ TOOL_SPECS: dict[str, tuple[type[BaseModel], str]] = {
 ACTING_TOOLS = frozenset({"navigate", "click", "fill", "select", "press"})
 
 
-def tool_definitions() -> list[dict[str, Any]]:
-    """The Anthropic tool list, generated from the Pydantic models above.
+def tool_definitions() -> list[ToolSpec]:
+    """The tool list, generated from the Pydantic models above.
 
-    `strict` guarantees the arguments validate against the schema, which removes a whole
-    class of defensive parsing from the loop.
+    Provider-neutral: plain JSON Schema, translated to a vendor's key names inside the
+    client. The first version emitted one provider's shape directly from here, which put
+    a wire format on the wrong side of the LLM boundary.
     """
-    definitions: list[dict[str, Any]] = []
-    for name, (model, description) in TOOL_SPECS.items():
-        schema = model.model_json_schema()
-        schema.pop("title", None)
-        schema["additionalProperties"] = False
-        schema.setdefault("required", [])
-        definitions.append(
-            {
-                "name": name,
-                "description": description,
-                "strict": True,
-                "input_schema": schema,
-            }
+    return [
+        ToolSpec(
+            name=name,
+            description=description,
+            arguments_schema=_schema_for(model),
         )
-    return definitions
+        for name, (model, description) in TOOL_SPECS.items()
+    ]
+
+
+def _schema_for(model: type[BaseModel]) -> dict[str, Any]:
+    schema = model.model_json_schema()
+    schema.pop("title", None)
+    schema["additionalProperties"] = False
+    schema.setdefault("required", [])
+    return schema
 
 
 def parse_args(name: str, raw: dict[str, Any]) -> BaseModel:

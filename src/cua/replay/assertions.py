@@ -18,6 +18,7 @@ import re
 from dataclasses import dataclass
 from fnmatch import fnmatch
 
+from cua.locator.generate import bind
 from cua.locator.match import resolve
 from cua.schema.capability import Assertion, AssertionKind
 from cua.schema.locator import Locator
@@ -53,18 +54,27 @@ def evaluate(
     assertion: Assertion,
     observation: Observation,
     outputs: dict[str, Locator] | None = None,
+    values: dict[str, str] | None = None,
 ) -> AssertionResult:
-    """`outputs` maps output name -> the locator currently in force for it.
+    """Evaluate one assertion against a screen.
 
-    Passed in rather than embedded so a tenant overlay that moves a value - a table on
-    one institution, a definition list on another - is honoured without the tenant being
-    allowed to redefine what success means.
+    `outputs` maps output name -> the locator currently in force for it. Passed in rather
+    than embedded so a tenant overlay that moves a value - a table on one institution, a
+    definition list on another - is honoured without the tenant being allowed to redefine
+    what success means.
+
+    `values` are this invocation's input parameters. Assertion locators are parameterised
+    exactly like step locators - a checkpoint on "the cell showing {{memberId}}" is a
+    perfectly reasonable thing for a discovery run to record - so they have to be bound
+    here too. Omitting that was a real bug: every action resolved correctly and then the
+    success condition failed, because it was looking for a cell literally named
+    "{{memberId}}".
     """
     kind = assertion.kind
     label = assertion.describe or str(kind)
 
     if kind is AssertionKind.ALL_OF:
-        results = [evaluate(a, observation, outputs) for a in assertion.of]
+        results = [evaluate(a, observation, outputs, values) for a in assertion.of]
         failed = [r for r in results if not r.passed]
         return AssertionResult(
             passed=not failed,
@@ -73,7 +83,7 @@ def evaluate(
         )
 
     if kind is AssertionKind.ANY_OF:
-        results = [evaluate(a, observation, outputs) for a in assertion.of]
+        results = [evaluate(a, observation, outputs, values) for a in assertion.of]
         return AssertionResult(
             passed=any(r.passed for r in results),
             describe=label,
@@ -98,7 +108,7 @@ def evaluate(
         locator = (outputs or {}).get(assertion.output or "")
         if locator is None:
             return AssertionResult(False, label, f"no locator for output {assertion.output!r}")
-        resolution = resolve(locator, observation)
+        resolution = resolve(bind(locator, values or {}), observation)
         return AssertionResult(
             passed=resolution.ref is not None,
             describe=label,
@@ -108,7 +118,7 @@ def evaluate(
     if kind in (AssertionKind.ELEMENT_PRESENT, AssertionKind.ELEMENT_ABSENT):
         if assertion.locator is None:
             return AssertionResult(False, label, "assertion has no locator")
-        resolution = resolve(assertion.locator, observation)
+        resolution = resolve(bind(assertion.locator, values or {}), observation)
         present = resolution.ref is not None
         want = kind is AssertionKind.ELEMENT_PRESENT
         return AssertionResult(
@@ -127,8 +137,9 @@ def evaluate_all(
     assertions: list[Assertion],
     observation: Observation,
     outputs: dict[str, Locator] | None = None,
+    values: dict[str, str] | None = None,
 ) -> tuple[bool, list[AssertionResult]]:
-    results = [evaluate(a, observation, outputs) for a in assertions]
+    results = [evaluate(a, observation, outputs, values) for a in assertions]
     return all(r.passed for r in results), results
 
 

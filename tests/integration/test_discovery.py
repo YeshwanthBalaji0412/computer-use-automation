@@ -23,7 +23,7 @@ import pytest_asyncio
 
 from cua.discovery.agent import DiscoveryAgent, StopReason
 from cua.discovery.compiler import compile_capability
-from cua.discovery.llm import MockLLM, ToolCall, Turn
+from cua.discovery.llm import Message, MockLLM, Role, ToolCall, ToolSpec, Turn
 from cua.evidence.logger import EvidenceLogger
 from cua.policy.engine import PolicyEngine, load_policy
 from cua.policy.redactor import Redactor
@@ -55,11 +55,9 @@ class ScriptedLLM:
     def model_name(self) -> str:
         return "scripted"
 
-    async def turn(
-        self, *, system: str, tools: list[dict[str, Any]], messages: list[dict[str, Any]]
-    ) -> Turn:
+    async def turn(self, *, system: str, tools: list[ToolSpec], messages: list[Message]) -> Turn:
         if self._index >= len(self._plan):
-            turn = Turn(text="plan exhausted", stop_reason="end_turn")
+            turn = Turn(text="plan exhausted", stop_reason="stop")
             self.emitted.append(turn)
             return turn
 
@@ -68,10 +66,15 @@ class ScriptedLLM:
         name = step.pop("tool")
         find = step.pop("find", None)
 
+        find_refs = step.pop("find_refs", None)
+        if find_refs is not None:
+            refs = [self._resolve(messages, *f) for f in find_refs]
+            step["refs"] = [r for r in refs if r]
+
         if find is not None:
             ref = self._resolve(messages, *find)
             if ref is None:
-                turn = Turn(text=f"could not find {find}", stop_reason="end_turn")
+                turn = Turn(text=f"could not find {find}", stop_reason="stop")
                 self.emitted.append(turn)
                 return turn
             step["ref"] = ref
@@ -79,21 +82,19 @@ class ScriptedLLM:
         turn = Turn(
             text=step.pop("_say", ""),
             tool_calls=[ToolCall(id=f"call_{self._index}", name=name, arguments=step)],
-            stop_reason="tool_use",
+            stop_reason="tool_calls",
         )
         self.emitted.append(turn)
         return turn
 
     @staticmethod
-    def _resolve(messages: list[dict[str, Any]], role: str, name: str) -> str | None:
+    def _resolve(messages: list[Message], role: str, name: str) -> str | None:
         """Find a ref in the most recent rendered observation, by role and name."""
         for message in reversed(messages):
-            content = message.get("content")
-            blocks = content if isinstance(content, list) else []
-            for block in reversed(blocks):
-                if not isinstance(block, dict) or block.get("type") != "tool_result":
-                    continue
-                for line in str(block.get("content", "")).splitlines():
+            if message.role is not Role.TOOL:
+                continue
+            for result in reversed(message.tool_results):
+                for line in result.content.splitlines():
                     match = _LINE.match(line)
                     if not match:
                         continue
@@ -143,9 +144,11 @@ def savings_balance_plan(member_id: str = "100042") -> list[dict[str, Any]]:
             "why": "read the member's current savings balance",
         },
         {
+            # A checkpoint that names a *parameterised* value, which is what a real
+            # model records and what exposed the unbound-assertion bug.
             "tool": "assert_state",
+            "find_refs": [("heading", "Member Detail"), ("cell", "100042")],
             "describe": "the member detail screen",
-            "refs": [],
         },
         {
             "tool": "finish",

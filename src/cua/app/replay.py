@@ -1,6 +1,6 @@
 """`cua replay` - the production execution path.
 
-Composition only. The engine it wires up never imports Playwright or the Anthropic SDK,
+Composition only. The engine it wires up never imports Playwright or the LLM SDK,
 which is what the import-linter contracts enforce and what makes "deterministic replay"
 a structural property rather than a promise.
 """

@@ -7,7 +7,6 @@ dependencies = [
     "playwright>=1.62",
     "pydantic>=2.13",
     "pydantic-settings>=2.7",
-    "anthropic>=1.1,<2",
     "fastapi>=0.141",
     "uvicorn[standard]>=0.52",
     "typer>=0.15",
@@ -16,6 +15,8 @@ dependencies = [
     "tenacity>=9.0",
     "pyyaml>=6.0",
     "python-multipart>=0.0.32",
+    "openai>=3.6.0",
+    "python-dotenv>=1.2.3",
 ]
 
 [project.scripts]

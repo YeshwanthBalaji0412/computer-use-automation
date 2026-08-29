@@ -8,8 +8,8 @@ uv run cua serve-app                          # terminal 1
 uv run python scripts/build_evidence.py       # terminal 2
 ```
 
-No API key is needed — discovery replays a recorded transcript and replay never calls a
-model. The build script **fails loudly** if a credential or a member's balance appears in
+No API key is needed — discovery replays the recorded `gpt-4o` transcript in
+`fixtures/`, and replay never calls a model at all. The build script **fails loudly** if a credential or a member's balance appears in
 anything it is about to commit.
 
 `demo/` is committed. `runs/` and `fixtures/` are working directories: `runs/` is
@@ -22,7 +22,7 @@ gitignored scratch, `fixtures/` holds the recorded transcript that `--mock` repl
 | # | Path | What to look at |
 |---|---|---|
 | 1 | [`demo/member.savings-balance@1.0.0.json`](demo/member.savings-balance%401.0.0.json) | The artifact. Typed inputs and outputs, per-step `intent`, ranked locator ladders, declared business outcomes. |
-| 2 | [`demo/discovery/`](demo/discovery/) | How it was produced — and note that `transcript.json` is kept *separate* from the artifact. |
+| 2 | [`demo/discovery/`](demo/discovery/) | How it was produced by `gpt-4o` — and note that `transcript.json` is kept *separate* from the artifact. |
 | 3 | [`demo/eval-matrix.txt`](demo/eval-matrix.txt) | Ten scenarios, six different answers, one screen. |
 | 4 | [`demo/replay-escalated-handoff/console.txt`](demo/replay-escalated-handoff/console.txt) | A run parked, a human resolved it, the run finished. |
 

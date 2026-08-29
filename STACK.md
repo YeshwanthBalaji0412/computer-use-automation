@@ -48,12 +48,12 @@ Confined to exactly one file (`surface/web_surface.py`) so the rest of the syste
 
 > ⚠️ **Async API, not sync.** On Day 5 automation must park mid-run awaiting a human while FastAPI keeps serving the operator console — same event loop. Sync Playwright raises inside asyncio. Choosing this wrong on Day 1 costs you a rewrite on Day 5.
 
-**anthropic `>=1.1,<2`** — *the discovery loop only. Never touched during replay.*
-`@beta_tool` decorators + `client.beta.messages.tool_runner(...).until_done()`. Model `claude-opus-5`, adaptive thinking, `effort: "high"`, and `disable_parallel_tool_use=True` — a browser has one cursor, so parallel tool calls would interleave clicks on stale state.
-> ⚠️ The SDK went 1.0 recently. Most tutorials online are 0.x and fail confusingly. Pin `<2`.
+**openai `>=3.6`** — *the discovery loop only. Never touched during replay.*
+`chat.completions.create` with function tools and `parallel_tool_calls=False` — a browser has one cursor, so parallel tool calls would interleave clicks on state the earlier click already invalidated. The model is `CUA_MODEL` (default `gpt-4o`); a long agentic loop rewards the strongest tool-use model a key can reach.
+> The SDK is confined to `discovery/llm.py`. The agent builds **provider-neutral** `Message` / `ToolSpec` types and the client translates at the last moment — so swapping provider is one file, and an import-linter contract proves replay never loads it at all.
 
 **import-linter** — *makes an architectural claim mechanically true.*
-Three contracts in `setup.cfg`: replay may not import `anthropic` or `cua.discovery`; Playwright may not escape the surface adapter; the schema layer depends on nothing. Requirement 3.3 says replay must run "without invoking the LLM" — this **proves** it in CI instead of promising it in a README. Very few submissions will have this.
+Three contracts in `setup.cfg`: replay may not import `openai` or `cua.discovery`; Playwright may not escape the surface adapter; the schema layer depends on nothing. Requirement 3.3 says replay must run "without invoking the LLM" — this **proves** it in CI instead of promising it in a README. Very few submissions will have this.
 
 ### The ones that make it runnable
 
@@ -121,7 +121,7 @@ Your interview cheat sheet. Every sub-requirement in the brief, the component th
 
 | Sub-requirement | Component | Proof |
 |---|---|---|
-| **Replay without the LLM** | `replay/` | ⭐ import-linter contract **+** `test_replay_never_imports_anthropic.py` asserting `"anthropic" not in sys.modules` after a real run |
+| **Replay without the LLM** | `replay/` | ⭐ import-linter contract **+** `test_replay_never_loads_the_llm_sdk` asserting `"openai" not in sys.modules` after a real run |
 | Stable element targeting | `locator/resolve.py` — walk the ladder, require uniqueness | Tier telemetry logged per step |
 | Verify the checkpoint | `replay/assertions.py` | `CHECKPOINT_FAILED` row in the matrix |
 | Return declared outputs | `replay/executor.py` | `cua replay ... --json` |
@@ -178,7 +178,7 @@ The real failure mode of a 7-day build isn't a bad library — it's discovering 
 | **Sync vs. async Playwright** | Day 5 — the console must serve requests while automation is parked | **`playwright.async_api` from the first line.** Non-negotiable. |
 | **A CSS selector leaking into the model or the artifact** | Day 4 — replay becomes brittle and the thesis collapses | `Surface` returns `Observation`/`ElementNode`. **No field can hold a CSS selector.** The type system forbids the mistake. |
 | **Redaction bolted on at the end** | Day 7 — retrofitting across logs, screenshots, artifacts, prompts is a lost day | Build `Redactor` on **Day 2**, before any evidence exists; make it the only writer to disk. |
-| **Anthropic SDK 0.x examples** | Day 3 — confusing failures | Pin `anthropic>=1.1,<2`; use only `@beta_tool` + `tool_runner`. |
+| **OpenAI SDK 0.x examples** | Day 3 — confusing failures | Pin `openai>=3.6`; use only `@beta_tool` + `tool_runner`. |
 
 ### Phase gates
 
@@ -215,10 +215,10 @@ Record the fixture on Day 3 *while you have real transcripts in hand*.
 | **"Why no database?"** | Artifacts are versioned documents that belong in git next to the code that runs them — that *is* the reviewability requirement. A DB adds migrations and removes `git diff` on capability changes. In production the registry becomes a service; `CapabilityRegistry` is already that seam. |
 | **"Why Playwright over Selenium?"** | Auto-waiting, `get_by_role`, `aria_snapshot()`, CDP access. Selenium has none of them, so you hand-roll the wait strategy — the number-one source of replay flake. |
 | **"Why not browser-use / Stagehand / Playwright MCP?"** ⭐ | I evaluated all three. They're the popular AI-browser layer right now, and every one of them is the wrong shape for this problem. `browser-use` *is* the agent loop and `Stagehand` *is* the perception layer — adopting either outsources the exact things being designed here (locator strategy, artifact schema, error taxonomy). More fundamentally, none of them emits a **reusable deterministic artifact**; they re-reason with a model on every single run. That's the naive approach this system exists to replace: too slow for a member on the phone, too expensive at thousands of calls a day, and non-deterministic in a regulated environment. I use raw Playwright precisely so the discovery→artifact→replay boundary is mine to design. |
-| **"Why the raw Anthropic SDK and not LangChain / LangGraph?"** | I've shipped with LangGraph — it's the orchestration layer in SAGE, my compliance-agent project — so this isn't unfamiliarity. It's the wrong fit here. The discovery loop is ten tools and one state machine, and the policy check and control lease have to sit *inside* every tool call where a reviewer can see them, not behind a framework's callback system. LangGraph's `interrupt()` does give you human-in-the-loop, but it pauses *graph* state; my hard problem is pausing a **live browser session** and transferring its lease, which LangGraph has no opinion about. Adding it would mean a reviewer has to trust the framework's semantics instead of reading a twenty-line `SessionController`. |
-| **"Why `claude-opus-5`?"** | Long-horizon tool-use reliability and 1M context, so a 30-step run with screenshots never needs compaction mid-discovery. It's an env var. Discovery runs *once per capability* and replay never calls a model, so model cost amortizes to near zero. |
-| **"How do I know replay truly has no LLM?"** | Two mechanisms. An import-linter contract forbids `cua.replay` from importing `anthropic`. And a test runs a full replay in a subprocess and asserts the module was never *loaded*. The second is the stronger claim. |
-| **"What if Anthropic is down?"** | Replay is unaffected — that's the entire point of the architecture. Discovery is an offline authoring step, not a production path. |
+| **"Why the raw OpenAI SDK and not LangChain / LangGraph?"** | I've shipped with LangGraph — it's the orchestration layer in SAGE, my compliance-agent project — so this isn't unfamiliarity. It's the wrong fit here. The discovery loop is ten tools and one state machine, and the policy check and control lease have to sit *inside* every tool call where a reviewer can see them, not behind a framework's callback system. LangGraph's `interrupt()` does give you human-in-the-loop, but it pauses *graph* state; my hard problem is pausing a **live browser session** and transferring its lease, which LangGraph has no opinion about. Adding it would mean a reviewer has to trust the framework's semantics instead of reading a twenty-line `SessionController`. |
+| **"Why `gpt-4o`?"** | Long-horizon tool-use reliability and 1M context, so a 30-step run with screenshots never needs compaction mid-discovery. It's an env var. Discovery runs *once per capability* and replay never calls a model, so model cost amortizes to near zero. |
+| **"How do I know replay truly has no LLM?"** | Two mechanisms. An import-linter contract forbids `cua.replay` from importing `openai`. And a test runs a full replay in a subprocess and asserts the module was never *loaded*. The second is the stronger claim. |
+| **"What if OpenAI is down?"** | Replay is unaffected — that's the entire point of the architecture. Discovery is an offline authoring step, not a production path. |
 | **"Where does this break at 2,000 app instances?"** | Not authoring — record per *product*, override per tenant, and ~2,000 instances collapse to ~20 products. Drift management breaks first: I'd need the nightly `verify` sweep, per-tenant conformance dashboards, an override-proposal workflow. Then session pooling and secret management — neither of which I built. |
 | **"What's the weakest part?"** | Discovery quality. The compiler's step-pruning and auto-parameterization are heuristics; on a complex flow I'd expect to hand-edit the artifact before approving it. That's *why* `status: draft` exists and unattended replay is gated on `approved`. Next investment: a diff-and-review UI for artifacts. |
 
@@ -230,7 +230,7 @@ Record the fixture on Day 3 *while you have real transcripts in hand*.
 cd /Users/yeshwanthbalaji/Documents/InterfaceAI_TakeHome
 
 uv init --python 3.13 --name cua
-uv add playwright pydantic pydantic-settings "anthropic>=1.1,<2" \
+uv add playwright pydantic pydantic-settings "openai>=3.6" \
        fastapi "uvicorn[standard]" typer structlog jinja2 tenacity pyyaml
 uv add --dev pytest pytest-asyncio ruff mypy import-linter types-pyyaml
 uv run playwright install chromium

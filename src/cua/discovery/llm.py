@@ -1,25 +1,38 @@
 """The LLM boundary.
 
-One narrow interface - `LLMClient.turn()` - with two implementations: the real Anthropic
-client, and a `MockLLM` that replays a recorded transcript. Everything above this line is
-identical either way, which is what makes `cua discover --mock` a genuine exercise of the
-discovery loop rather than a separate code path that happens to produce an artifact.
+One interface - `LLMClient.turn()` - over provider-neutral message and tool types, with
+two implementations: the live OpenAI client and a `MockLLM` that replays a recorded
+transcript. Everything above this line is identical either way, which is what makes
+`cua discover --mock` a genuine exercise of the discovery loop rather than a separate
+code path that happens to produce an artifact.
 
-Why a manual loop instead of the SDK's tool runner
---------------------------------------------------
-The runner would drive the request/execute/loop cycle for us, and for a plain tool agent
-that is the right default. Three things here argue against it:
+On the neutral types
+--------------------
+`Message`, `ToolCall`, `ToolResult` and `ToolSpec` are ours, not a vendor's. Each client
+translates them to its own wire format at the last possible moment.
 
-* Every tool call has to pass through the policy engine, the control lease, and the
-  recorder *before* it touches the surface. That sequence is the safety story, and it
-  belongs somewhere a reviewer can read it in one place rather than behind callbacks.
+That translation is worth its ~40 lines because the first version did not do it: the
+agent built content blocks in one provider's shape and passed them straight through what
+was nominally an abstraction. The method signature was provider-neutral; the payload was
+not. Porting to a second provider is what revealed it - a seam you have never crossed is
+a seam you have not tested.
+
+Why a manual loop rather than an SDK's agent runner
+---------------------------------------------------
+* Every tool call has to pass the policy engine, the control lease, and the recorder
+  *before* it touches the surface. That sequence is the safety story, and it belongs
+  where a reviewer reads it in one place rather than behind framework callbacks.
 * The stopping conditions are stateful across turns - a no-progress detector comparing
   observation fingerprints - which is loop logic, not tool logic.
 * Owning the loop makes the model a swappable dependency. `MockLLM` needs no SDK, no
-  network, and no key, so the entire discovery path is testable in CI for free.
+  network and no key, so the whole discovery path runs in CI for free.
 
-The cost is roughly forty lines of loop we maintain ourselves. Worth it for the third
-reason alone.
+On the provider
+---------------
+The brief leaves provider and model open. OpenAI here; the model is `CUA_MODEL`, and a
+long agentic loop rewards the strongest tool-use model a key has access to. Nothing
+outside this file knows which provider is in use - and replay never calls a model at all,
+which an import-linter contract enforces.
 """
 
 from __future__ import annotations
@@ -27,13 +40,24 @@ from __future__ import annotations
 import json
 import os
 import re
+from enum import StrEnum
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from pydantic import BaseModel, Field
 
-DEFAULT_MODEL = "claude-opus-5"
+DEFAULT_MODEL = "gpt-4o"
 MAX_TOKENS = 8_000
+
+
+# ---------------------------------------------------------------- neutral types
+
+
+class Role(StrEnum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    #: Results of tool calls, answering the assistant's previous turn.
+    TOOL = "tool"
 
 
 class ToolCall(BaseModel):
@@ -42,11 +66,33 @@ class ToolCall(BaseModel):
     arguments: dict[str, Any] = Field(default_factory=dict)
     element_hint: str = Field(
         default="",
-        description="'role|name' of the element this call resolved to, stamped by the "
-        "agent after execution. Refs are per-observation, so a recorded transcript that "
-        "trusted them would break the moment perception changed - which is exactly what "
-        "happened when paragraph text started being perceived and every ref shifted.",
+        description="Identity of the element this call resolved to - 'role|name', or a "
+        "column/row form for extraction targets - stamped by the agent after execution. "
+        "Refs are per-observation, so a recorded transcript that trusted them would "
+        "break the moment perception changed, which is exactly what happened when "
+        "paragraph text started being perceived and every ref shifted.",
     )
+
+
+class ToolResult(BaseModel):
+    tool_call_id: str
+    content: str
+    is_error: bool = False
+
+
+class Message(BaseModel):
+    role: Role
+    text: str = ""
+    tool_calls: list[ToolCall] = Field(default_factory=list)
+    tool_results: list[ToolResult] = Field(default_factory=list)
+
+
+class ToolSpec(BaseModel):
+    """A tool the model may call. `arguments_schema` is plain JSON Schema."""
+
+    name: str
+    description: str
+    arguments_schema: dict[str, Any]
 
 
 class Turn(BaseModel):
@@ -54,7 +100,7 @@ class Turn(BaseModel):
 
     text: str = ""
     tool_calls: list[ToolCall] = Field(default_factory=list)
-    stop_reason: str = "end_turn"
+    stop_reason: str = "stop"
     input_tokens: int = 0
     output_tokens: int = 0
 
@@ -63,94 +109,153 @@ class Turn(BaseModel):
         return bool(self.tool_calls)
 
 
-class ToolResult(BaseModel):
-    tool_use_id: str
-    content: str
-    is_error: bool = False
-
-
 class LLMClient(Protocol):
-    """The whole boundary. Two methods, one of them bookkeeping."""
+    """The whole boundary."""
 
     async def turn(
-        self,
-        *,
-        system: str,
-        tools: list[dict[str, Any]],
-        messages: list[dict[str, Any]],
+        self, *, system: str, tools: list[ToolSpec], messages: list[Message]
     ) -> Turn: ...
 
     @property
     def model_name(self) -> str: ...
 
 
-class AnthropicClient:
-    """The real thing."""
+# ---------------------------------------------------------------- live client
+
+
+class OpenAIClient:
+    """The live model."""
 
     def __init__(self, model: str | None = None) -> None:
         # Imported lazily so `--mock` runs with no SDK configuration and no key.
-        from anthropic import AsyncAnthropic
+        from openai import AsyncOpenAI
 
-        self._client = AsyncAnthropic()
+        self._client = AsyncOpenAI()
         self._model: str = model or os.environ.get("CUA_MODEL") or DEFAULT_MODEL
 
     @property
     def model_name(self) -> str:
         return self._model
 
-    async def turn(
-        self,
-        *,
-        system: str,
-        tools: list[dict[str, Any]],
-        messages: list[dict[str, Any]],
-    ) -> Turn:
-        # The SDK's overloads are TypedDict-based and do not infer from inline dict
-        # literals for `thinking` / `output_config` / `tool_choice`. Importing those
-        # param types just to satisfy the checker would couple this module to SDK
-        # internals for no runtime benefit, so the boundary carries one narrow ignore.
-        response = await self._client.messages.create(  # type: ignore[call-overload]
+    async def turn(self, *, system: str, tools: list[ToolSpec], messages: list[Message]) -> Turn:
+        response = await self._client.chat.completions.create(
             model=self._model,
             max_tokens=MAX_TOKENS,
-            thinking={"type": "adaptive"},
-            output_config={"effort": "high"},
             # A browser has one cursor. Parallel tool calls would interleave clicks on
             # state that the earlier click already invalidated.
-            tool_choice={"type": "auto", "disable_parallel_tool_use": True},
-            # The system prompt and tool schemas are byte-identical on every turn of a
-            # thirty-step run, so they belong behind a cache breakpoint.
-            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-            tools=tools,
-            messages=messages,
+            parallel_tool_calls=False,
+            tools=cast("Any", [_tool_wire(t) for t in tools]),
+            messages=cast(
+                "Any", [{"role": "system", "content": system}, *_messages_wire(messages)]
+            ),
         )
 
-        text = "".join(b.text for b in response.content if b.type == "text")
-        calls = [
-            ToolCall(id=b.id, name=b.name, arguments=dict(b.input))
-            for b in response.content
-            if b.type == "tool_use"
-        ]
+        choice = response.choices[0]
+        calls: list[ToolCall] = []
+        for call in choice.message.tool_calls or []:
+            # The SDK's tool-call union also covers custom tools, which carry no
+            # `.function`. Narrowing on the discriminator rather than reaching for the
+            # attribute keeps this honest if that union grows again.
+            if call.type != "function":
+                continue
+            calls.append(
+                ToolCall(
+                    id=call.id,
+                    name=call.function.name,
+                    # Arguments arrive as a JSON *string*. Always parse rather than
+                    # string-matching: escaping differs between models and versions.
+                    arguments=_safe_json(call.function.arguments),
+                )
+            )
+
+        usage = response.usage
         return Turn(
-            text=text,
+            text=choice.message.content or "",
             tool_calls=calls,
-            stop_reason=response.stop_reason or "end_turn",
-            input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens,
+            stop_reason=choice.finish_reason or "stop",
+            input_tokens=getattr(usage, "prompt_tokens", 0) if usage else 0,
+            output_tokens=getattr(usage, "completion_tokens", 0) if usage else 0,
         )
+
+
+def _tool_wire(tool: ToolSpec) -> dict[str, Any]:
+    """Neutral spec -> OpenAI's function-tool shape.
+
+    `strict` is deliberately not set: it requires every property to appear in `required`,
+    and several of these tools have genuinely optional arguments with defaults. Arguments
+    are validated against the same Pydantic model that generated the schema when they
+    come back, so a malformed call is still rejected - one layer later, with a message
+    the model can act on.
+    """
+    return {
+        "type": "function",
+        "function": {
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": tool.arguments_schema,
+        },
+    }
+
+
+def _messages_wire(messages: list[Message]) -> list[dict[str, Any]]:
+    """Neutral messages -> OpenAI's chat format.
+
+    One neutral TOOL message can carry several results; OpenAI wants one message per
+    result, each keyed by `tool_call_id`.
+    """
+    out: list[dict[str, Any]] = []
+    for message in messages:
+        if message.role is Role.TOOL:
+            out.extend(
+                {
+                    "role": "tool",
+                    "tool_call_id": result.tool_call_id,
+                    "content": result.content,
+                }
+                for result in message.tool_results
+            )
+        elif message.role is Role.ASSISTANT:
+            entry: dict[str, Any] = {"role": "assistant", "content": message.text or None}
+            if message.tool_calls:
+                entry["tool_calls"] = [
+                    {
+                        "id": call.id,
+                        "type": "function",
+                        "function": {
+                            "name": call.name,
+                            "arguments": json.dumps(call.arguments),
+                        },
+                    }
+                    for call in message.tool_calls
+                ]
+            out.append(entry)
+        else:
+            out.append({"role": "user", "content": message.text})
+    return out
+
+
+def _safe_json(raw: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+# ---------------------------------------------------------------- recorded client
 
 
 class MockLLM:
     """Replays a recorded transcript.
 
-    This is what makes the brief's "how to run without live services" answer real, and
-    it is also the fast deterministic test of the recorder and compiler - the two
-    components whose bugs are otherwise only visible after spending money.
-
-    Recorded tool calls carry both a `ref` and the description of the element that ref
-    pointed at. On replay the ref is used if it still names the same thing, and
-    otherwise the element is found again by role and name. Refs are per-observation, so
-    a fixture that trusted them blindly would rot the first time an element was added.
+    This is what makes the brief's "how to run without live services" answer real, and it
+    is also the fast deterministic test of the recorder and compiler - the two components
+    whose bugs are otherwise only visible after spending money.
     """
+
+    #: `  e19  link 'View' [contentFrame]  (row: Account=Savings | column: Action)`
+    _LINE = re.compile(r"^\s+(e\d+)\s+([\w-]+)\s+'(.*?)'")
+    _ROW = re.compile(r"\(row: (.*?) \| column: (.*?)\)")
 
     def __init__(self, turns: list[Turn], *, model: str = "mock") -> None:
         self._turns = turns
@@ -170,34 +275,21 @@ class MockLLM:
     def write_fixture(cls, path: Path, turns: list[Turn], *, model: str) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps(
-                {"model": model, "turns": [t.model_dump() for t in turns]},
-                indent=2,
-            ),
+            json.dumps({"model": model, "turns": [t.model_dump() for t in turns]}, indent=2),
             encoding="utf-8",
         )
 
-    #: `  e19  link 'View' [contentFrame]  (row: Account=Savings | column: Action)`
-    _LINE = re.compile(r"^\s+(e\d+)\s+([\w-]+)\s+'(.*?)'")
-    _ROW = re.compile(r"\(row: (.*?) \| column: (.*?)\)")
-
-    async def turn(
-        self,
-        *,
-        system: str,
-        tools: list[dict[str, Any]],
-        messages: list[dict[str, Any]],
-    ) -> Turn:
+    async def turn(self, *, system: str, tools: list[ToolSpec], messages: list[Message]) -> Turn:
         if self._index >= len(self._turns):
             # Running off the end means the loop took a path the recording did not.
             # Ending the turn is the honest response; pretending to have more to say
-            # would make the mock diverge silently from the real client.
-            return Turn(text="(mock transcript exhausted)", stop_reason="end_turn")
+            # would make the mock diverge silently from a live client.
+            return Turn(text="(mock transcript exhausted)", stop_reason="stop")
         turn = self._turns[self._index]
         self._index += 1
         return self._rebind(turn, messages)
 
-    def _rebind(self, turn: Turn, messages: list[dict[str, Any]]) -> Turn:
+    def _rebind(self, turn: Turn, messages: list[Message]) -> Turn:
         """Re-resolve recorded refs against the current screen.
 
         A ref is only meaningful inside the observation that produced it. Replaying one
@@ -222,17 +314,14 @@ class MockLLM:
         return turn.model_copy(update={"tool_calls": rebound})
 
     @classmethod
-    def _element_index(cls, messages: list[dict[str, Any]]) -> dict[str, str]:
-        """'role|name' -> ref, from the most recent rendered observation."""
+    def _element_index(cls, messages: list[Message]) -> dict[str, str]:
+        """Element identity -> ref, from the most recent rendered observation."""
         for message in reversed(messages):
-            content = message.get("content")
-            if not isinstance(content, list):
+            if message.role is not Role.TOOL:
                 continue
-            for block in reversed(content):
-                if not isinstance(block, dict) or block.get("type") != "tool_result":
-                    continue
+            for result in reversed(message.tool_results):
                 index: dict[str, str] = {}
-                for line in str(block.get("content", "")).splitlines():
+                for line in result.content.splitlines():
                     match = cls._LINE.match(line)
                     if not match:
                         continue
@@ -240,7 +329,8 @@ class MockLLM:
                     index.setdefault(f"{role}|{name}".lower(), ref)
 
                     # Extraction targets are hinted by column and a sibling cell rather
-                    # than by their own text, so index those forms too.
+                    # than by their own text - a cell's accessible name *is* the value -
+                    # so index those forms too.
                     row = cls._ROW.search(line)
                     if row:
                         pairs, column = row.groups()
