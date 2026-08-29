@@ -79,6 +79,62 @@ def test_the_default_policy_ships_with_the_package() -> None:
     assert signals > 0, "shipped policy has no irreversible-action signals"
 
 
+def test_no_command_the_cli_advertises_is_a_stub() -> None:
+    """Every registered command must be real.
+
+    `cua catalog` and `cua agent` were once registered, documented in the README, listed
+    in `--help`, and raised `NotImplementedError` when run. Nothing caught it, because
+    nothing had ever invoked them - the docs were the only place they existed.
+
+    This walks the Typer app rather than checking a hard-coded list, so a command added
+    tomorrow is covered without anyone remembering to add it here. That is the point: the
+    failure was not "we forgot to implement `catalog`", it was "we had no way to notice".
+    """
+    import ast
+
+    import cua.cli as cli
+
+    registered = {c.callback.__name__ for c in cli.app.registered_commands if c.callback}
+    assert registered, "the CLI registered no commands at all"
+
+    source = Path(cli.__file__).read_text(encoding="utf-8")
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.FunctionDef) or node.name not in registered:
+            continue
+        body = [s for s in node.body if not isinstance(s, ast.Expr)]  # drop the docstring
+        raised = [
+            s.exc.func.id
+            for s in body
+            if isinstance(s, ast.Raise)
+            and isinstance(s.exc, ast.Call)
+            and isinstance(s.exc.func, ast.Name)
+        ]
+        assert "NotImplementedError" not in raised, (
+            f"`cua {node.name}` is advertised in --help but raises NotImplementedError. "
+            f"Implement it or unregister it - do not ship a command that crashes."
+        )
+
+
+def test_advertised_read_only_commands_actually_run(tmp_path: Path) -> None:
+    """One rung up from the AST check: these genuinely execute.
+
+    Limited to commands that need neither a browser nor a network, so it stays in the
+    unit tier. `--help` alone would not have caught the stubs, since Typer renders help
+    from the signature without ever calling the body.
+    """
+    for args in (["catalog"], ["catalog", "--show", "nope.missing"], ["--help"]):
+        result = subprocess.run(
+            [sys.executable, "-m", "cua.cli", *args],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        combined = result.stdout + result.stderr
+        assert "NotImplementedError" not in combined, f"`cua {' '.join(args)}`:\n{combined}"
+        assert "Traceback" not in combined, f"`cua {' '.join(args)}`:\n{combined}"
+
+
 def test_the_cli_reads_dotenv(tmp_path: Path) -> None:
     """Copying .env.example to .env has to actually do something.
 

@@ -74,6 +74,14 @@ def discover(
     ] = False,
     fixture: Annotated[str, typer.Option(help="Transcript to replay with --mock.")] = "",
     headed: Annotated[bool, typer.Option(help="Show the browser.")] = False,
+    operator_port: Annotated[
+        int,
+        typer.Option(
+            help="Serve the operator console on this port. Irreversible actions are "
+            "escalated for authorisation instead of ending the run - required to "
+            "record a write flow."
+        ),
+    ] = 0,
 ) -> None:
     """Run the LLM observe->decide->act loop and compile a capability artifact.
 
@@ -107,6 +115,7 @@ def discover(
             mock=mock,
             headed=headed,
             fixture=Path(fixture) if fixture else None,
+            operator_port=operator_port or None,
         )
     )
     raise typer.Exit(code)
@@ -197,6 +206,9 @@ def verify(
             tenant_ids=wanted,
             capabilities_dir=Path("capabilities"),
             tenants_dir=TENANTS_DIR,
+            # The sweep is the controlled measurement an approval decision rests on, so
+            # this is where the artifact's stability record gets fed.
+            record_stability=True,
         )
     )
     typer.echo(render(results, capability))
@@ -205,18 +217,55 @@ def verify(
 
 @app.command()
 def catalog(
-    show: Annotated[str, typer.Option(help="Capability id to show in detail.")] = "",
+    show: Annotated[str, typer.Option(help="Capability id to show as a tool definition.")] = "",
 ) -> None:
-    """List saved capabilities as the callable tool contract an AI agent would see."""
-    raise NotImplementedError("phase 6")
+    """List saved capabilities as the callable tool contract an AI agent would see.
+
+    `--show <id>` prints the exact tool definition that would be handed to a model,
+    including the business outcomes it can return. Needs no API key.
+    """
+    from pathlib import Path
+
+    from cua.catalog.registry import CapabilityRegistry, render, render_detail
+
+    registry = CapabilityRegistry(Path("capabilities"))
+    if show:
+        capability = registry.get(show)
+        if capability is None:
+            typer.echo(f"No capability with id {show!r}. Run `cua catalog` to list them.")
+            raise typer.Exit(1)
+        typer.echo(render_detail(capability))
+        return
+    typer.echo(render(registry.load_all()))
 
 
 @app.command()
-def agent(
-    ask: Annotated[str, typer.Argument(help="Natural-language request.")],
+def approve(
+    capability: Annotated[str, typer.Argument(help="Capability id, e.g. member.open-savings.")],
+    reviewer: Annotated[str, typer.Option(help="Who reviewed it.")] = "",
+    undo: Annotated[bool, typer.Option("--undo", help="Return it to draft.")] = False,
 ) -> None:
-    """Demo: an LLM agent picks a capability from the catalog and invokes it by name."""
-    raise NotImplementedError("phase 6")
+    """Mark a recorded capability as reviewed, so replay will run its risky steps.
+
+    A `draft` capability is refused at the policy gate before any irreversible action
+    runs. This is the human review that turns `blocked` into `success` - a deliberate
+    act by a named person, recorded in the artifact.
+    """
+    from pathlib import Path
+
+    from cua.app.approve import approve_capability
+
+    try:
+        message = approve_capability(
+            capability_id=capability,
+            reviewer=reviewer or "unknown",
+            capabilities_dir=Path("capabilities"),
+            undo=undo,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(1) from exc
+    typer.echo(message)
 
 
 @app.command("eval")
