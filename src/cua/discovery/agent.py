@@ -29,6 +29,8 @@ import re
 import time
 from dataclasses import dataclass, field
 
+from cua.control.intervention import Intervention, InterventionStore
+from cua.control.session import Disposition, SessionController
 from cua.discovery.llm import LLMClient, Message, Role, ToolCall, ToolResult, Turn
 from cua.discovery.prompt import PROMPT_VERSION, SYSTEM_PROMPT, build_goal_message
 from cua.discovery.recorder import Recorder
@@ -47,6 +49,7 @@ from cua.locator.generate import CONTENT_ROLES
 from cua.policy.engine import PolicyEngine
 from cua.schema.capability import ActionKind
 from cua.schema.policy import DecisionKind
+from cua.schema.result import EscalationReason
 from cua.surface.base import Action, ActionType, ElementNode, Observation, Surface
 
 #: Consecutive *identical* acts - same action, same element, same resulting screen -
@@ -134,6 +137,9 @@ class DiscoveryAgent:
         logger: EvidenceLogger,
         recorder: Recorder | None = None,
         secrets: dict[str, str] | None = None,
+        controller: SessionController | None = None,
+        interventions: InterventionStore | None = None,
+        operator_base_url: str = "",
     ) -> None:
         self._surface = surface
         self._llm = llm
@@ -141,6 +147,15 @@ class DiscoveryAgent:
         self._log = logger
         self._recorder = recorder or Recorder()
         self._observation: Observation | None = None
+        #: Attended discovery. Without these a risky step still escalates - it just ends
+        #: the run instead of parking, because there is nobody to ask. One code path,
+        #: two deployment shapes, exactly as in replay.
+        self._controller = controller
+        self._interventions = interventions
+        self._operator_base_url = operator_base_url
+        self._authorisations = 0
+        #: Carried into the intervention so an operator sees what the run is for.
+        self._goal = ""
         #: (action, target ref, resulting screen fingerprint) per act. A stall is the
         #: same signature repeating - not merely a screen that has not moved.
         self._signatures: list[tuple[str, str, str]] = []
@@ -150,6 +165,7 @@ class DiscoveryAgent:
 
     async def run(self, *, goal: str, target: str, tenant: str) -> DiscoveryResult:
         started = time.monotonic()
+        self._goal = goal
         limits = self._policy.policy
         tools = tool_definitions()
         messages: list[Message] = [
@@ -325,9 +341,25 @@ class DiscoveryAgent:
                 detail=decision.reason,
                 control=element.name if element else url,
             )
-            return (
-                self._ok(call, f"escalated for human approval: {decision.reason}"),
-                True,
+            authorised, note = await self._request_authorisation(
+                call, decision.reason, element, url
+            )
+            if not authorised:
+                return (
+                    self._ok(call, f"escalated for human approval: {decision.reason}"),
+                    True,
+                )
+            # Authorised, so fall through and perform the action. Note what happens
+            # *next*: the recorder captures this as automation's own step, with the
+            # model's `why` intact. Had the operator clicked the button themselves we
+            # would have a role and a name and no recorded intent - which is the
+            # difference between a step that replays and a note that it once happened.
+            self._log.event(
+                EventType.POLICY_DECISION,
+                tool=call.name,
+                decision="allow_after_authorisation",
+                rule=decision.rule,
+                reason=note or "authorised by a human operator",
             )
 
         why = getattr(args, "why", "")
@@ -411,6 +443,106 @@ class DiscoveryAgent:
         if not outcome.ok:
             return self._err(call, f"action failed: {outcome.error}"), False
         return self._ok(call, f"done.\n\n{self._render(after)}"), False
+
+    # ------------------------------------------------------------------ authorisation
+
+    async def _request_authorisation(
+        self,
+        call: ToolCall,
+        reason: str,
+        element: ElementNode | None,
+        url: str | None,
+    ) -> tuple[bool, str]:
+        """Ask a human to authorise one irreversible action, and wait for the answer.
+
+        This is the same lease, the same intervention store and the same console that
+        replay hands off to - pointed at a different question. Replay escalates because it
+        is *stuck*; discovery escalates because it is about to do something it cannot
+        undo. Treating those as one mechanism is what keeps "who is driving" answerable in
+        both phases instead of only the one the demo happens to exercise.
+
+        With no controller wired in, the answer is no. An unattended recording session
+        must not be able to open an account merely because nobody was watching.
+        """
+        if self._controller is None:
+            return False, ""
+
+        control = (element.name if element else url) or "an unnamed control"
+        intervention: Intervention | None = None
+
+        if self._interventions is not None:
+            self._authorisations += 1
+            observation = self._observation or await self._surface.observe()
+            intervention = self._interventions.raise_(
+                Intervention(
+                    id=f"auth-{self._authorisations}",
+                    run_id=self._log.run_id,
+                    capability="(being discovered)",
+                    goal=self._goal,
+                    step_id=f"turn-{len(self._signatures) + 1}",
+                    step_intent=str(getattr(parse_args(call.name, call.arguments), "why", "")),
+                    reason=EscalationReason.RISKY_STEP_NEEDS_APPROVAL,
+                    explain=(
+                        f"The model wants to {call.name} {control!r}, which policy "
+                        f"classifies as irreversible: {reason}. Discovery does not "
+                        f"perform irreversible actions without a human saying so."
+                    ),
+                    # The model's own stated intent for the last few steps, which is what
+                    # an operator needs to judge whether this action makes sense - far
+                    # more use than a list of clicks with no reasons attached.
+                    attempted=[
+                        f"{a.action}: {a.why}" for a in self._recorder.effective_actions[-3:]
+                    ],
+                    url=observation.url,
+                    aria_snapshot=observation.aria_yaml,
+                    suggested_actions=[
+                        f"Authorise it - resume as 'step completed' and automation will "
+                        f"{call.name} {control!r} itself, recording it as a step",
+                        "Refuse - abort the run; nothing irreversible has happened yet",
+                    ],
+                    operator_url=(
+                        f"{self._operator_base_url}/#auth-{self._authorisations}"
+                        if self._operator_base_url
+                        else ""
+                    ),
+                )
+            )
+            print(f"\n  authorisation needed: {intervention.operator_url}", flush=True)
+
+        self._log.event(
+            EventType.CONTROL_TRANSFERRED,
+            actor="system",
+            to="human",
+            epoch=self._controller.epoch + 1,
+            purpose="authorise_irreversible_action",
+        )
+
+        handoff = await self._controller.cede()
+
+        # An operator who acted while holding the lease still gets those actions into the
+        # same event stream. Authorising is meant to be a decision rather than a takeover,
+        # but the audit trail should record what happened, not what was intended.
+        for action in handoff.actions:
+            self._log.event(EventType.HUMAN_ACTION, actor="human", detail=action.describe())
+
+        authorised = handoff.disposition in (Disposition.STEP_COMPLETED, Disposition.RECOVERED)
+        self._log.event(
+            EventType.CONTROL_TRANSFERRED,
+            actor="system",
+            to="automation",
+            epoch=self._controller.epoch,
+            disposition=str(handoff.disposition),
+            authorised=authorised,
+        )
+        if self._interventions is not None and intervention is not None:
+            self._interventions.resolve(
+                intervention.id,
+                handoff.disposition,
+                note=handoff.note,
+                actions=handoff.actions,
+                operator=handoff.operator,
+            )
+        return authorised, handoff.note
 
     async def _do_extract(self, call: ToolCall) -> str:
         args = parse_args("extract", call.arguments)
@@ -521,11 +653,23 @@ class DiscoveryAgent:
     def _ok(call: ToolCall, content: str) -> ToolResult:
         return ToolResult(tool_call_id=call.id, content=content)
 
-    @staticmethod
-    def _err(call: ToolCall, content: str) -> ToolResult:
+    def _err(self, call: ToolCall, content: str) -> ToolResult:
         """A refusal is a tool *result*, not an exception.
 
         The model reads it, adapts, and cannot route around the check that produced it -
         because the check happened on our side of the boundary.
+
+        It is also *logged*. A refusal the model silently works around is the hardest
+        kind of run to explain afterwards: the artifact simply comes out short, with
+        nothing in the evidence to say which call was turned away or why. This was found
+        exactly that way - a transcript replayed to a two-step recording and the log had
+        nothing to offer.
         """
+        self._log.event(
+            EventType.ERROR,
+            actor="system",
+            tool=call.name,
+            detail=content,
+            recoverable=True,
+        )
         return ToolResult(tool_call_id=call.id, content=content, is_error=True)

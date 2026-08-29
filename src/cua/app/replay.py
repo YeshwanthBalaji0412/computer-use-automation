@@ -152,6 +152,7 @@ async def run_replay(
     surface, pw, browser = await WebSurface.launch(
         headed=headed,
         evidence_dir=logger.steps_dir,
+        trace_path=logger.dir / "trace.zip",
         extra_http_headers=headers,
         allow_request=policy.allows_request,
         on_blocked_request=lambda url: logger.event(
@@ -163,7 +164,7 @@ async def run_replay(
 
     console: tuple[object, object] | None = None
     if controller is not None and store is not None and operator_port:
-        console = await _serve_console(
+        console = await serve_console(
             store=store,
             controller=controller,
             page_provider=lambda: surface.page,
@@ -261,7 +262,7 @@ def exit_code(result: ReplayResult) -> int:
     return EXIT_CODES.get(result.status, 1)
 
 
-async def _serve_console(
+async def serve_console(
     *,
     store: InterventionStore,
     controller: SessionController,

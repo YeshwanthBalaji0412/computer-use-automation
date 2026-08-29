@@ -141,10 +141,21 @@ class InterventionStore:
         *,
         note: str = "",
         actions: list[HumanAction] | None = None,
+        operator: str | None = None,
     ) -> Intervention | None:
+        """`operator` is a fallback for a resolution that never went through `take`.
+
+        The console always takes before it resumes, so normally the name is already on
+        the record. An authorisation raised during discovery need not - answering "yes,
+        open the account" is a decision rather than a takeover - and an audit record of
+        an irreversible action that does not name the human who authorised it is the one
+        record in this system that would be worthless.
+        """
         item = self._items.get(intervention_id)
         if item is None:
             return None
+        if operator and not item.operator:
+            item.operator = operator
         item.status = InterventionStatus.RESOLVED
         item.resolved_at = datetime.now(UTC)
         item.disposition = disposition

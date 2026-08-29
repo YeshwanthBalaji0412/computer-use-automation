@@ -7,10 +7,15 @@ substitution rather than a parallel code path.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
-from cua.app.replay import secrets_from_env
+from cua.app.replay import secrets_from_env, serve_console
+from cua.control.intervention import InterventionStore
+from cua.control.session import HumanAction, SessionController
 from cua.discovery.agent import DiscoveryAgent, StopReason
 from cua.discovery.compiler import compile_capability
 from cua.discovery.llm import LLMClient, MockLLM, OpenAIClient
@@ -35,6 +40,7 @@ async def run_discover(
     fixture: Path | None = None,
     capabilities_dir: Path = CAPABILITIES_DIR,
     evidence_dir: Path = EVIDENCE_DIR,
+    operator_port: int | None = None,
 ) -> int:
     llm: LLMClient
     if mock:
@@ -53,14 +59,49 @@ async def run_discover(
     logger = EvidenceLogger(evidence_dir, kind="discovery", redactor=redactor)
 
     policy_engine = PolicyEngine(load_policy())
+
+    # Attended discovery. Policy escalates every irreversible action during discovery -
+    # the model is by definition operating on a UI it does not yet understand, which is
+    # the worst possible moment to let it press "Confirm and Open Account". Without an
+    # operator port there is nobody to ask, so that escalation ends the run; with one, it
+    # parks and a human authorises the single action. Same lease, same console, same
+    # intervention record that replay uses when it gets stuck.
+    controller = SessionController() if operator_port else None
+    store = InterventionStore(logger.dir, redactor=redactor) if operator_port else None
+
+    def note_human_action(payload: dict[str, str]) -> None:
+        if controller is None:
+            return
+        controller.record_human_action(
+            HumanAction(
+                at=datetime.now(UTC),
+                kind=payload.get("kind", "action"),
+                role=payload.get("role", ""),
+                name=payload.get("name", ""),
+            )
+        )
+
     surface, pw, browser = await WebSurface.launch(
         headed=headed,
         evidence_dir=logger.steps_dir,
+        trace_path=logger.dir / "trace.zip",
         allow_request=policy_engine.allows_request,
         on_blocked_request=lambda url: logger.event(
             EventType.POLICY_DECISION, decision="block", rule="network_allowlist", url=url
         ),
+        lease_guard=controller.guard() if controller else None,
+        on_human_action=note_human_action if controller else None,
     )
+
+    console: tuple[object, object] | None = None
+    if controller is not None and store is not None and operator_port:
+        console = await serve_console(
+            store=store,
+            controller=controller,
+            page_provider=lambda: surface.page,
+            port=operator_port,
+        )
+        print(f"operator console -> http://localhost:{operator_port}/", flush=True)
 
     try:
         agent = DiscoveryAgent(
@@ -69,9 +110,20 @@ async def run_discover(
             policy=policy_engine,
             logger=logger,
             secrets=secrets_from_env(),
+            controller=controller,
+            interventions=store,
+            operator_base_url=f"http://localhost:{operator_port}" if operator_port else "",
         )
         result = await agent.run(goal=goal, target=target, tenant=tenant)
     finally:
+        if controller is not None:
+            # Never leave a parked coroutine waiting on a future nobody will complete.
+            controller.abandon("run finished")
+        if console is not None:
+            server, serving = console
+            server.should_exit = True  # type: ignore[attr-defined]
+            with contextlib.suppress(TimeoutError, asyncio.CancelledError):
+                await asyncio.wait_for(serving, timeout=5)  # type: ignore[arg-type]
         await surface.close()
         await browser.close()
         await pw.stop()
