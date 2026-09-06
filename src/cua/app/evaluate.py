@@ -94,10 +94,11 @@ SCENARIOS: list[Scenario] = [
     Scenario(
         "app-error",
         {"memberId": "100042"},
-        "business_outcome",
-        expect_code="APP_ERROR",
+        "failed",
+        expect_code="app_error",
         fault="500",
-        why="the application's own error page, recognised and reported",
+        why="the application's own error page: declared in the contract so a caller "
+        "knows it can happen, but returned as a failure because a 500 is not an answer",
     ),
     Scenario(
         "slow-load",

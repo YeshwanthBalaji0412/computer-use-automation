@@ -105,7 +105,7 @@ invalid-input          failed                       invalid_input        PASS
 known-interstitial     success                      success              PASS
 session-expiry         success                      success              PASS
 unknown-dialog         escalated                    unknown_dialog       PASS
-app-error              APP_ERROR                    APP_ERROR            PASS
+app-error              app_error                    app_error            PASS
 slow-load              success                      success              PASS
 write-blocked          blocked                      blocked              PASS
 write-duplicate        DUPLICATE_RECORD             DUPLICATE_RECORD     PASS

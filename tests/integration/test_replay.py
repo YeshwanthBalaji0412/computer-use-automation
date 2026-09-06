@@ -406,14 +406,30 @@ async def test_an_irreversible_capability_is_refused_without_both_approvals(
     assert "--approve" in result.policy.required_approval
 
 
-async def test_a_server_error_is_reported_as_such(
+async def test_a_server_error_is_declared_but_is_not_an_answer(
     base_url: str, tenant_dir: Path, tmp_path: Path, policy_file: Path
 ) -> None:
+    """The taxonomy arguing with itself, and the line it settles on.
+
+    A 500 has to be *declared* - a calling agent should learn from the contract that it
+    can happen, rather than treating every non-success as an outage. But it is not an
+    answer: there is no balance to report, and returning it as a peer of `success` is the
+    same conflation that makes "no such member" look like a crash, pointed the other way.
+
+    So it is recognised by the capability's own detector like any other known outcome, and
+    then returned through the failure channel with a specific error class - which is what
+    lets a caller tell "the app is broken" from "the automation is broken".
+    """
     result = await replay(
         base_url, tenant_dir, tmp_path, policy_file, {"memberId": "100042"}, fault="500"
     )
-    assert result.status == "business_outcome"
-    assert result.outcome.code == "APP_ERROR"
+    assert result.status == "failed"
+    assert str(result.error.error_class) == "app_error"
+    # Still in the published contract, or declaring it bought nothing.
+    assert any(
+        o.code == "APP_ERROR"
+        for o in load_capability("member.savings-balance", CAPABILITIES).known_outcomes
+    )
 
 
 # ------------------------------------------------------------------ evidence

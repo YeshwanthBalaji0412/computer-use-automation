@@ -1,8 +1,8 @@
 {
-  "run_id": "rep_9f5c4cfd1889",
+  "run_id": "rep_ba280ce29084",
   "kind": "replay",
-  "finished_at": "2026-08-29T21:46:42+00:00",
-  "duration_ms": 28505,
+  "finished_at": "2026-09-06T20:21:51+00:00",
+  "duration_ms": 28509,
   "capability": "member.savings-balance@1.0.0",
   "tenant": "lakeside",
   "inputs": {

@@ -1,0 +1,3 @@
+app_error at s3
+expected: the application to respond to 'Submit credentials to sign in.'
+observed: APP_ERROR: The application returned a server error.

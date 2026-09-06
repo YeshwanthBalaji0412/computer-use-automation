@@ -1,6 +1,6 @@
-# Replay: member.savings-balance@1.0.0 (business_outcome)
+# Replay: member.savings-balance@1.0.0 (failed)
 
-- run: `rep_431f2b747b34` (replay)
+- run: `rep_b75ec2e27697` (replay)
 - events: 18
 
 | # | actor | event | step | detail |
@@ -11,7 +11,7 @@
 | 4 | automation | policy_decision | s1 | decision=allow, rule=default |
 | 5 | automation | locator_resolved |  | target=the textbox 'User ID' in the 'Operator Sign In' section, outcome=resolved |
 | 6 | automation | action | s1 | Enter user ID to sign in. |
-| 7 | automation | step_finished | s1 | duration_ms=39 |
+| 7 | automation | step_finished | s1 | duration_ms=37 |
 | 8 | automation | step_started | s2 | Enter password to sign in. |
 | 9 | automation | policy_decision | s2 | decision=allow, rule=default |
 | 10 | automation | locator_resolved |  | target=the textbox 'Password' in the 'Operator Sign In' section, outcome=resolved |
@@ -21,5 +21,5 @@
 | 14 | automation | policy_decision | s3 | decision=allow, rule=default |
 | 15 | automation | locator_resolved |  | target=the button 'Sign In' in the 'Operator Sign In' section, outcome=resolved |
 | 16 | automation | action | s3 | Submit credentials to sign in. |
-| 17 | automation | business_outcome | s3 | code=APP_ERROR |
-| 18 | automation | run_finished |  | status=business_outcome, duration_ms=6306 |
+| 17 | automation | error | s3 | level=error, message=app_error |
+| 18 | automation | run_finished |  | status=failed, duration_ms=6305 |

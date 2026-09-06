@@ -1,13 +1,13 @@
 {
-  "run_id": "rep_431f2b747b34",
+  "run_id": "rep_b75ec2e27697",
   "kind": "replay",
-  "finished_at": "2026-08-29T21:45:45+00:00",
-  "duration_ms": 6584,
+  "finished_at": "2026-09-06T20:20:54+00:00",
+  "duration_ms": 6586,
   "capability": "member.savings-balance@1.0.0",
   "tenant": "meridian",
   "inputs": {
     "memberId": "100042"
   },
-  "status": "business_outcome",
+  "status": "failed",
   "fault": "500"
 }

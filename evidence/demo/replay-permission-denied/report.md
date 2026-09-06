@@ -1,6 +1,6 @@
 # Replay: member.savings-balance@1.0.0 (business_outcome)
 
-- run: `rep_e5e1434816d1` (replay)
+- run: `rep_c34407916d2e` (replay)
 - events: 28
 
 | # | actor | event | step | detail |
@@ -11,7 +11,7 @@
 | 4 | automation | policy_decision | s1 | decision=allow, rule=default |
 | 5 | automation | locator_resolved |  | target=the textbox 'User ID' in the 'Operator Sign In' section, outcome=resolved |
 | 6 | automation | action | s1 | Enter user ID to sign in. |
-| 7 | automation | step_finished | s1 | duration_ms=42 |
+| 7 | automation | step_finished | s1 | duration_ms=47 |
 | 8 | automation | step_started | s2 | Enter password to sign in. |
 | 9 | automation | policy_decision | s2 | decision=allow, rule=default |
 | 10 | automation | locator_resolved |  | target=the textbox 'Password' in the 'Operator Sign In' section, outcome=resolved |
@@ -26,10 +26,10 @@
 | 19 | automation | policy_decision | s4 | decision=allow, rule=default |
 | 20 | automation | locator_resolved |  | target=the textbox 'Member ID' in the 'Member Search' section (frame contentFrame), outcom |
 | 21 | automation | action | s4 | Enter member ID to search for member details. |
-| 22 | automation | step_finished | s4 | duration_ms=5070 |
+| 22 | automation | step_finished | s4 | duration_ms=5053 |
 | 23 | automation | step_started | s5 | Search for the member with ID 100042. |
 | 24 | automation | policy_decision | s5 | decision=allow, rule=default |
 | 25 | automation | locator_resolved |  | target=the button 'Search' in the 'Member Search' section (frame contentFrame), outcome=re |
 | 26 | automation | action | s5 | Search for the member with ID 100042. |
 | 27 | automation | business_outcome | s5 | code=PERMISSION_DENIED |
-| 28 | automation | run_finished |  | status=business_outcome, duration_ms=17039 |
+| 28 | automation | run_finished |  | status=business_outcome, duration_ms=17013 |

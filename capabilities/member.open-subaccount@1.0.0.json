@@ -1251,8 +1251,8 @@
             "column_header": null,
             "anchor_text": null,
             "bbox": {
-              "x": 29.0,
-              "y": 237.0,
+              "x": 20.0,
+              "y": 233.0,
               "w": 172.5625,
               "h": 19.0
             }
@@ -1556,7 +1556,7 @@
         "of": [],
         "output": null
       },
-      "severity": "warn",
+      "severity": "error",
       "terminal": true,
       "returns": {}
     }
@@ -1656,12 +1656,12 @@
     "discovered_by": "llm",
     "model": "scripted",
     "prompt_version": "discovery/v2",
-    "discovery_run_id": "dis_b9b44022a41e",
-    "recorded_at": "2026-08-29T21:48:07.096152Z",
+    "discovery_run_id": "dis_6e8b8c52f5af",
+    "recorded_at": "2026-09-06T20:23:16.454027Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "c1ba2c3478d015c0",
     "reviewed_by": "ops@meridiancu.example",
-    "reviewed_at": "2026-08-29T21:48:46.863070Z"
+    "reviewed_at": "2026-09-06T20:23:56.251410Z"
   },
   "stability": {
     "replays": 0,

@@ -24,7 +24,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from cua.schema.capability import ApprovalStatus, Capability, RiskClass
+from cua.schema.capability import (
+    ApprovalStatus,
+    Capability,
+    OutcomeSeverity,
+    RiskClass,
+)
 
 
 class CapabilityRegistry:
@@ -82,13 +87,29 @@ def describe_for_agent(capability: Capability) -> str:
         returns = ", ".join(f"{o.name} ({o.type})" for o in capability.outputs)
         lines.append(f"Returns: {returns}.")
 
-    if capability.known_outcomes:
-        codes = ", ".join(o.code for o in capability.known_outcomes if o.terminal)
-        if codes:
-            lines.append(
-                f"May instead return one of these expected outcomes, which are answers "
-                f"rather than errors: {codes}."
-            )
+    # Split by severity, because the caller does two different things with them. An
+    # answer is handled; a declared failure is retried or reported. Listing a 500 as "an
+    # answer rather than an error" would be worse than not declaring it at all.
+    answers = [
+        o.code
+        for o in capability.known_outcomes
+        if o.terminal and o.severity is not OutcomeSeverity.ERROR
+    ]
+    failures = [
+        o.code
+        for o in capability.known_outcomes
+        if o.terminal and o.severity is OutcomeSeverity.ERROR
+    ]
+    if answers:
+        lines.append(
+            f"May instead return one of these expected outcomes, which are answers "
+            f"rather than errors: {', '.join(answers)}."
+        )
+    if failures:
+        lines.append(
+            f"May fail with: {', '.join(failures)}. These are declared so you can "
+            f"recognise them, but the request did not succeed."
+        )
 
     if capability.risk_class is not RiskClass.READ_ONLY:
         lines.append(

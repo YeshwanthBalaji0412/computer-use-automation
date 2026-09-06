@@ -155,7 +155,11 @@ def product_outcomes(
         KnownOutcome(
             code="APP_ERROR",
             message="The application returned a server error.",
-            severity=OutcomeSeverity.WARN,
+            # Declared, so a caller knows it can happen - but `error`, so it comes back
+            # through the failure channel. There is no balance to report on a 500, and
+            # calling that an answer is the same conflation as calling "no such member" a
+            # crash, pointed the other way.
+            severity=OutcomeSeverity.ERROR,
             terminal=True,
             detect=Assertion(
                 kind=AssertionKind.TEXT_PRESENT,

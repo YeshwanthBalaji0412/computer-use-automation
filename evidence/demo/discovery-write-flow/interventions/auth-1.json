@@ -1,7 +1,7 @@
 {
   "id": "auth-1",
-  "run_id": "dis_b9b44022a41e",
-  "raised_at": "2026-08-29T21:47:55.333202Z",
+  "run_id": "dis_6e8b8c52f5af",
+  "raised_at": "2026-09-06T20:23:04.781532Z",
   "capability": "(being discovered)",
   "goal": "Open a new SAVINGS sub-account nicknamed HOLIDAY FUND for member 100042, and read back the confirmation number",
   "tenant": null,
@@ -23,10 +23,10 @@
   ],
   "status": "resolved",
   "operator": "operator",
-  "taken_at": "2026-08-29T21:47:55.483486Z",
-  "resolved_at": "2026-08-29T21:47:55.487648Z",
+  "taken_at": "2026-09-06T20:23:04.923722Z",
+  "resolved_at": "2026-09-06T20:23:04.927753Z",
   "disposition": "step_completed",
   "note": "authorised for this recording session",
   "human_actions": [],
-  "operator_url": "http://localhost:59040/#auth-1"
+  "operator_url": "http://localhost:62272/#auth-1"
 }

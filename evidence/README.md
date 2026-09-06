@@ -88,7 +88,7 @@ and `idempotent` on the step, not in the response text.
 | [`replay-not-found`](demo/replay-not-found/) | member 999999 | `business_outcome` · `MEMBER_NOT_FOUND` |
 | [`replay-permission-denied`](demo/replay-permission-denied/) | a restricted record | `business_outcome` · `PERMISSION_DENIED` |
 | [`replay-slow-recovered`](demo/replay-slow-recovered/) | a screen slower than one settle window | `success`, after a bounded re-observe |
-| [`replay-app-error`](demo/replay-app-error/) | the app's own 500 page | recognised and reported |
+| [`replay-app-error`](demo/replay-app-error/) | the app's own 500 page | `failed` · `app_error` — declared, but not an answer |
 | [`replay-escalated-handoff`](demo/replay-escalated-handoff/) | an undeclared dialog | parked → human → `success` |
 | [`discovery-write-flow`](demo/discovery-write-flow/) | recording a write, attended | two irreversible actions authorised by a named human |
 | [`replay-lakeside`](demo/replay-lakeside/) | the same artifact at another institution | `success`, with the overlay visible in the telemetry |

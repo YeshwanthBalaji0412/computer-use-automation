@@ -129,10 +129,13 @@ Two safety rules came out of tests that failed:
 | Class | Examples | Response | Result |
 |---|---|---|---|
 | **Business outcome** | `MEMBER_NOT_FOUND`, `PERMISSION_DENIED`, `VALIDATION_REJECTED`, `DUPLICATE_RECORD` | Return the declared code and payload. Not an error, does not raise. | `business_outcome` |
+| **Declared failure** | `APP_ERROR` — the application's own 500 page | Recognised by its declared detector, reported through the failure channel | `failed` · `error_class: app_error` |
 | **Recoverable** | known interstitial, transient slow load, expired session | Dismiss / wait / re-authenticate, bounded and logged | `success` with recoveries in the trace |
 | **Needs a human** | undeclared dialog, recovery exhausted, ambiguous write, risky step | Freeze the session, raise an intervention | `escalated` |
 | **Policy** | origin not allowed, risk gate | Refuse before touching the page | `blocked` |
-| **Hard failure** | locator unresolved/ambiguous, checkpoint failed, app 5xx, extraction failed | Stop, dump evidence, report step + expected + observed | `failed` |
+| **Hard failure** | locator unresolved/ambiguous, checkpoint failed, extraction failed | Stop, dump evidence, report step + expected + observed | `failed` |
+
+**The second row is the taxonomy arguing with itself, and worth the paragraph.** Declaring an outcome and *returning it as an answer* are two different things, and an application's own 500 needs the first without the second. A calling agent should learn from the contract that `APP_ERROR` can happen — that is what stops it treating every non-success as an outage. But there is no balance to report on an error page, so handing it back as a peer of `success` is the same conflation this taxonomy exists to prevent, pointed the other way: I would be telling a caller "the application returned a server error" and labelling it *a legitimate answer, not a failure*. `KnownOutcome.severity` carries the distinction. `info` and `warn` are answers; `error` is recognised by the same declared detector and then returned as `failed` with `ErrorClass.APP_ERROR` — which preserves "the app is broken" versus "the automation is broken" without pretending the app worked.
 
 Two orderings are load-bearing. **Classification runs before post-conditions**, so an exceptional state is recognised as *itself* rather than as "the checkpoint failed" — get this backwards and "no such member" reaches the caller as a crash. And **policy is checked before the locator is resolved**, so nothing about a refused step ever touches the application.
 

@@ -1,8 +1,8 @@
 {
-  "run_id": "rep_a64f99e25bfb",
+  "run_id": "rep_e673e3eaeefc",
   "kind": "replay",
-  "finished_at": "2026-08-29T21:50:16+00:00",
-  "duration_ms": 50495,
+  "finished_at": "2026-09-06T20:25:26+00:00",
+  "duration_ms": 50601,
   "capability": "member.open-subaccount@1.0.0",
   "tenant": "meridian",
   "inputs": {

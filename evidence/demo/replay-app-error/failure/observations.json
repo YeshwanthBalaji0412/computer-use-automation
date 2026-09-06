@@ -1,6 +1,6 @@
 [
   {
-    "observation_id": "obs_73bf25ecd309",
+    "observation_id": "obs_ea695a26a777",
     "url": "http://localhost:4000/tenants/meridian/home",
     "title": "Meridian Credit Union - CoreLink Servicing Console",
     "frame_paths": [
@@ -46,9 +46,9 @@
         "row_context": null,
         "anchor_text": null,
         "bbox": {
-          "x": 20.0,
-          "y": 80.0,
-          "w": 130.0,
+          "x": 29.0,
+          "y": 84.0,
+          "w": 112.0,
           "h": 16.0
         },
         "tag": "h2"
@@ -66,8 +66,8 @@
         "row_context": null,
         "anchor_text": null,
         "bbox": {
-          "x": 24.0,
-          "y": 108.0,
+          "x": 40.0,
+          "y": 114.0,
           "w": 86.5625,
           "h": 13.0
         },
@@ -86,8 +86,8 @@
         "row_context": null,
         "anchor_text": null,
         "bbox": {
-          "x": 24.0,
-          "y": 127.0,
+          "x": 40.0,
+          "y": 137.0,
           "w": 68.5625,
           "h": 13.0
         },
@@ -106,8 +106,8 @@
         "row_context": null,
         "anchor_text": null,
         "bbox": {
-          "x": 24.0,
-          "y": 146.0,
+          "x": 40.0,
+          "y": 160.0,
           "w": 42.234375,
           "h": 13.0
         },
@@ -126,8 +126,8 @@
         "row_context": null,
         "anchor_text": null,
         "bbox": {
-          "x": 24.0,
-          "y": 165.0,
+          "x": 40.0,
+          "y": 183.0,
           "w": 35.0625,
           "h": 13.0
         },
@@ -146,8 +146,8 @@
         "row_context": null,
         "anchor_text": null,
         "bbox": {
-          "x": 24.0,
-          "y": 203.0,
+          "x": 40.0,
+          "y": 229.0,
           "w": 48.1875,
           "h": 13.0
         },
@@ -167,7 +167,7 @@
         "anchor_text": null,
         "bbox": {
           "x": 0.0,
-          "y": 240.0,
+          "y": 272.0,
           "w": 170.0,
           "h": 42.0
         },

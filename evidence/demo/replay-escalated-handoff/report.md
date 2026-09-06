@@ -1,6 +1,6 @@
 # Replay: member.savings-balance@1.0.0 (success)
 
-- run: `rep_7a73e234aa6b` (replay)
+- run: `rep_fe1a37336a2d` (replay)
 - events: 43
 
 | # | actor | event | step | detail |
@@ -11,7 +11,7 @@
 | 4 | automation | policy_decision | s1 | decision=allow, rule=default |
 | 5 | automation | locator_resolved |  | target=the textbox 'User ID' in the 'Operator Sign In' section, outcome=resolved |
 | 6 | automation | action | s1 | Enter user ID to sign in. |
-| 7 | automation | step_finished | s1 | duration_ms=49 |
+| 7 | automation | step_finished | s1 | duration_ms=42 |
 | 8 | automation | step_started | s2 | Enter password to sign in. |
 | 9 | automation | policy_decision | s2 | decision=allow, rule=default |
 | 10 | automation | locator_resolved |  | target=the textbox 'Password' in the 'Operator Sign In' section, outcome=resolved |
@@ -21,7 +21,7 @@
 | 14 | automation | policy_decision | s3 | decision=allow, rule=default |
 | 15 | automation | locator_resolved |  | target=the button 'Sign In' in the 'Operator Sign In' section, outcome=resolved |
 | 16 | automation | action | s3 | Submit credentials to sign in. |
-| 17 | automation | step_finished | s3 | duration_ms=5686 |
+| 17 | automation | step_finished | s3 | duration_ms=5669 |
 | 18 | automation | step_started | s4 | Enter member ID to search for member details. |
 | 19 | automation | policy_decision | s4 | decision=allow, rule=default |
 | 20 | automation | locator_resolved |  | target=the textbox 'Member ID' in the 'Member Search' section (frame contentFrame), outcom |
@@ -31,7 +31,7 @@
 | 24 | automation | policy_decision | s5 | decision=allow, rule=default |
 | 25 | automation | locator_resolved |  | target=the button 'Search' in the 'Member Search' section (frame contentFrame), outcome=re |
 | 26 | automation | action | s5 | Search for the member with ID 100042. |
-| 27 | automation | step_finished | s5 | duration_ms=5650 |
+| 27 | automation | step_finished | s5 | duration_ms=5632 |
 | 28 | automation | step_started | s6 | View details for member 100042. |
 | 29 | automation | policy_decision | s6 | decision=allow, rule=default |
 | 30 | automation | locator_resolved |  | target=the link 'View' in the row where Member ID = 100042, Name = J. RIVERA (frame conten |
@@ -41,10 +41,10 @@
 | 34 | human | human_action | s6 | detail=click button 'Acknowledge' |
 | 35 | system | control_transferred |  | to=automation, epoch=2 |
 | 36 | automation | step_finished | s6 | completed_by=human, note=post-condition satisfied after handoff |
-| 37 | automation | step_finished | s6 | duration_ms=15816 |
+| 37 | automation | step_finished | s6 | duration_ms=15833 |
 | 38 | automation | step_started | s7 | Retrieve the current savings balance for member 100042. |
 | 39 | automation | policy_decision | s7 | decision=allow, rule=default |
 | 40 | automation | locator_resolved |  | target=the Balance cell in the row where Account = Savings (frame contentFrame), outcome=r |
 | 41 | automation | action | s7 | extracted=savingsBalance |
 | 42 | automation | step_finished | s7 | duration_ms=31 |
-| 43 | automation | run_finished |  | status=success, duration_ms=32924 |
+| 43 | automation | run_finished |  | status=success, duration_ms=32907 |

@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from cua.replay.assertions import evaluate
-from cua.schema.capability import Capability, KnownOutcome, Recovery
+from cua.schema.capability import Capability, KnownOutcome, OutcomeSeverity, Recovery
 from cua.schema.result import EscalationReason
 from cua.surface.base import Observation
 
@@ -37,6 +37,9 @@ from cua.surface.base import Observation
 class StateClass(StrEnum):
     CLEAN = "clean"
     BUSINESS_OUTCOME = "business_outcome"
+    #: A declared outcome the capability marks `severity: error` - recognised the same
+    #: way, reported through the failure channel. The application's own 500 page.
+    DECLARED_FAILURE = "declared_failure"
     RECOVERABLE = "recoverable"
     ESCALATE = "escalate"
 
@@ -64,8 +67,18 @@ class StateClassifier:
             if not result.passed:
                 continue
             if outcome.terminal:
+                # Declared either way - the caller learns from the contract that this can
+                # happen - but only `info`/`warn` are *answers*. A 500 is recognised by
+                # its declared detector and then returned as a failure, because there is
+                # no balance to report and saying otherwise is the conflation this whole
+                # taxonomy exists to prevent, pointed the other way.
+                state = (
+                    StateClass.DECLARED_FAILURE
+                    if outcome.severity is OutcomeSeverity.ERROR
+                    else StateClass.BUSINESS_OUTCOME
+                )
                 return Classification(
-                    state=StateClass.BUSINESS_OUTCOME,
+                    state=state,
                     outcome=outcome,
                     detail=outcome.message,
                     evidence=[result.describe],

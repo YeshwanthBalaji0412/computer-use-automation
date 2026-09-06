@@ -1,5 +1,5 @@
 status     success
 capability member.open-subaccount@1.0.0   tenant=meridian
-duration   50177 ms
-outputs    {"confirmationNumber": "SA-548514"}
-evidence   evidence/runs/rep_a64f99e25bfb
+duration   50235 ms
+outputs    {"confirmationNumber": "SA-611450"}
+evidence   evidence/runs/rep_e673e3eaeefc

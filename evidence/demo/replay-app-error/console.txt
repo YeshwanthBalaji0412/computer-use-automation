@@ -1,6 +1,8 @@
-status     business_outcome
+status     failed
 capability member.savings-balance@1.0.0   tenant=meridian
-duration   6306 ms
-outcome    APP_ERROR: The application returned a server error.
-           (a legitimate answer, not a failure)
-evidence   evidence/runs/rep_431f2b747b34
+duration   6305 ms
+error      app_error
+at step    s3 - Submit credentials to sign in.
+expected   the application to respond to 'Submit credentials to sign in.'
+observed   APP_ERROR: The application returned a server error.
+evidence   evidence/runs/rep_b75ec2e27697

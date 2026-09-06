@@ -164,16 +164,34 @@ class Assertion(BaseModel):
 
 
 class OutcomeSeverity(StrEnum):
+    """How the caller should read a declared outcome.
+
+    `info` and `warn` are answers: the application worked and this is what it said.
+    `error` is the exception that proves the rule - see `KnownOutcome`.
+    """
+
     INFO = "info"
     WARN = "warn"
+    #: Declared so a caller knows it can happen, but returned through the *failure*
+    #: channel rather than as an answer. Currently: the application's own 500 page.
+    ERROR = "error"
 
 
 class KnownOutcome(BaseModel):
-    """An expected business result. **Not an error.**
+    """A state the capability declares it can end in, so the caller learns about it from
+    the contract rather than discovering it as an exception at 3am.
 
-    Declared in the artifact so it is part of the published contract: a calling agent
-    reads the capability and learns that `MEMBER_NOT_FOUND` is a thing it must handle,
-    rather than discovering it as an exception at 3am.
+    Almost all of these are **not errors** - `MEMBER_NOT_FOUND` is the true answer to a
+    question about a member who does not exist, and returning it as a crash is the mistake
+    this schema exists to prevent.
+
+    `severity` is what keeps that claim honest. An application's own 500 page also needs
+    declaring - a calling agent should know it can happen - but it is *not* an answer:
+    there is no balance to report, and printing "a legitimate answer, not a failure" next
+    to a server error is exactly the conflation being avoided, in the opposite direction.
+    So `severity: error` outcomes are recognised by their declared detector like any other,
+    and then returned as `failed` with `ErrorClass.APP_ERROR`, which is what preserves
+    "the app is broken" versus "the automation is broken" without pretending the app worked.
     """
 
     code: str = Field(description="Stable, machine-readable, e.g. MEMBER_NOT_FOUND.")

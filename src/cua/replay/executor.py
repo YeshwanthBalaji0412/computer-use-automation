@@ -508,6 +508,21 @@ class ReplayExecutor:
                 ctx,
             )
 
+        if classification.state is StateClass.DECLARED_FAILURE:
+            outcome = classification.outcome
+            assert outcome is not None
+            # Recognised by the capability's own detector, so the caller was told this
+            # could happen - but reported as a failure, because the application did not
+            # answer. `ErrorClass.APP_ERROR` is what preserves "the app is broken" versus
+            # "the automation is broken" without claiming the app worked.
+            return self._error(
+                ErrorClass.APP_ERROR,
+                step,
+                f"the application to respond to {step.intent!r}",
+                f"{outcome.code}: {outcome.message}",
+                ctx,
+            )
+
         if classification.state is StateClass.BUSINESS_OUTCOME:
             outcome = classification.outcome
             assert outcome is not None
@@ -769,6 +784,14 @@ class ReplayExecutor:
                 f"control was handed back as {handoff.disposition}, but the condition "
                 f"is still present: {still.detail}",
                 step,
+                ctx,
+            )
+        if still.state is StateClass.DECLARED_FAILURE and still.outcome is not None:
+            return self._error(
+                ErrorClass.APP_ERROR,
+                step,
+                "the application to be working after the handoff",
+                f"{still.outcome.code}: {still.outcome.message}",
                 ctx,
             )
         if still.state is StateClass.BUSINESS_OUTCOME and still.outcome is not None:

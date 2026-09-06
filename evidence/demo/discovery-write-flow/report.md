@@ -1,6 +1,6 @@
 # Discovery: member.open-subaccount@1.0.0
 
-- run: `dis_b9b44022a41e` (discovery)
+- run: `dis_6e8b8c52f5af` (discovery)
 - events: 50
 
 | # | actor | event | step | detail |
