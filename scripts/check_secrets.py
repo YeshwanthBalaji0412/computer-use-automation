@@ -59,9 +59,15 @@ CREDENTIAL_PATTERNS = [
 #: The operator's terminal, where the declared output is delivered. See rule 1.
 OUTPUT_CHANNEL = "console.txt"
 
-#: This file names every pattern it looks for, and the packaging tests synthesise fake keys
-#: to prove `.env` loading works. Scanning either is a guaranteed self-hit.
-EXEMPT = {"scripts/check_secrets.py", "tests/unit/test_packaging.py"}
+#: Three files that must contain credential-shaped strings in order to do their job: this
+#: one names every pattern it looks for, the packaging tests synthesise a fake key to
+#: prove `.env` loading works, and the redactor tests assert that a key *does* get masked.
+#: Scanning them is a guaranteed self-hit. Every value in them is invented.
+EXEMPT = {
+    "scripts/check_secrets.py",
+    "tests/unit/test_packaging.py",
+    "tests/unit/test_redactor.py",
+}
 
 TEXT_SUFFIXES = {".json", ".jsonl", ".md", ".txt", ".py", ".yaml", ".yml", ".html", ".cfg", ".toml"}
 

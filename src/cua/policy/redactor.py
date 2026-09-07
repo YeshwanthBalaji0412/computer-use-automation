@@ -12,10 +12,16 @@ every input and output of every capability. This is the mechanism that actually 
 regulated data, and it works because sensitivity is declared in the artifact rather than
 guessed at run time.
 
-**Pattern redaction (backstop).** Regexes for SSNs, card numbers, emails, phones. Catches
-data nobody declared - a member's SSN rendered on a screen we did not model. Best-effort
-by construction, and the card matcher is Luhn-checked specifically so a 16-digit
-reference number is not mistaken for a PAN.
+**Pattern redaction (backstop).** Regexes for SSNs, card numbers, emails, phones, and
+credential shapes. Catches data nobody declared - a member's SSN rendered on a screen we
+did not model, or an API key surfacing in a stack trace. Best-effort by construction, and
+the card matcher is Luhn-checked specifically so a 16-digit reference number is not
+mistaken for a PAN.
+
+The backstop is judged on false positives as much as on catches. Six-digit member ids and
+confirmation numbers are deliberately left legible: they are internal identifiers rather
+than PII, and a redactor that masks everything produces evidence nobody reads, which is a
+security failure of a slower kind.
 
 Known limits, stated because a guardrail whose gaps you cannot name is not a guardrail:
 
@@ -87,6 +93,18 @@ PATTERNS: list[_Pattern] = [
     #: confirmation numbers stay legible - those are internal identifiers, not PII, and
     #: masking them would make every log useless for debugging.
     _Pattern("account", r"\b\d{9,17}\b"),
+    #: Credential *shapes*. Secrets are supposed to reach the surface through
+    #: `secret_ref` and never enter a log at all, and `scripts/check_secrets.py` gates
+    #: the repository - but both of those protect paths we anticipated. A key that turns
+    #: up in an error message, a stack trace, or a page's own text is the case nobody
+    #: planned for, which is exactly what a backstop is for. Matched by shape, because
+    #: the key that matters is the one not on any list.
+    _Pattern("api_key", r"\bsk-(?:ant|proj)-[A-Za-z0-9_-]{16,}"),
+    _Pattern("api_key", r"\bsk-[A-Za-z0-9]{32,}\b"),
+    _Pattern("token", r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
+    _Pattern("token", r"\bBearer\s+[A-Za-z0-9._~+/-]{20,}={0,2}"),
+    #: JWTs carry claims in a base64 payload anyone can decode.
+    _Pattern("jwt", r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b"),
 ]
 
 

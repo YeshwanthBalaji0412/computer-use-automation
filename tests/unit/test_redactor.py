@@ -166,3 +166,42 @@ def test_fingerprints_do_not_join_across_runs() -> None:
     assert Redactor(salt="run-a").fingerprint("100042") != Redactor(salt="run-b").fingerprint(
         "100042"
     )
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "OPENAI_API_KEY=sk-proj-AAAABBBBCCCCDDDDEEEEFFFF",
+        "using sk-ant-api03-XXXXXXXXXXXXXXXXXXXXXXXX now",
+        "auth ghp_AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHH",
+        "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9abcdefghij",
+        "tok eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NX0.SflKxwRJSMeKKF2QT4",
+    ],
+)
+def test_a_credential_shape_never_survives_an_egress(text: str) -> None:
+    """Secrets are meant to reach the surface through `secret_ref` and never enter a log,
+    and a commit-time gate scans the repository - but both of those protect paths someone
+    anticipated. A key surfacing in a stack trace or in a page's own text is the case
+    nobody planned for, and the backstop exists for exactly that.
+    """
+    out = Redactor().text(text)
+    assert "«redacted:" in out
+    for secret in ("sk-proj-", "sk-ant-", "ghp_", "eyJhbGciOiJIUzI1NiJ9"):
+        assert secret not in out, f"{secret} survived redaction"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "member 100042 J. RIVERA",
+        "confirmation SA-655584 issued",
+        "clicked Search on the member screen",
+        "ref 4111 1111 1111 1112 internal",
+    ],
+)
+def test_the_backstop_is_judged_on_false_positives_too(text: str) -> None:
+    """A redactor that masks everything produces evidence nobody reads, which is a
+    security failure of a slower kind. Member ids and confirmation numbers are internal
+    identifiers, not PII, and the last case is a 16-digit number that fails Luhn - a
+    reference, not a card."""
+    assert Redactor().text(text) == text
