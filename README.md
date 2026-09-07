@@ -13,7 +13,7 @@ So this system splits the problem in two:
 > **The model discovers.** Once. Slow, expensive, smart.
 > **Deterministic replay invokes it.** Forever. Fast, cheap, auditable, and with no model involved in any decision.
 
-The design write-up is in **[REPORT.md](REPORT.md)**. A plain-language explanation of the problem is in **[UNDERSTAND.md](UNDERSTAND.md)**.
+The design write-up — architecture, artifact schema, error taxonomy, escalation model, and what I cut — is in **[REPORT.md](REPORT.md)**.
 
 ---
 
