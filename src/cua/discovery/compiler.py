@@ -132,13 +132,38 @@ def product_outcomes(
         ),
         KnownOutcome(
             code="VALIDATION_REJECTED",
-            message="The application rejected the input as malformed.",
+            message="The application rejected the input.",
             severity=OutcomeSeverity.INFO,
             terminal=True,
             detect=Assertion(
                 kind=AssertionKind.TEXT_PRESENT,
-                pattern=r"(?i)invalid\s+member\s+id|enter a \d+-digit",
-                describe="the search screen showed a validation message",
+                # The first version matched only the member-search messages, which is
+                # what the recorded flow happened to show. The application also rejects a
+                # blank nickname and a missing branch with "<field> is required." - a
+                # legitimate answer that fell straight through the classifier and would
+                # have reached the caller as a checkpoint failure. That is the exact
+                # conflation this taxonomy exists to prevent, so the detector now covers
+                # the shape of the message rather than one instance of it.
+                #
+                # Note the singular `is required`. The sign-in screen says "User ID and
+                # password *are* required", and that one deliberately does not match: a
+                # missing credential is a configuration fault on our side, not the
+                # application rejecting a caller's data, and it should fail loudly rather
+                # than be handed back as a clean business outcome. The distinction is
+                # worth the narrower regex.
+                # The negative lookbehinds are load-bearing, not defensive polish. A
+                # first attempt matched a bare `is required`, and the maintenance
+                # interstitial says "No action is required" - so a dismissible notice was
+                # classified as a validation rejection, inverting its meaning and
+                # terminating a run that should have recovered and carried on. Caught by
+                # the eval matrix on the very next run.
+                pattern=(
+                    r"(?i)invalid\s+member\s+id"
+                    r"|enter a \d+-digit"
+                    r"|(?<!\bno\s)(?<!\bnot\s)\b\w+\s+is\s+required\b"
+                    r"|\b(cannot be blank|must be a valid|is not a valid)\b"
+                ),
+                describe="the application showed a validation message",
             ),
         ),
         KnownOutcome(

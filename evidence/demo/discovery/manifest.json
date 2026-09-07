@@ -1,8 +1,8 @@
 {
-  "run_id": "dis_ce0dddbcd34f",
+  "run_id": "dis_96e1bedcf10f",
   "kind": "discovery",
-  "finished_at": "2026-09-06T20:19:49+00:00",
-  "duration_ms": 23882,
+  "finished_at": "2026-09-07T15:10:12+00:00",
+  "duration_ms": 23906,
   "goal": "replay a recorded discovery transcript",
   "tenant": "meridian",
   "stop_reason": "finished",

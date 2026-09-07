@@ -940,12 +940,12 @@
     },
     {
       "code": "VALIDATION_REJECTED",
-      "message": "The application rejected the input as malformed.",
+      "message": "The application rejected the input.",
       "detect": {
         "kind": "text_present",
-        "describe": "the search screen showed a validation message",
+        "describe": "the application showed a validation message",
         "locator": null,
-        "pattern": "(?i)invalid\\s+member\\s+id|enter a \\d+-digit",
+        "pattern": "(?i)invalid\\s+member\\s+id|enter a \\d+-digit|(?<!\\bno\\s)(?<!\\bnot\\s)\\b\\w+\\s+is\\s+required\\b|\\b(cannot be blank|must be a valid|is not a valid)\\b",
         "of": [],
         "output": null
       },
@@ -1079,8 +1079,8 @@
     "discovered_by": "llm",
     "model": "gpt-4o",
     "prompt_version": "discovery/v2",
-    "discovery_run_id": "dis_ce0dddbcd34f",
-    "recorded_at": "2026-09-06T20:19:49.746091Z",
+    "discovery_run_id": "dis_96e1bedcf10f",
+    "recorded_at": "2026-09-07T15:10:12.793957Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "c1ba2c3478d015c0",
     "reviewed_by": null,
@@ -1089,7 +1089,7 @@
   "stability": {
     "replays": 2,
     "successes": 2,
-    "last_verified_at": "2026-09-06T20:35:22.135582Z",
+    "last_verified_at": "2026-09-07T15:26:29.911695Z",
     "locator_tier_histogram": {
       "tier1": 9,
       "tier3": 1,

@@ -12,7 +12,8 @@ app-error              app_error                    app_error                   
 slow-load              success                      success                      PASS
 write-blocked          blocked                      blocked                      PASS
 write-success          success                      success                      PASS
+write-validation-rejected VALIDATION_REJECTED          VALIDATION_REJECTED          PASS
 write-duplicate        DUPLICATE_RECORD             DUPLICATE_RECORD             PASS
 write-ambiguous        ambiguous_write_outcome      ambiguous_write_outcome      PASS
 
-14/14 scenarios passed
+15/15 scenarios passed

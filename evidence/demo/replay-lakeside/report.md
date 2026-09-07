@@ -1,6 +1,6 @@
 # Replay: member.savings-balance@1.0.0 (success)
 
-- run: `rep_ba280ce29084` (replay)
+- run: `rep_8c12e060150a` (replay)
 - events: 45
 
 | # | actor | event | step | detail |
@@ -12,12 +12,12 @@
 | 5 | automation | policy_decision | s1 | decision=allow, rule=default |
 | 6 | automation | locator_resolved |  | target=the textbox 'User ID' in the 'Operator Sign In' section, outcome=resolved |
 | 7 | automation | action | s1 | Enter user ID to sign in. |
-| 8 | automation | step_finished | s1 | duration_ms=34 |
+| 8 | automation | step_finished | s1 | duration_ms=41 |
 | 9 | automation | step_started | s2 | Enter password to sign in. |
 | 10 | automation | policy_decision | s2 | decision=allow, rule=default |
 | 11 | automation | locator_resolved |  | target=the textbox 'Password' in the 'Operator Sign In' section, outcome=resolved |
 | 12 | automation | action | s2 | Enter password to sign in. |
-| 13 | automation | step_finished | s2 | duration_ms=64 |
+| 13 | automation | step_finished | s2 | duration_ms=63 |
 | 14 | automation | step_started | s3 | Submit credentials to sign in. |
 | 15 | automation | policy_decision | s3 | decision=allow, rule=default |
 | 16 | automation | locator_resolved |  | target=the button 'Sign In' in the 'Operator Sign In' section, outcome=resolved |
@@ -33,20 +33,20 @@
 | 26 | automation | policy_decision | lakeside-branch | decision=allow, rule=default |
 | 27 | automation | locator_resolved |  | target=the Branch dropdown in the Member Search form, outcome=resolved |
 | 28 | automation | action | lakeside-branch | Lakeside requires a branch before it will run a member search |
-| 29 | automation | step_finished | lakeside-branch | duration_ms=5467 |
+| 29 | automation | step_finished | lakeside-branch | duration_ms=5483 |
 | 30 | automation | step_started | s5 | Search for the member with ID 100042. |
 | 31 | automation | policy_decision | s5 | decision=allow, rule=default |
 | 32 | automation | locator_resolved |  | target=the button 'Search' in the 'Member Search' section (frame contentFrame), outcome=re |
 | 33 | automation | action | s5 | Search for the member with ID 100042. |
-| 34 | automation | step_finished | s5 | duration_ms=5640 |
+| 34 | automation | step_finished | s5 | duration_ms=5636 |
 | 35 | automation | step_started | s6 | View details for member 100042. |
 | 36 | automation | policy_decision | s6 | decision=allow, rule=default |
 | 37 | automation | locator_resolved |  | target=the link 'View' in the row where Member ID = 100042, Name = J. RIVERA (frame conten |
 | 38 | automation | action | s6 | View details for member 100042. |
-| 39 | automation | step_finished | s6 | duration_ms=5659 |
+| 39 | automation | step_finished | s6 | duration_ms=5628 |
 | 40 | automation | step_started | s7 | Retrieve the current savings balance for member 100042. |
 | 41 | automation | policy_decision | s7 | decision=allow, rule=default |
 | 42 | automation | locator_resolved |  | target=the Balance cell in the row where Account = Savings (frame contentFrame), outcome=r |
 | 43 | automation | action | s7 | extracted=savingsBalance |
 | 44 | automation | step_finished | s7 | duration_ms=31 |
-| 45 | automation | run_finished |  | status=success, duration_ms=28202 |
+| 45 | automation | run_finished |  | status=success, duration_ms=28197 |

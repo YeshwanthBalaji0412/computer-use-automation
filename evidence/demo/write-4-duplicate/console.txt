@@ -1,6 +1,6 @@
 status     business_outcome
 capability member.open-subaccount@1.0.0   tenant=meridian
-duration   44481 ms
+duration   44492 ms
 outcome    DUPLICATE_RECORD: A record with those details already exists; nothing was created.
            (a legitimate answer, not a failure)
-evidence   evidence/runs/rep_37c815888e8c
+evidence   evidence/runs/rep_7553ff15cc59

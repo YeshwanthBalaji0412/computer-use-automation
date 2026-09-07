@@ -1,6 +1,6 @@
 status     success
 capability member.savings-balance@1.0.0   tenant=meridian
-duration   27601 ms
+duration   27636 ms
 outputs    {"savingsBalance": "4182.55"}
 recovered  s7: transient-load
-evidence   evidence/runs/rep_8dc75a241172
+evidence   evidence/runs/rep_52f35a8e70fd

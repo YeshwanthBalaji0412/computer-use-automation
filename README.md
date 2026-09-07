@@ -96,25 +96,27 @@ The whole taxonomy, in one command:
 uv run cua eval
 ```
 ```
-SCENARIO               EXPECTED                     ACTUAL
-happy-path             success                      success              PASS
-different-member       success                      success              PASS
-not-found              MEMBER_NOT_FOUND             MEMBER_NOT_FOUND     PASS
-permission-denied      PERMISSION_DENIED            PERMISSION_DENIED    PASS
-invalid-input          failed                       invalid_input        PASS
-known-interstitial     success                      success              PASS
-session-expiry         success                      success              PASS
-unknown-dialog         escalated                    unknown_dialog       PASS
-app-error              app_error                    app_error            PASS
-slow-load              success                      success              PASS
-write-blocked          blocked                      blocked              PASS
-write-duplicate        DUPLICATE_RECORD             DUPLICATE_RECORD     PASS
-write-ambiguous        ambiguous_write_outcome      ambiguous_write_out  PASS
+SCENARIO                   EXPECTED                 ACTUAL
+happy-path                 success                  success                  PASS
+different-member           success                  success                  PASS
+not-found                  MEMBER_NOT_FOUND         MEMBER_NOT_FOUND         PASS
+permission-denied          PERMISSION_DENIED        PERMISSION_DENIED        PASS
+invalid-input              failed                   invalid_input            PASS
+known-interstitial         success                  success                  PASS
+session-expiry             success                  success                  PASS
+unknown-dialog             escalated                unknown_dialog           PASS
+app-error                  app_error                app_error                PASS
+slow-load                  success                  success                  PASS
+write-blocked              blocked                  blocked                  PASS
+write-success              success                  success                  PASS
+write-validation-rejected  VALIDATION_REJECTED      VALIDATION_REJECTED      PASS
+write-duplicate            DUPLICATE_RECORD         DUPLICATE_RECORD         PASS
+write-ambiguous            ambiguous_write_outcome  ambiguous_write_outcome  PASS
 
-13/13 scenarios passed
+15/15 scenarios passed
 ```
 
-Thirteen rows, **nine different answers**. A system that returned `failed` for the middle rows would pass a naive smoke test and be useless in production — the caller could not tell "this member does not exist" from "the automation is broken".
+Fifteen rows, **ten different answers**. A system that returned `failed` for the middle rows would pass a naive smoke test and be useless in production — the caller could not tell "this member does not exist" from "the automation is broken".
 
 The last three rows are the write flow, and they are the ones I would open first. **`write-blocked`** is refused *before it touches the page* — a policy refusal is not a malfunction, so it is `blocked` rather than `failed`, and the caller's response is "get approval", not "retry harder". **`write-duplicate`** is a clean answer: the application refuses at the review screen before committing, which is exactly what makes a capability that must never retry a *step* safe for a caller to retry as a *whole*. And **`write-ambiguous`** is the one that matters most — see below.
 

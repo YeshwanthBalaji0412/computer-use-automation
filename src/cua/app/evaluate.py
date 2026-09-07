@@ -135,6 +135,20 @@ SCENARIOS: list[Scenario] = [
         "account, and returns the confirmation number as a typed output",
     ),
     Scenario(
+        "write-validation-rejected",
+        # Whitespace passes the *capability's* input contract - it is a non-empty string -
+        # and then fails the *application's* own check, which strips before testing. That
+        # gap is the only way to reach a server-rendered validation message, and it is the
+        # case the brief names first among the runtime conditions a replay must handle.
+        {"memberId": "100042", "nickname": "   "},
+        "business_outcome",
+        expect_code="VALIDATION_REJECTED",
+        capability="member.open-subaccount",
+        approve=True,
+        why="the application rejected the input and said so on screen; that is an answer "
+        "for the caller, not a crash, and nothing was created",
+    ),
+    Scenario(
         "write-duplicate",
         {"memberId": "100042", "nickname": "VACATION FUND"},
         "business_outcome",

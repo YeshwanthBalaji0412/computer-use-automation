@@ -170,3 +170,23 @@ def test_a_real_environment_variable_beats_the_dotenv_file(tmp_path: Path) -> No
     )
     assert result.returncode == 0, result.stderr
     assert "sk-from-real-env" in result.stdout
+
+
+def test_every_unit_test_file_declares_the_unit_marker() -> None:
+    """A file that forgets `pytestmark = pytest.mark.unit` is silently deselected.
+
+    CI runs `pytest -m unit`, so such a file passes locally when you invoke it directly
+    and never runs in the pipeline at all - the worst kind of gap, because the test
+    exists, is green, and protects nothing. This happened: ten detector tests were
+    written and would not have run.
+    """
+    here = Path(__file__).parent
+    missing = [
+        path.name
+        for path in sorted(here.glob("test_*.py"))
+        if "pytestmark = pytest.mark.unit" not in path.read_text(encoding="utf-8")
+    ]
+    assert not missing, (
+        f"these files would be deselected by `pytest -m unit`: {missing}. "
+        f"Add `pytestmark = pytest.mark.unit`."
+    )

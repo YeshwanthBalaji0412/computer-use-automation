@@ -1,17 +1,17 @@
-operator console -> http://localhost:62272/
+operator console -> http://localhost:57295/
 
-  authorisation needed: http://localhost:62272/#auth-1
+  authorisation needed: http://localhost:57295/#auth-1
 
-  authorisation needed: http://localhost:62272/#auth-2
+  authorisation needed: http://localhost:57295/#auth-2
 
-run      dis_6e8b8c52f5af
+run      dis_1580514a23f8
 stopped  finished
 actions  12 effective of 12 attempted
 
 artifact capabilities/member.open-subaccount@1.0.0.json
   12 steps, 2 input(s), 1 output(s), 6 known outcome(s)
   status=draft risk=irreversible_write
-evidence evidence/runs/dis_6e8b8c52f5af
+evidence evidence/runs/dis_1580514a23f8
 
 authorisation #1  risky_step_needs_approval
   asked       The model wants to click 'Continue', which policy classifies as reversible_write: control name 'Continue' matches \b(save|update|apply|submit|continue|create)\b; risky actions are escalated during discovery. Discovery does not perform an action it cannot undo without a human saying so.

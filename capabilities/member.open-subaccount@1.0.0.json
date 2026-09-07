@@ -381,8 +381,8 @@
             "column_header": null,
             "anchor_text": null,
             "bbox": {
-              "x": 97.953125,
-              "y": 136.0,
+              "x": 128.953125,
+              "y": 139.0,
               "w": 63.8125,
               "h": 19.0
             }
@@ -804,8 +804,8 @@
             "column_header": null,
             "anchor_text": null,
             "bbox": {
-              "x": 20.0,
-              "y": 277.0,
+              "x": 38.0,
+              "y": 295.0,
               "w": 102.875,
               "h": 13.0
             }
@@ -1517,12 +1517,12 @@
     },
     {
       "code": "VALIDATION_REJECTED",
-      "message": "The application rejected the input as malformed.",
+      "message": "The application rejected the input.",
       "detect": {
         "kind": "text_present",
-        "describe": "the search screen showed a validation message",
+        "describe": "the application showed a validation message",
         "locator": null,
-        "pattern": "(?i)invalid\\s+member\\s+id|enter a \\d+-digit",
+        "pattern": "(?i)invalid\\s+member\\s+id|enter a \\d+-digit|(?<!\\bno\\s)(?<!\\bnot\\s)\\b\\w+\\s+is\\s+required\\b|\\b(cannot be blank|must be a valid|is not a valid)\\b",
         "of": [],
         "output": null
       },
@@ -1656,12 +1656,12 @@
     "discovered_by": "llm",
     "model": "scripted",
     "prompt_version": "discovery/v2",
-    "discovery_run_id": "dis_6e8b8c52f5af",
-    "recorded_at": "2026-09-06T20:23:16.454027Z",
+    "discovery_run_id": "dis_1580514a23f8",
+    "recorded_at": "2026-09-07T15:13:39.862621Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "c1ba2c3478d015c0",
     "reviewed_by": "ops@meridiancu.example",
-    "reviewed_at": "2026-09-06T20:23:56.251410Z"
+    "reviewed_at": "2026-09-07T15:14:19.555601Z"
   },
   "stability": {
     "replays": 0,

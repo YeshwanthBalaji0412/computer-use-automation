@@ -1,6 +1,6 @@
 # Discovery: member.savings-balance@1.0.0
 
-- run: `dis_ce0dddbcd34f` (discovery)
+- run: `dis_96e1bedcf10f` (discovery)
 - events: 28
 
 | # | actor | event | step | detail |
