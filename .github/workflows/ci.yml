@@ -20,11 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Caching deliberately off. The action's *post* step - which saves the cache after
+      # every gate has already passed - failed and took a fully green run red with it.
+      # `uv sync` here is well under a minute, so the cache was buying seconds and
+      # costing a false signal on the one thing a reviewer looks at before cloning.
+      # The Playwright browser is ~150MB and genuinely worth caching; that is handled
+      # below by actions/cache, which tolerates a key that already exists.
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
+          enable-cache: false
 
       - name: Install dependencies
         run: uv sync --locked --all-groups
