@@ -17,6 +17,8 @@ Three are enforced by `import-linter` contracts rather than convention: replay m
 
 **Perception is accessibility-first** — `aria_snapshot()` enriched with DOM context into `ElementNode` (role, accessible name, frame path, row context). There is no CSS or XPath field anywhere in the schema. That is the same information Windows UI Automation and macOS AX expose, which is why the design ports.
 
+**`gpt-4o`, behind a Protocol.** The provider is the least important choice here, and the design is what makes that true: `LLMClient` is one method and one property, `OpenAIClient` and `MockLLM` both satisfy it, and exactly one file imports `openai`. I chose it for tool-calling reliability; swapping provider is one class. The decision that mattered was refusing to let that choice leak — which is why the whole discovery path runs in CI with no key and no network.
+
 **Trade-offs.** A manual agent loop, not the SDK's tool runner: every call passes policy, lease and recorder before the surface, and that sequence *is* the safety story. Files, not a database — artifacts belong in `git diff`. One process; the seams above are where services would split. A target app I wrote, because no public site yields permission denial, session timeout and a 500 on demand.
 
 ## Artifact schema
