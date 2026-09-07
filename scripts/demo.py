@@ -237,7 +237,20 @@ def reset() -> bool:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--auto", action="store_true", help="Do not pause between segments.")
+    ap.add_argument(
+        "--auto",
+        action="store_true",
+        help="Do not wait for a keypress. For a silent recording, where the printed "
+        "claim and punchline are the narration.",
+    )
+    ap.add_argument(
+        "--pace",
+        type=float,
+        default=5.0,
+        help="Seconds to hold on each explanation in --auto mode. The default is set to "
+        "reading speed, not typing speed: with no voice-over, a viewer has to read the "
+        "line before the next command scrolls it away.",
+    )
     ap.add_argument("--only", type=int, default=0, help="Rehearse a single segment.")
     ap.add_argument("--no-reset", action="store_true", help="Skip the state reset.")
     args = ap.parse_args()
@@ -260,16 +273,26 @@ def main() -> int:
                 print("\nstopped.")
                 return 0
 
+        if args.auto:
+            # The claim was printed by banner(); hold on it so it can be read before the
+            # first command starts scrolling.
+            time.sleep(args.pace)
+
         if seg.manual:
             print(f"{YELLOW}This one is interactive - do it by hand:{RESET}\n")
             print(seg.manual)
+            if args.auto:
+                print(f"{DIM}  (pausing 30s - do it now, or Ctrl-C and use --only 5){RESET}")
+                time.sleep(30)
         else:
             for command in seg.commands:
                 run(command)
                 if args.auto:
-                    time.sleep(1)
+                    time.sleep(args.pace * 0.5)
 
         print(f"{BOLD}  -> {RESET}{seg.punchline}\n")
+        if args.auto:
+            time.sleep(args.pace)
         if not args.auto and seg is not segments[-1]:
             try:
                 input(f"{DIM}  [enter for the next segment]{RESET} ")
