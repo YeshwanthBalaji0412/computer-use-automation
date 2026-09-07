@@ -365,7 +365,7 @@ uv run python scripts/check_secrets.py
 
 ## What this is built on
 
-Python 3.13 · Playwright (async) · Pydantic v2 · FastAPI · Typer · OpenAI SDK. One language, one toolchain, no database, no queue, no Docker. The reasoning for each choice — and for the ones rejected — is in [REPORT.md](REPORT.md) and [STACK.md](STACK.md).
+Python 3.13 · Playwright (async) · Pydantic v2 · FastAPI · Typer · OpenAI SDK. One language, one toolchain, no database, no queue, no Docker. The reasoning, and the trade-offs each choice cost, is in [REPORT.md](REPORT.md).
 
 The target application in [`targetapp/`](targetapp/) is a deliberately hostile stand-in: framesets, nested layout tables, zero test IDs, and ASP.NET-style control IDs regenerated on every render. It is built rather than borrowed because no public demo site can produce "record not found", a permission denial, a session timeout, an undeclared modal and a 500 on demand — and those are the interesting cases.
 

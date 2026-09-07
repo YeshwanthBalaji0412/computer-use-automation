@@ -105,12 +105,26 @@ async def test_the_scenario_matrix_passes(
 
 
 def test_the_matrix_covers_every_result_status() -> None:
-    """A taxonomy nobody exercises is a taxonomy nobody can trust."""
+    """A taxonomy nobody exercises is a taxonomy nobody can trust.
+
+    Asserted against the result contract itself rather than a hand-copied list, because
+    the hand-copied version is what rots: this test kept asserting the code `APP_ERROR`
+    for a whole commit after that scenario started returning `app_error` through the
+    failure channel, and only CI noticed.
+    """
     statuses = {s.expect_status for s in SCENARIOS}
-    assert {"success", "business_outcome", "escalated", "failed"} <= statuses
+    assert statuses == {"success", "business_outcome", "escalated", "blocked", "failed"}, (
+        f"every variant of the result contract should appear in the matrix, missing: "
+        f"{ {'success', 'business_outcome', 'escalated', 'blocked', 'failed'} - statuses }"
+    )
 
     codes = {s.expect_code for s in SCENARIOS if s.expect_code}
-    assert {"MEMBER_NOT_FOUND", "PERMISSION_DENIED", "APP_ERROR"} <= codes
+    # One of each interesting kind: the app said no, the app refused a write, the
+    # automation stopped rather than guess, and the app itself broke.
+    assert {"MEMBER_NOT_FOUND", "PERMISSION_DENIED"} <= codes, "business outcomes"
+    assert "DUPLICATE_RECORD" in codes, "a write refused before it committed"
+    assert "ambiguous_write_outcome" in codes, "a write whose outcome is unknown"
+    assert "app_error" in codes, "a declared failure, reported as a failure"
 
 
 # ------------------------------------------------------------------ no LLM

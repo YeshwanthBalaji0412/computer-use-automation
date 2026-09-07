@@ -1,6 +1,6 @@
 # What This Project Actually Is
 
-Read this first. [STACK.md](STACK.md) is *what it's made of* and how every requirement maps to a file and a command. [REPORT.md](REPORT.md) is the design write-up. This is *what it is and why anyone wants it*.
+Read this first. [REPORT.md](REPORT.md) is the design write-up — the decisions and their trade-offs. This is *what the project is and why anyone wants it*, in plain language.
 
 ---
 

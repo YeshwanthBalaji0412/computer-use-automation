@@ -1,6 +1,6 @@
 # Design write-up
 
-An LLM learns a legacy banking UI once; a typed artifact replays it forever with no model in the loop. This is the argument; the depth is in [STACK.md](STACK.md), [`evidence/`](evidence/) and the code comments.
+An LLM learns a legacy banking UI once; a typed artifact replays it forever with no model in the loop. This is the argument; the working detail is in [`evidence/`](evidence/) and the code comments.
 
 ## Architecture
 
