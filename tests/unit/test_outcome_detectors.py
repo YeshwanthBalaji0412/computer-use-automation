@@ -92,3 +92,31 @@ def test_every_declared_outcome_has_a_detector_that_could_fire() -> None:
                     f"{path.name}/{outcome['code']}: {detect['kind']} with no pattern"
                 )
                 re.compile(detect["pattern"])  # a broken regex fails the build, not a run
+
+
+def test_capabilities_the_matrix_approves_are_actually_approved() -> None:
+    """A scenario that passes `--approve` still needs the capability itself approved.
+
+    Both gates are deliberate - risk is a property of the action, status is how far this
+    recording is trusted - so a capability sitting at `draft` turns every such scenario
+    into `blocked`. That is correct behaviour and a broken matrix.
+
+    It happened: the demo script resets the capability to draft so a walkthrough shows
+    both gates falling away, and a `git add -A` swept that reset into a commit. Four
+    commits shipped with an artifact that would have failed three scenarios in CI.
+    """
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+    from cua.app.evaluate import SCENARIOS
+
+    needed = {s.capability for s in SCENARIOS if s.approve}
+    for capability_id in sorted(needed):
+        matches = sorted(CAPABILITIES.glob(f"{capability_id}@*.json"))
+        assert matches, f"{capability_id} is exercised by the matrix but not committed"
+        status = json.loads(matches[-1].read_text(encoding="utf-8"))["status"]
+        assert status == "approved", (
+            f"{matches[-1].name} is '{status}'. The matrix runs scenarios against it with "
+            f"--approve, which also requires status == approved, so those rows would come "
+            f"back `blocked`. Run: cua approve {capability_id} --reviewer <you>"
+        )
