@@ -128,7 +128,16 @@ class OpenAIClient:
 
     def __init__(self, model: str | None = None) -> None:
         # Imported lazily so `--mock` runs with no SDK configuration and no key.
+        from dotenv import load_dotenv
         from openai import AsyncOpenAI
+
+        # Loaded here rather than only in the CLI. The credential is needed at exactly
+        # one place - this constructor - and putting the load anywhere further out means
+        # every new entry point has to remember: `scripts/record_flow_b.py` calls
+        # `run_discover` directly, skipped the CLI, and failed with "Missing credentials"
+        # against a .env that was sitting right there. `override=False` so a real
+        # environment variable always wins over the file.
+        load_dotenv(Path.cwd() / ".env", override=False)
 
         self._client = AsyncOpenAI()
         self._model: str = model or os.environ.get("CUA_MODEL") or DEFAULT_MODEL
