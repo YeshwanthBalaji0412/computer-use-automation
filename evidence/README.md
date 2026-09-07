@@ -192,6 +192,17 @@ fail next.
 
 ---
 
+## Reproducing this as a demo
+
+`uv run python scripts/demo_reset.py` puts the two things that drift back to a known
+state — the write capability to `draft`, so the first replay shows *both* approval gates
+missing rather than one, and the target app stopped so no nickname has been used yet —
+then prints an ordered storyboard. There is deliberately no reset *endpoint*: a real core
+banking system does not have one, and building the eval around a thing that would not
+exist in production would prove the wrong thing.
+
+---
+
 ## On the data
 
 Every member, name, balance and credential in here is invented. `100042` and `J. RIVERA`

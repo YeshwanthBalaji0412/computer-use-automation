@@ -15,7 +15,7 @@
     "requires_auth": true,
     "auth_capability": null
   },
-  "status": "approved",
+  "status": "draft",
   "risk_class": "irreversible_write",
   "idempotent": false,
   "inputs": [
@@ -1660,8 +1660,8 @@
     "recorded_at": "2026-09-07T15:13:39.862621Z",
     "recorded_against_tenant": "meridian",
     "surface_fingerprint": "c1ba2c3478d015c0",
-    "reviewed_by": "ops@meridiancu.example",
-    "reviewed_at": "2026-09-07T15:14:19.555601Z"
+    "reviewed_by": null,
+    "reviewed_at": null
   },
   "stability": {
     "replays": 0,
