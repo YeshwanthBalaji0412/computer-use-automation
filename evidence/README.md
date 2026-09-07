@@ -194,7 +194,8 @@ fail next.
 
 ## Reproducing this as a demo
 
-`uv run python scripts/demo_reset.py` puts the two things that drift back to a known
+`uv run python scripts/demo.py` walks the whole system in order, pausing between
+segments so you can talk over them. It first puts the two things that drift back to a known
 state — the write capability to `draft`, so the first replay shows *both* approval gates
 missing rather than one, and the target app stopped so no nickname has been used yet —
 then prints an ordered storyboard. There is deliberately no reset *endpoint*: a real core
